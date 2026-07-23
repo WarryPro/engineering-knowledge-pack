@@ -349,5 +349,6 @@ Downstream documents must reference this document in their `related` frontmatter
 ## Related
 
 - Domain index: [engineering/README.md](README.md)
+- [SOLID](solid.md) — class/module design practices (EKP-P05, EKP-P09)
 - Decision records: [architecture/decisions/README.md](../architecture/decisions/README.md)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
