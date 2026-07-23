@@ -1,0 +1,66 @@
+---
+name: Knowledge Document
+description: Propose a new or updated engineering knowledge document
+title: "[Knowledge] "
+labels: ["knowledge"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to propose a knowledge document. For straightforward additions, you may open a PR directly — see [contribution-guide.md](../docs/contribution-guide.md).
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Knowledge domain
+      options:
+        - engineering
+        - architecture
+        - php
+        - symfony
+        - flutter
+        - typescript
+        - frontend
+        - database
+        - security
+        - testing
+        - performance
+        - devops
+        - ai
+    validations:
+      required: true
+
+  - type: input
+    id: topic
+    attributes:
+      label: Proposed filename (kebab-case)
+      description: "e.g. error-handling-strategy"
+      placeholder: topic-name
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: What problem does this document address? Who is it for?
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why is this needed?
+      description: What gap exists in the current knowledge base?
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Author checklist
+      options:
+        - label: I have searched existing knowledge for overlap
+          required: true
+        - label: This is a single concern (not multiple topics in one document)
+          required: true

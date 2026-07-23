@@ -21,10 +21,14 @@ For straightforward additions (a new knowledge document in an existing domain), 
 
 ### 2. Author
 
-1. Identify the correct domain in `knowledge/` (see [folder-structure.md](folder-structure.md))
+1. Identify the correct domain in `knowledge/` — read the domain `README.md` (see [folder-structure.md](folder-structure.md))
 2. Copy the relevant template from `templates/`
 3. Write the document following the [style guide](style-guide.md)
-4. Place it in the correct directory with a kebab-case filename
+4. Place it in the correct directory:
+   - Guides: `knowledge/<domain>/<topic>.md`
+   - ADRs: `knowledge/architecture/decisions/adr-<n>-<topic>.md`
+   - Checklists: `knowledge/<domain>/checklists/<name>.md`
+5. Run validation: `py -3 scripts/validate/validate.py`
 
 ### 3. Self-review
 

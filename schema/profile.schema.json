@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/engineering-knowledge-pack/schema/profile.schema.json",
+  "title": "EKP Profile",
+  "description": "Composition manifest selecting knowledge for a specific context",
+  "type": "object",
+  "required": ["name", "description", "knowledge"],
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Unique profile identifier (kebab-case)"
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "knowledge": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^knowledge/.+\\.md$" },
+      "minItems": 1,
+      "description": "Paths to knowledge documents (rules are derived by adapters)"
+    },
+    "filters": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "severity": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["required", "recommended", "advisory"] }
+        },
+        "applies_to": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "tags": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["cursor", "copilot", "claude"]
+      },
+      "description": "Target tools for adapter output (Phase 5)"
+    }
+  }
+}

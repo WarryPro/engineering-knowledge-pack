@@ -22,9 +22,15 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 2. Read [`docs/architecture.md`](docs/architecture.md) to understand how the repository is organized.
 3. Read [`docs/contribution-guide.md`](docs/contribution-guide.md) before adding or changing content.
 
+## Validation
+
+```bash
+py -3 scripts/validate/validate.py
+```
+
 ## Status
 
-This repository is in **Phase 1: Foundation**. Knowledge domains and AI adapters are not yet populated. See [`docs/roadmap.md`](docs/roadmap.md) for the development plan.
+Phase 1 (Foundation) is complete. Phase 2 (Core engineering knowledge) is next. See [`docs/roadmap.md`](docs/roadmap.md) for the development plan.
 
 ## License
 

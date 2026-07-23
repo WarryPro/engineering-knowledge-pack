@@ -83,7 +83,15 @@ Rules are concise. They translate knowledge into directives an AI assistant can 
 
 ### Decision records
 
-Follow the [decision record template](../templates/decision-record-template.md). One decision per record.
+Follow the [decision record template](../templates/decision-record-template.md). Place in `knowledge/architecture/decisions/adr-<number>-<topic>.md`. Set `type: decision-record` in frontmatter. One decision per record.
+
+### Review checklists
+
+Follow the [review checklist template](../templates/review-checklist-template.md). Place in `knowledge/<domain>/checklists/<name>.md`. Set `type: checklist` in frontmatter.
+
+### Profiles
+
+Follow the [profile template](../templates/profile-template.yaml). Place in `profiles/<name>.yaml`. Profiles reference knowledge paths only.
 
 ## Frontmatter schema
 
@@ -97,6 +105,7 @@ tags: [tag-one, tag-two]     # required — at least one tag
 severity: recommended        # required — required | recommended | advisory
 applies_to: [backend, api]   # required — context identifiers
 related: []                  # optional — paths to related documents
+type: guide                  # optional — guide | checklist | decision-record
 ---
 ```
 

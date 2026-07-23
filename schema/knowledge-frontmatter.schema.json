@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/engineering-knowledge-pack/schema/knowledge-frontmatter.schema.json",
+  "title": "EKP Knowledge Document Frontmatter",
+  "description": "Required metadata for knowledge documents in knowledge/",
+  "type": "object",
+  "required": ["title", "domain", "tags", "severity", "applies_to"],
+  "additionalProperties": true,
+  "properties": {
+    "title": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable document title"
+    },
+    "domain": {
+      "type": "string",
+      "enum": [
+        "engineering",
+        "architecture",
+        "php",
+        "symfony",
+        "flutter",
+        "typescript",
+        "frontend",
+        "database",
+        "security",
+        "testing",
+        "performance",
+        "devops",
+        "ai"
+      ],
+      "description": "Knowledge domain; must match the parent directory"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+      "minItems": 1
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["required", "recommended", "advisory"]
+    },
+    "applies_to": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+      "minItems": 1
+    },
+    "related": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "type": {
+      "type": "string",
+      "enum": ["guide", "checklist", "decision-record"],
+      "description": "Optional document type; decision-record only in architecture/decisions/"
+    }
+  }
+}

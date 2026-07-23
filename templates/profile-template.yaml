@@ -1,0 +1,19 @@
+# Copy to profiles/<name>.yaml
+name: profile-name
+description: What context this profile serves (team, stack, role, or project type)
+
+# Required: knowledge documents to include. Rules are derived by adapters — do not list rule paths here.
+knowledge:
+  - knowledge/engineering/example-topic.md
+
+# Optional: narrow inclusion within listed knowledge documents
+filters:
+  severity: [required, recommended]
+  applies_to: [backend]
+  tags: []
+
+# Optional: target tools for bundle generation (Phase 5)
+outputs:
+  - cursor
+  - copilot
+  - claude

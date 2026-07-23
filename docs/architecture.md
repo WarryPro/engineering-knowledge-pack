@@ -63,9 +63,9 @@ A profile defines which knowledge and rules apply to a specific context:
 - A role ("tech lead doing architecture reviews")
 - A project type ("greenfield microservice" vs. "legacy migration")
 
-Profiles are composition manifests—not duplicates of knowledge. They reference knowledge documents and rules by path, with optional priority and scope metadata.
+Profiles are composition manifests—not duplicates of knowledge. They reference **knowledge documents only**. Adapters derive tool-specific rules from the selected knowledge at build time.
 
-Example profile concept (not yet implemented):
+Example profile:
 
 ```yaml
 name: symfony-api-backend
@@ -75,9 +75,13 @@ knowledge:
   - knowledge/symfony/service-layer.md
   - knowledge/database/transaction-boundaries.md
   - knowledge/security/authentication.md
-rules:
-  - rules/cursor/symfony-api.mdc
+outputs:
+  - cursor
+  - copilot
+  - claude
 ```
+
+See `templates/profile-template.yaml` and `schema/profile.schema.json`.
 
 ### `templates/` — Authoring scaffolds
 
@@ -145,7 +149,7 @@ Adapters in `scripts/` will follow a consistent pipeline:
 2. Filter   — Apply profile scope; select relevant documents
 3. Transform — Map knowledge sections to target format (Cursor rule, Copilot instruction, etc.)
 4. Validate — Check output against tool schema and internal lint rules
-5. Emit     — Write to rules/ or a deployment target
+5. Emit     — Write to dist/<profile>/ or a deployment target
 ```
 
 ### Design constraints for adapters
@@ -175,9 +179,14 @@ Adapters read this metadata to decide inclusion, ordering, and formatting. The b
 
 ## Extension points
 
+Current tooling:
+
+- **Validation CLI** — `scripts/validate/validate.py` checks frontmatter, domain alignment, and links
+- **Schemas** — `schema/` defines contracts for knowledge frontmatter and profiles
+
 Future phases may add:
 
-- **Validation CLI** — `scripts/validate` checks structure, links, and metadata
+- **JSON Schema validation** in the validation CLI
 - **Index generation** — auto-generated table of contents per domain
 - **Versioning** — profile versioning for teams that pin to a specific EKP release
 - **Plugin adapters** — community-contributed transformers for additional AI tools

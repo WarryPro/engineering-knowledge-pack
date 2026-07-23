@@ -4,7 +4,7 @@ Development is organized into five phases. Each phase produces a usable artifact
 
 ## Phase 1: Foundation
 
-**Status:** In progress
+**Status:** Complete
 
 Establish the repository structure, meta-documentation, templates, and contribution workflow.
 
@@ -12,9 +12,12 @@ Establish the repository structure, meta-documentation, templates, and contribut
 
 - [x] Directory structure (`knowledge/`, `rules/`, `profiles/`, `templates/`, `docs/`, `scripts/`, `examples/`)
 - [x] Project documentation (vision, architecture, roadmap, style guide, contribution guide)
-- [x] Document templates (knowledge, rules, review checklist, decision record)
-- [ ] Validation script skeleton in `scripts/`
-- [ ] GitHub issue and PR templates
+- [x] Document templates (knowledge, rules, review checklist, decision record, profile)
+- [x] Validation script skeleton in `scripts/validate/`
+- [x] GitHub issue and PR templates
+- [x] JSON Schema contracts in `schema/`
+- [x] Domain README stubs with scope boundaries
+- [x] ADR and checklist artifact locations defined
 
 **Exit criteria:** A contributor can read the docs, pick a template, and know exactly where to place new content and how to format it.
 

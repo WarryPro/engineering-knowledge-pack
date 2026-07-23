@@ -9,6 +9,7 @@ This document describes the purpose of each top-level directory and how content 
 ├── CHANGELOG.md               # Version history
 ├── CONTRIBUTING.md            # Contribution entry point
 ├── CODE_OF_CONDUCT.md         # Community standards
+├── .gitignore
 │
 ├── docs/                      # Project meta-documentation
 │   ├── vision.md
@@ -18,9 +19,15 @@ This document describes the purpose of each top-level directory and how content 
 │   ├── style-guide.md
 │   └── contribution-guide.md
 │
+├── schema/                    # JSON Schema contracts for validation
+│   ├── knowledge-frontmatter.schema.json
+│   └── profile.schema.json
+│
 ├── knowledge/                 # Engineering knowledge (source of truth)
-│   ├── engineering/           # Cross-cutting engineering practices
-│   ├── architecture/          # System design and architectural patterns
+│   ├── engineering/
+│   ├── architecture/
+│   │   ├── decisions/         # Architecture decision records (ADRs)
+│   │   └── checklists/        # Architecture review checklists
 │   ├── php/
 │   ├── symfony/
 │   ├── flutter/
@@ -31,19 +38,29 @@ This document describes the purpose of each top-level directory and how content 
 │   ├── testing/
 │   ├── performance/
 │   ├── devops/
-│   └── ai/                    # Guidance on using AI in engineering workflows
+│   └── ai/
 │
 ├── rules/                     # Tool-specific AI rules (derived from knowledge)
-├── profiles/                  # Composed knowledge + rule sets for specific contexts
+│   ├── cursor/
+│   ├── copilot/
+│   └── claude/
+│
+├── profiles/                  # Composed knowledge sets for specific contexts
 │
 ├── templates/                 # Document templates for consistent authoring
 │   ├── knowledge-document-template.md
 │   ├── cursor-rule-template.md
 │   ├── review-checklist-template.md
-│   └── decision-record-template.md
+│   ├── decision-record-template.md
+│   └── profile-template.yaml
 │
 ├── examples/                  # Reference implementations and usage demonstrations
-└── scripts/                   # Adapters, validators, and build tooling
+├── scripts/                   # Adapters, validators, and build tooling
+│   ├── validate/
+│   ├── adapters/
+│   └── assemble/
+│
+└── dist/                      # Generated bundles (gitignored, created by assemble)
 ```
 
 ## Directory details
@@ -54,9 +71,18 @@ Meta-documentation about the EKP project itself. This is **not** engineering kno
 
 Do not place engineering practices here. If it would help an engineer write better code, it belongs in `knowledge/`.
 
+Note: `docs/architecture.md` describes the **repository** architecture. `knowledge/architecture/` contains **system design** knowledge.
+
+### `schema/`
+
+JSON Schema definitions for machine validation:
+
+- `knowledge-frontmatter.schema.json` — required metadata fields for knowledge documents
+- `profile.schema.json` — profile manifest structure
+
 ### `knowledge/`
 
-The canonical source of engineering knowledge. Organized by domain:
+The canonical source of engineering knowledge. Each domain has a `README.md` defining scope and boundaries.
 
 | Directory | Scope |
 |-----------|-------|
@@ -74,11 +100,29 @@ The canonical source of engineering knowledge. Organized by domain:
 | `devops/` | CI/CD, infrastructure, deployment, observability |
 | `ai/` | Using AI assistants responsibly in engineering workflows |
 
-Each subdirectory will contain individual markdown files—one concern per document. Subdirectories may gain nested folders as content grows (e.g., `knowledge/symfony/services/`).
+#### Domain boundary: `typescript/` vs `frontend/`
+
+| Topic | Domain |
+|-------|--------|
+| Type narrowing, generics, `strict` config | `typescript/` |
+| React/Vue component architecture, state management | `frontend/` |
+| Shared types between API and UI | `typescript/` (type design) + link to `frontend/` |
+
+When a document spans both, place it in the domain of the primary concern and link to the other.
+
+#### Document types and locations
+
+| Type | Location | Template |
+|------|----------|----------|
+| Guide | `knowledge/<domain>/<topic>.md` | `knowledge-document-template.md` |
+| Decision record | `knowledge/architecture/decisions/adr-<n>-<topic>.md` | `decision-record-template.md` |
+| Review checklist | `knowledge/<domain>/checklists/<name>.md` | `review-checklist-template.md` |
+
+Set `type: decision-record` or `type: checklist` in frontmatter where applicable.
 
 ### `rules/`
 
-Tool-specific rule files generated from or curated against knowledge documents. Expected subdirectories (created in Phase 5):
+Tool-specific rule files generated from knowledge documents:
 
 ```
 rules/
@@ -87,11 +131,11 @@ rules/
 └── claude/        # Claude Skills
 ```
 
-Do not author rules directly without a corresponding knowledge document.
+Do not author rules directly without a corresponding knowledge document. Generated output may also be written to `dist/` during bundle assembly.
 
 ### `profiles/`
 
-YAML or JSON manifests that compose knowledge documents and rules for a specific context. A profile answers: "What engineering context does this team/project need?"
+YAML manifests that compose knowledge documents for a specific context. Profiles reference **knowledge paths only**—adapters derive rules at build time.
 
 ```
 profiles/
@@ -100,9 +144,11 @@ profiles/
 └── full-stack.yaml
 ```
 
+See `templates/profile-template.yaml` and `schema/profile.schema.json`.
+
 ### `templates/`
 
-Scaffolds for creating new documents. Copy the relevant template when adding content. Templates define required sections and metadata fields.
+Scaffolds for creating new documents. Copy the relevant template when adding content.
 
 ### `examples/`
 
@@ -110,13 +156,25 @@ Worked examples showing EKP in practice: sample profiles, adapter output, decisi
 
 ### `scripts/`
 
-Build and transformation tooling:
-
 ```
 scripts/
 ├── validate/      # Document structure and link validation
 ├── adapters/      # Knowledge → tool-specific format transformers
 └── assemble/      # Profile composition and bundle generation
+```
+
+Run validation: `py -3 scripts/validate/validate.py`
+
+### `dist/`
+
+Generated deployable bundles (gitignored). Created by `scripts/assemble/` in Phase 5:
+
+```
+dist/
+└── symfony-api/
+    ├── cursor/
+    ├── copilot/
+    └── claude/
 ```
 
 ## Content flow
@@ -132,10 +190,10 @@ Author writes knowledge document
         └──► Transformed by adapter
                     │
                     ▼
-              rules/<tool>/<rule>.mdc
+              dist/<profile>/<tool>/
                     │
                     ▼
-              Deployed via profile bundle
+              Deployed to consumer project
 ```
 
 ## Naming conventions
