@@ -115,7 +115,9 @@ When a document spans both, place it in the domain of the primary concern and li
 | Type | Location | Template |
 |------|----------|----------|
 | Guide | `knowledge/<domain>/<topic>.md` | `knowledge-document-template.md` |
-| Decision record | `knowledge/architecture/decisions/adr-<n>-<topic>.md` | `decision-record-template.md` |
+| Decision record | `knowledge/architecture/decisions/adr-<number>-<topic>.md` | `decision-record-template.md` |
+
+Use zero-padded four-digit numbers (e.g. `adr-0004-clean-code-position-in-knowledge-graph.md`). See [decisions/README.md](../knowledge/architecture/decisions/README.md).
 | Review checklist | `knowledge/<domain>/checklists/<name>.md` | `review-checklist-template.md` |
 
 Set `type: decision-record` or `type: checklist` in frontmatter where applicable.

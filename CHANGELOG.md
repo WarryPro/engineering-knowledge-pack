@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Profile template and schema; profiles reference knowledge only.
 - Tool scaffold directories: `rules/cursor/`, `rules/copilot/`, `rules/claude/`.
 - Script scaffolds: `scripts/validate/`, `scripts/adapters/`, `scripts/assemble/`.
+- `knowledge/engineering/engineering-principles.md` — foundational engineering principles (EKP-P01–P10).
+- ADR-0004: Clean Code position in the EKP knowledge graph.
+
+### Changed
+
+- Consolidated ADR storage under `knowledge/architecture/decisions/`; removed top-level `adr/` directory.
+- Validation excludes `adr-*.md` files from knowledge frontmatter checks (decision record format).
 
 ## [0.1.0] - 2026-07-23
 

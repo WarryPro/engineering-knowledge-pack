@@ -83,7 +83,7 @@ Rules are concise. They translate knowledge into directives an AI assistant can 
 
 ### Decision records
 
-Follow the [decision record template](../templates/decision-record-template.md). Place in `knowledge/architecture/decisions/adr-<number>-<topic>.md`. Set `type: decision-record` in frontmatter. One decision per record.
+Follow the [decision record template](../templates/decision-record-template.md). Place in `knowledge/architecture/decisions/adr-<number>-<topic>.md` (zero-padded four-digit number, e.g. `adr-0004-clean-code-position-in-knowledge-graph.md`). Set `type: decision-record` in frontmatter when used. One decision per record.
 
 ### Review checklists
 

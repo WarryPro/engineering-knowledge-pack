@@ -20,7 +20,7 @@ System design, structural patterns, and architectural decision-making.
 | Type | Location | Template |
 |------|----------|----------|
 | Guide | `knowledge/architecture/<topic>.md` | `templates/knowledge-document-template.md` |
-| Decision record | `knowledge/architecture/decisions/adr-<number>-<topic>.md` | `templates/decision-record-template.md` |
+| Decision record | `knowledge/architecture/decisions/adr-<number>-<topic>.md` | `decision-record-template.md` |
 | Checklist | `knowledge/architecture/checklists/<name>.md` | `templates/review-checklist-template.md` |
 
 Set `type: decision-record` in frontmatter for ADRs.

@@ -13,6 +13,7 @@ py -3 scripts/validate/validate.py
 ## What it validates
 
 - Knowledge documents have required frontmatter (`title`, `domain`, `tags`, `severity`, `applies_to`)
+- ADR files (`adr-*.md` in `knowledge/architecture/decisions/`) are excluded — they use the decision record template
 - `domain` matches the parent directory under `knowledge/`
 - Internal markdown links resolve to existing files
 - Profiles reference `knowledge/` paths only (not `rules/`)

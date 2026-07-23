@@ -54,7 +54,7 @@ def parse_frontmatter(content):
 def collect_knowledge_files():
     return sorted(
         p for p in KNOWLEDGE_DIR.rglob("*.md")
-        if p.name != "README.md"
+        if p.name != "README.md" and not p.name.startswith("adr-")
     )
 
 

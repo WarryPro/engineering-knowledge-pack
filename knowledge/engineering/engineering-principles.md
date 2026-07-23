@@ -12,6 +12,7 @@ related:
   - knowledge/engineering/refactoring.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/README.md
+  - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
 depends_on: []
 concept_ids: [EKP-P01, EKP-P02, EKP-P03, EKP-P04, EKP-P05, EKP-P06, EKP-P07, EKP-P08, EKP-P09, EKP-P10]
@@ -349,3 +350,4 @@ Downstream documents must reference this document in their `related` frontmatter
 
 - Domain index: [engineering/README.md](README.md)
 - Decision records: [architecture/decisions/README.md](../architecture/decisions/README.md)
+- [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
