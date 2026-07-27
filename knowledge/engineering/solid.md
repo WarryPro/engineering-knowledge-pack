@@ -470,6 +470,6 @@ Structural fix procedures belong in `refactoring.md`—this table diagnoses only
 - [Refactoring](refactoring.md) — structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP; EKP-P02, EKP-P05, EKP-P09)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
-- Planned: `knowledge/architecture/layering-and-boundaries.md` — system boundaries (EKP-P06)
+- [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system boundaries (EKP-LB; EKP-P05, EKP-P06)
 - [Engineering domain index](README.md)
 

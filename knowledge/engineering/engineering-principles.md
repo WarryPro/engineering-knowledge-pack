@@ -147,7 +147,8 @@ A unit of code should be understandable without loading the entire system into w
 
 - Limit side effects and hidden dependencies.
 - Avoid shared mutable state across boundaries without a documented concurrency model.
-- Class and module decomposition is defined in `solid.md` (EKP-SL01–EKP-SL05). System layering is covered in `knowledge/architecture/layering-and-boundaries.md` (planned).
+- Class and module decomposition is defined in `solid.md` (EKP-SL01–EKP-SL05).
+- System-level boundaries and architectural ownership are defined in `knowledge/architecture/layering-and-boundaries.md` (EKP-LB01–EKP-LB16).
 
 If you cannot explain what a unit does in two sentences, it likely does too much.
 
@@ -158,6 +159,7 @@ Every interface between systems, teams, or layers has an owner responsible for c
 - Define what crosses the boundary: data shape, error codes, idempotency guarantees, timeout behavior.
 - Validate at the boundary. Do not trust upstream input because "it's internal."
 - Version or evolve contracts deliberately. Breaking changes require migration paths.
+- Boundary ownership and integration contracts are defined in `knowledge/architecture/layering-and-boundaries.md` (EKP-LB01–EKP-LB16).
 
 Leaky abstractions are boundary failures. "It usually works" is not a contract.
 
@@ -339,7 +341,12 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [solid.md](solid.md) | Published | EKP-P05, EKP-P09 | Class design and dependency management (EKP-SL) |
 | [refactoring.md](refactoring.md) | Published | EKP-P03, EKP-P10 | Safe structural change procedures (EKP-RF) |
 | [design-patterns.md](design-patterns.md) | Published | EKP-P02, EKP-P05, EKP-P09 | Named pattern catalog (EKP-DP) |
-| `knowledge/architecture/layering-and-boundaries.md` | Planned | EKP-P05, EKP-P06 | System structure and integration contracts |
+
+### Architecture layer (builds upon principles)
+
+| Document | Layer | Status |
+|----------|-------|--------|
+| [layering-and-boundaries.md](../architecture/layering-and-boundaries.md) | architecture | Published |
 
 Downstream documents must reference this document in their `related` frontmatter and must not restate principles—only operationalize them.
 
@@ -357,5 +364,6 @@ Downstream documents must reference this document in their `related` frontmatter
 - [SOLID](solid.md) — class/module design practices (EKP-SL; EKP-P05, EKP-P09)
 - [Refactoring](refactoring.md) — safe structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP; EKP-P02, EKP-P05, EKP-P09)
+- [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system structure and integration contracts (EKP-LB; EKP-P05, EKP-P06)
 - Decision records: [architecture/decisions/README.md](../architecture/decisions/README.md)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)

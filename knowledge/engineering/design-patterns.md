@@ -522,5 +522,5 @@ engineering-principles
 - [Refactoring](refactoring.md) — structural change procedures (EKP-RF)
 - [ADR-0004: Knowledge graph layering](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Architecture decision records](../architecture/decisions/README.md)
-- Planned: `knowledge/architecture/layering-and-boundaries.md` — system boundaries (EKP-P06)
+- [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system boundaries (EKP-LB; EKP-P05, EKP-P06)
 - [Engineering domain index](README.md)

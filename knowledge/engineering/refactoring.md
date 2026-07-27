@@ -515,5 +515,5 @@ engineering-principles
 - [ADR-0004: Knowledge graph layering](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Architecture decision records](../architecture/decisions/README.md)
 - [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP)
-- Planned: `knowledge/architecture/layering-and-boundaries.md` — Level 4 escalation
+- [Layering and Boundaries](../architecture/layering-and-boundaries.md) — Level 4 escalation (EKP-LB)
 - [Engineering domain index](README.md)

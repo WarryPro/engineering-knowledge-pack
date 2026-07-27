@@ -15,6 +15,7 @@ related:
   - knowledge/engineering/engineering-principles.md
   - knowledge/engineering/solid.md
   - knowledge/engineering/refactoring.md
+  - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
 concept_ids: [EKP-CC01, EKP-CC02, EKP-CC03, EKP-CC04, EKP-CC05, EKP-CC06, EKP-CC07, EKP-CC08]
@@ -445,5 +446,6 @@ Structural extraction steps belong in `refactoring.md`—this table diagnoses on
 - [Engineering Principles](engineering-principles.md) — EKP-P01–P10 foundation
 - [SOLID](solid.md) — class/module design (EKP-SL)
 - [Refactoring](refactoring.md) — structural change procedures (EKP-RF; EKP-P03, EKP-P10)
+- [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system boundaries (EKP-LB; EKP-P05, EKP-P06)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Engineering domain index](README.md)
