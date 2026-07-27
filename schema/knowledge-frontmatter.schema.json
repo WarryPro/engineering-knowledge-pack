@@ -4,7 +4,17 @@
   "title": "EKP Knowledge Document Frontmatter",
   "description": "Required metadata for knowledge documents in knowledge/",
   "type": "object",
-  "required": ["title", "domain", "tags", "severity", "applies_to"],
+  "required": [
+    "title",
+    "domain",
+    "tags",
+    "severity",
+    "applies_to",
+    "role",
+    "type",
+    "depends_on",
+    "concept_ids"
+  ],
   "additionalProperties": true,
   "properties": {
     "title": {
@@ -45,14 +55,82 @@
       "items": { "type": "string", "pattern": "^[a-z0-9-]+$" },
       "minItems": 1
     },
-    "related": {
-      "type": "array",
-      "items": { "type": "string" }
+    "role": {
+      "type": "string",
+      "enum": ["foundation", "practice", "pattern", "procedure", "architecture"]
     },
     "type": {
       "type": "string",
       "enum": ["guide", "checklist", "decision-record"],
-      "description": "Optional document type; decision-record only in architecture/decisions/"
+      "description": "Document type; decision-record only in architecture/decisions/"
+    },
+    "depends_on": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^knowledge/.+\\.md$"
+      }
+    },
+    "implements": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^EKP-P(0[1-9]|10)$"
+      },
+      "minItems": 1
+    },
+    "related": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^knowledge/.+\\.md$"
+      }
+    },
+    "concept_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^EKP-([A-Z]{2}[0-9]{2}|P(0[1-9]|10))$"
+      },
+      "minItems": 1
+    },
+    "extends": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^knowledge/.+\\.md$"
+      }
+    },
+    "adapter_priority": {
+      "type": "string",
+      "enum": ["high", "medium", "low"]
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "role": { "const": "foundation" } },
+        "required": ["role"]
+      },
+      "then": {
+        "properties": {
+          "depends_on": { "maxItems": 0 }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": { "role": { "not": { "const": "foundation" } } },
+        "required": ["role"]
+      },
+      "then": {
+        "required": ["implements"],
+        "properties": {
+          "depends_on": { "minItems": 1 },
+          "implements": { "minItems": 1 },
+          "concept_ids": { "minItems": 1 }
+        }
+      }
+    }
+  ]
 }

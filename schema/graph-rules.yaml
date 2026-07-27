@@ -1,0 +1,39 @@
+# EKP knowledge graph dependency rules (ADR-0004).
+# Dependency targets are classified by role: foundation, practice, pattern, etc.
+
+roles:
+  foundation:
+    allowed_dependencies: []
+
+  practice:
+    required_dependencies:
+      - foundation
+    allowed_dependencies:
+      - foundation
+
+  procedure:
+    required_dependencies:
+      - foundation
+    allowed_dependencies:
+      - foundation
+
+  architecture:
+    required_dependencies:
+      - foundation
+    allowed_dependencies:
+      - foundation
+
+  pattern:
+    required_dependencies:
+      - foundation
+    allowed_dependencies:
+      - foundation
+      - practice
+
+exceptions:
+  - source: knowledge/engineering/design-patterns.md
+    allowed_dependency: knowledge/engineering/solid.md
+
+depth:
+  warn_at: 3
+  error_at: 4

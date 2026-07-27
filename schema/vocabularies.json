@@ -1,0 +1,19 @@
+{
+  "severity": [
+    "required",
+    "recommended",
+    "advisory"
+  ],
+  "roles": [
+    "foundation",
+    "practice",
+    "pattern",
+    "procedure",
+    "architecture"
+  ],
+  "adapter_priority": [
+    "high",
+    "medium",
+    "low"
+  ]
+}
