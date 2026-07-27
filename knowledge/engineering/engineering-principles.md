@@ -126,6 +126,7 @@ When two options are equally viable, choose the one that is cheaper to change la
 - Defer irreversible choices until you have evidence.
 - Use feature flags, interface boundaries, and configuration over hard-coded branching where rollback matters.
 - Separate "decide" from "commit"—prototype behind an interface before baking in a dependency.
+- Safe structural change procedures are defined in `refactoring.md` (EKP-RF01–EKP-RF07).
 
 One-way doors deserve design review. Two-way doors deserve speed.
 
@@ -135,7 +136,7 @@ Make contracts, assumptions, and failure modes visible—not inferred from conve
 
 - State what must remain true and what must never happen.
 - Prefer typed contracts and schema validation over unchecked assumptions.
-- Naming and readability practices that implement this principle are covered in `knowledge/engineering/clean-code.md` (planned).
+- Naming and readability practices that implement this principle are defined in `clean-code.md` (EKP-CC01–EKP-CC08).
 
 Implicit behavior is a liability. The next engineer—or the AI assistant—will not infer what you assumed.
 
@@ -145,7 +146,7 @@ A unit of code should be understandable without loading the entire system into w
 
 - Limit side effects and hidden dependencies.
 - Avoid shared mutable state across boundaries without a documented concurrency model.
-- Structural decomposition patterns (layering, dependency direction) are covered in `knowledge/architecture/layering-and-boundaries.md` and `knowledge/engineering/solid.md` (planned).
+- Class and module decomposition is defined in `solid.md` (EKP-SL01–EKP-SL05). System layering is covered in `knowledge/architecture/layering-and-boundaries.md` (planned).
 
 If you cannot explain what a unit does in two sentences, it likely does too much.
 
@@ -185,7 +186,7 @@ Premature optimization wastes time. Optimizing the wrong layer wastes time and a
 Prefer small, composable units over monolithic structures that accrete unrelated responsibility.
 
 - Extract when duplication represents a **concept**, not a coincidence.
-- Class design patterns (composition vs inheritance, dependency injection) are covered in `knowledge/engineering/solid.md` (planned).
+- Class design heuristics (composition vs inheritance, dependency direction) are defined in `solid.md` (EKP-SL01–EKP-SL05).
 
 Composition scales. Structures that grow by accumulation do not.
 
@@ -194,8 +195,8 @@ Composition scales. Structures that grow by accumulation do not.
 Optimize for the cost of change over the cost of initial authorship.
 
 - Keep changes reviewable and scoped to the stated problem.
-- Refactoring techniques and when to apply them are covered in `knowledge/engineering/refactoring.md` (planned).
-- Code hygiene practices are covered in `knowledge/engineering/clean-code.md` (planned).
+- Structural change procedures are defined in `refactoring.md` (EKP-RF01–EKP-RF07).
+- Code hygiene practices are defined in `clean-code.md` (EKP-CC01–EKP-CC08).
 
 Technical debt is a loan. Unacknowledged debt is insolvency.
 
@@ -330,12 +331,12 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 
 ### Downstream knowledge (builds upon this document)
 
-| Planned document | Principles it operationalizes | Scope |
-|------------------|------------------------------|-------|
-| `knowledge/engineering/clean-code.md` | EKP-P04, EKP-P10 | Naming, readability, code hygiene |
-| `knowledge/engineering/solid.md` | EKP-P05, EKP-P09 | Class design and dependency management |
-| `knowledge/engineering/refactoring.md` | EKP-P03, EKP-P10 | When and how to change structure safely |
-| `knowledge/architecture/layering-and-boundaries.md` | EKP-P05, EKP-P06 | System structure and integration contracts |
+| Document | Status | Principles it operationalizes | Scope |
+|----------|--------|------------------------------|-------|
+| [clean-code.md](clean-code.md) | Published | EKP-P04, EKP-P10 | Naming, readability, code hygiene (EKP-CC) |
+| [solid.md](solid.md) | Published | EKP-P05, EKP-P09 | Class design and dependency management (EKP-SL) |
+| [refactoring.md](refactoring.md) | Published | EKP-P03, EKP-P10 | Safe structural change procedures (EKP-RF) |
+| `knowledge/architecture/layering-and-boundaries.md` | Planned | EKP-P05, EKP-P06 | System structure and integration contracts |
 
 Downstream documents must reference this document in their `related` frontmatter and must not restate principles—only operationalize them.
 
@@ -349,6 +350,8 @@ Downstream documents must reference this document in their `related` frontmatter
 ## Related
 
 - Domain index: [engineering/README.md](README.md)
-- [SOLID](solid.md) — class/module design practices (EKP-P05, EKP-P09)
+- [Clean Code](clean-code.md) — readability and hygiene practices (EKP-CC; EKP-P04, EKP-P10)
+- [SOLID](solid.md) — class/module design practices (EKP-SL; EKP-P05, EKP-P09)
+- [Refactoring](refactoring.md) — safe structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - Decision records: [architecture/decisions/README.md](../architecture/decisions/README.md)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)

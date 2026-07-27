@@ -438,13 +438,12 @@ Structural extraction steps belong in `refactoring.md`—this table diagnoses on
 | `role` | `practice` |
 | `depends_on` | `engineering-principles.md` |
 | `implements` | EKP-P04, EKP-P10 |
-| Siblings | `solid.md`, `refactoring.md`, `design-patterns.md` |
+| Siblings | `solid.md` (practice), `refactoring.md` (procedure) |
 
 ## Related
 
 - [Engineering Principles](engineering-principles.md) — EKP-P01–P10 foundation
-- [Clean Code](clean-code.md) — function/file readability (EKP-CC)
 - [SOLID](solid.md) — class/module design (EKP-SL)
+- [Refactoring](refactoring.md) — structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
-- Planned: `knowledge/engineering/refactoring.md` — structural change procedures (EKP-P03, EKP-P10)
 - [Engineering domain index](README.md)

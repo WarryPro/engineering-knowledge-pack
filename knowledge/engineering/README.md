@@ -1,26 +1,22 @@
-# Engineering
+# Engineering Knowledge
 
-Language-agnostic software engineering practices that apply regardless of stack.
+Navigation index for the `knowledge/engineering/` domain. See each document for guidance.
 
-## Scope
+## Foundation
 
-- Code organization and module boundaries
-- Naming conventions
-- Error handling and logging
-- Documentation standards
-- Code review practices
+- [engineering-principles.md](engineering-principles.md) — EKP-P01–P10
 
-## Does not belong here
+## Practices
 
-- Language-specific idioms → see `php/`, `typescript/`
-- Framework patterns → see `symfony/`, `flutter/`, `frontend/`
-- System design → see `architecture/`
+- [clean-code.md](clean-code.md) — EKP-CC; EKP-P04, EKP-P10
+- [solid.md](solid.md) — EKP-SL; EKP-P05, EKP-P09
 
-## Document types
+## Procedures
 
-| Type | Location | Template |
-|------|----------|----------|
-| Guide | `knowledge/engineering/<topic>.md` | `templates/knowledge-document-template.md` |
-| Checklist | `knowledge/engineering/checklists/<name>.md` | `templates/review-checklist-template.md` |
+- [refactoring.md](refactoring.md) — EKP-RF; EKP-P03, EKP-P10
 
-Set `type: checklist` in frontmatter for review checklists.
+## Planned
+
+- `design-patterns.md`
+- `testing.md`
+- `error-handling.md`

@@ -1,5 +1,6 @@
 ---
-title: SOLID
+
+## title: SOLID
 domain: engineering
 tags: [solid, class-design, responsibility, dependencies, practices]
 severity: recommended
@@ -20,9 +21,12 @@ related:
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
 concept_ids: [EKP-SL01, EKP-SL02, EKP-SL03, EKP-SL04, EKP-SL05]
----
+
+
 
 # SOLID
+
+
 
 ## Summary
 
@@ -38,32 +42,40 @@ Poor class and module design spreads change across the codebase. A class with mi
 
 **Boundaries:**
 
-| Layer | Document | Unit of analysis |
-|-------|----------|------------------|
-| Function/file readability | `clean-code.md` (EKP-CC) | Names, functions, formatting |
-| Class/module structure | **this document** (EKP-SL) | Responsibilities, dependencies, substitutability |
-| System structure | `layering-and-boundaries.md` | Layers, services, integration contracts |
+
+| Layer                     | Document                     | Unit of analysis                                 |
+| ------------------------- | ---------------------------- | ------------------------------------------------ |
+| Function/file readability | `clean-code.md` (EKP-CC)     | Names, functions, formatting                     |
+| Class/module structure    | **this document** (EKP-SL)   | Responsibilities, dependencies, substitutability |
+| System structure          | `layering-and-boundaries.md` | Layers, services, integration contracts          |
+
 
 **Out of scope:** naming and formatting (`clean-code.md`), structural change procedures (`refactoring.md`), named patterns (`design-patterns.md`), framework DI configuration (`symfony/`, stack domains), microservices/CQRS/hexagonal architecture (`architecture/`).
 
 ## Guidance
 
+
+
 ### Anti-dogmatism
 
 SOLID is widely misapplied. EKP treats these heuristics as **tools for judgment**, not laws.
 
-| Dogma | EKP position |
-|-------|--------------|
-| Every class needs an interface | **False.** Introduce an abstraction when you have multiple implementations, a required test seam, or stable extension points—not by default. Unnecessary interfaces add indirection without benefit (**EKP-P02**). |
-| SRP means one method per class | **False.** SRP means one **reason to change**. A cohesive 150-line class with a single responsibility is valid. Split when *reasons to change* diverge, not when line count exceeds a threshold. |
+
+| Dogma                                      | EKP position                                                                                                                                                                                                                                      |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Every class needs an interface             | **False.** Introduce an abstraction when you have multiple implementations, a required test seam, or stable extension points—not by default. Unnecessary interfaces add indirection without benefit (**EKP-P02**).                                |
+| SRP means one method per class             | **False.** SRP means one **reason to change**. A cohesive 150-line class with a single responsibility is valid. Split when *reasons to change* diverge, not when line count exceeds a threshold.                                                  |
 | DIP equals dependency injection frameworks | **False.** DIP means high-level policy depends on abstractions, not concretions. Constructor injection makes dependencies visible; Symfony, Spring, and NestJS containers are **implementation mechanisms**—documented in stack guides, not here. |
-| OCP must be applied everywhere | **False.** Extension points (interfaces, hooks, plugins) carry **indirection cost**: more types, more navigation, harder onboarding. Add OCP when change frequency justifies the abstraction (**EKP-P02**). |
-| DTOs and records need full SOLID | **False.** Data carriers with no behavior exist to transfer state. Applying SRP/OCP/ISP to `OrderDto` is meaningless. Evaluate SOLID on units that **own behavior and change**. |
-| Refactor to SOLID during incidents | **Forbidden without justification.** Incident response optimizes for reversibility and speed (**EKP-P03**). Structural cleanup belongs in a follow-up ticket—not mixed into a hotfix PR. |
+| OCP must be applied everywhere             | **False.** Extension points (interfaces, hooks, plugins) carry **indirection cost**: more types, more navigation, harder onboarding. Add OCP when change frequency justifies the abstraction (**EKP-P02**).                                       |
+| DTOs and records need full SOLID           | **False.** Data carriers with no behavior exist to transfer state. Applying SRP/OCP/ISP to `OrderDto` is meaningless. Evaluate SOLID on units that **own behavior and change**.                                                                   |
+| Refactor to SOLID during incidents         | **Forbidden without justification.** Incident response optimizes for reversibility and speed (**EKP-P03**). Structural cleanup belongs in a follow-up ticket—not mixed into a hotfix PR.                                                          |
+
 
 When SOLID and delivery pressure conflict, document the deviation. Undocumented shortcut is inconsistency; documented shortcut is engineering judgment.
 
 ---
+
+
 
 ### EKP-SL01: Single Responsibility Principle (SRP)
 
@@ -82,10 +94,12 @@ When SOLID and delivery pressure conflict, document the deviation. Undocumented 
 
 **Trade-offs:**
 
-| Gain | Cost |
-|------|------|
+
+| Gain                                   | Cost                                      |
+| -------------------------------------- | ----------------------------------------- |
 | Localized change; smaller blast radius | More classes/modules; navigation overhead |
-| Clearer ownership in review | Risk of over-splitting cohesive logic |
+| Clearer ownership in review            | Risk of over-splitting cohesive logic     |
+
 
 **When NOT to apply strictly:**
 
@@ -123,6 +137,8 @@ class OrderService {
 
 ---
 
+
+
 ### EKP-SL02: Open/Closed Principle (OCP)
 
 **Implements:** EKP-P09
@@ -140,10 +156,12 @@ class OrderService {
 
 **Trade-offs:**
 
-| Gain | Cost |
-|------|------|
-| Existing behavior stays untouched when adding variants | Indirection: more types, harder trace for new readers |
-| Easier parallel development per variant | Speculative extension points before variants exist (**YAGNI**) |
+
+| Gain                                                   | Cost                                                           |
+| ------------------------------------------------------ | -------------------------------------------------------------- |
+| Existing behavior stays untouched when adding variants | Indirection: more types, harder trace for new readers          |
+| Easier parallel development per variant                | Speculative extension points before variants exist (**YAGNI**) |
+
 
 **When NOT to apply strictly:**
 
@@ -179,6 +197,8 @@ interface ShippingStrategy { cost(order) }
 
 ---
 
+
+
 ### EKP-SL03: Liskov Substitution Principle (LSP)
 
 **Implements:** EKP-P05
@@ -196,10 +216,12 @@ interface ShippingStrategy { cost(order) }
 
 **Trade-offs:**
 
-| Gain | Cost |
-|------|------|
+
+| Gain                                        | Cost                                                           |
+| ------------------------------------------- | -------------------------------------------------------------- |
 | Safe polymorphism; trustworthy abstractions | Restricts inheritance hierarchies; may push toward composition |
-| Clearer contracts in review | Behavioral contracts are harder to verify than syntax |
+| Clearer contracts in review                 | Behavioral contracts are harder to verify than syntax          |
+
 
 **When NOT to apply strictly:**
 
@@ -231,6 +253,8 @@ class Penguin { swim() }  // no false IS-A relationship
 
 ---
 
+
+
 ### EKP-SL04: Interface Segregation Principle (ISP)
 
 **Implements:** EKP-P05, EKP-P09
@@ -248,10 +272,12 @@ class Penguin { swim() }  // no false IS-A relationship
 
 **Trade-offs:**
 
-| Gain | Cost |
-|------|------|
-| Implementors only provide what they use | More interface types; assembly at call sites |
-| Changes isolated to affected clients | Risk of interface proliferation (over-segregation) |
+
+| Gain                                    | Cost                                               |
+| --------------------------------------- | -------------------------------------------------- |
+| Implementors only provide what they use | More interface types; assembly at call sites       |
+| Changes isolated to affected clients    | Risk of interface proliferation (over-segregation) |
+
 
 **When NOT to apply strictly:**
 
@@ -288,6 +314,8 @@ class Human implements Workable, ExpenseReportable { ... }
 
 ---
 
+
+
 ### EKP-SL05: Dependency Inversion Principle (DIP)
 
 **Implements:** EKP-P09
@@ -307,10 +335,12 @@ class Human implements Workable, ExpenseReportable { ... }
 
 **Trade-offs:**
 
-| Gain | Cost |
-|------|------|
-| Testable policy without infrastructure | More types; mapping between abstraction and implementation |
-| Swappable implementations | Wrong abstraction locks you in as surely as concrete coupling |
+
+| Gain                                   | Cost                                                          |
+| -------------------------------------- | ------------------------------------------------------------- |
+| Testable policy without infrastructure | More types; mapping between abstraction and implementation    |
+| Swappable implementations              | Wrong abstraction locks you in as surely as concrete coupling |
+
 
 **When NOT to apply strictly:**
 
@@ -349,6 +379,8 @@ class PlaceOrderHandler {
 
 ---
 
+
+
 ### Composition vs inheritance
 
 **Implements:** EKP-P09 (supporting guidance)
@@ -359,17 +391,21 @@ This is not a design pattern catalog—see `design-patterns.md` for named struct
 
 ---
 
+
+
 ### Review signals (summary)
 
-| Signal | Likely concept | Layer check |
-|--------|----------------|-------------|
-| Unrelated methods change together | EKP-SL01 | solid, not clean-code |
-| Function name unclear | EKP-CC01 | clean-code, not solid |
-| Growing switch for variants | EKP-SL02 | solid |
-| Override throws "not supported" | EKP-SL03 | solid |
-| Fat interface with stub methods | EKP-SL04 | solid |
-| Domain imports database driver | EKP-SL05 | solid; layer boundary → architecture |
-| API calls database directly | — | `layering-and-boundaries.md` |
+
+| Signal                            | Likely concept | Layer check                          |
+| --------------------------------- | -------------- | ------------------------------------ |
+| Unrelated methods change together | EKP-SL01       | solid, not clean-code                |
+| Function name unclear             | EKP-CC01       | clean-code, not solid                |
+| Growing switch for variants       | EKP-SL02       | solid                                |
+| Override throws "not supported"   | EKP-SL03       | solid                                |
+| Fat interface with stub methods   | EKP-SL04       | solid                                |
+| Domain imports database driver    | EKP-SL05       | solid; layer boundary → architecture |
+| API calls database directly       | —              | `layering-and-boundaries.md`         |
+
 
 Reference IDs in review: `"Violates EKP-SL01 — mixed persistence and notification responsibilities."`
 
@@ -377,12 +413,14 @@ Reference IDs in review: `"Violates EKP-SL01 — mixed persistence and notificat
 
 Applying SOLID consistently improves structural maintainability. It is not free.
 
-| Benefit | Cost |
-|---------|------|
-| Predictable change blast radius | More types and indirection |
-| Testable policy without infrastructure | Upfront design time |
-| Shared review vocabulary (EKP-SL01–05) | Learning curve; misuse as dogma |
+
+| Benefit                                           | Cost                                  |
+| ------------------------------------------------- | ------------------------------------- |
+| Predictable change blast radius                   | More types and indirection            |
+| Testable policy without infrastructure            | Upfront design time                   |
+| Shared review vocabulary (EKP-SL01–05)            | Learning curve; misuse as dogma       |
 | AI assistants generate structurally sound classes | Over-abstraction when applied blindly |
+
 
 **When this document is insufficient:**
 
@@ -392,37 +430,48 @@ Applying SOLID consistently improves structural maintainability. It is not free.
 - Service layers, API boundaries → `layering-and-boundaries.md`
 - Container wiring → stack domains (`symfony/`, `typescript/`)
 
+
+
 ## Examples
+
+
 
 ### Combined review scenario
 
 **Finding:** `ReportService` generates PDFs, queries the database, and sends Slack notifications. It implements `Exporter` with twelve methods; only `exportPdf` is used. Domain handlers construct `new PostgresClient()` directly.
 
-| Issue | Concept | Diagnosis |
-|-------|---------|-----------|
-| PDF + DB + Slack in one class | EKP-SL01 | Multiple reasons to change |
+
+| Issue                             | Concept  | Diagnosis                    |
+| --------------------------------- | -------- | ---------------------------- |
+| PDF + DB + Slack in one class     | EKP-SL01 | Multiple reasons to change   |
 | Twelve-method interface, one used | EKP-SL04 | Fat interface; split by role |
 | `new PostgresClient()` in handler | EKP-SL05 | Policy depends on concretion |
-| Method name `doStuff` | EKP-CC01 | **clean-code**, not solid |
+| Method name `doStuff`             | EKP-CC01 | **clean-code**, not solid    |
+
 
 Structural fix procedures belong in `refactoring.md`—this table diagnoses only.
 
 ## Knowledge graph
 
-| Field | Value |
-|-------|-------|
-| `role` | `practice` |
-| `depends_on` | `engineering-principles.md` |
-| `implements` | EKP-P05, EKP-P09 |
-| Siblings | `clean-code.md`, `refactoring.md`, `design-patterns.md` |
-| Downstream | `design-patterns.md` (depends on solid per ADR-0004) |
+
+| Field        | Value                                                    |
+| ------------ | -------------------------------------------------------- |
+| `role`       | `practice`                                               |
+| `depends_on` | `engineering-principles.md`                              |
+| `implements` | EKP-P05, EKP-P09                                         |
+| Siblings     | `clean-code.md` (practice), `refactoring.md` (procedure) |
+| Downstream   | `design-patterns.md` (depends on solid per ADR-0004)     |
+
+
+
 
 ## Related
 
 - [Engineering Principles](engineering-principles.md) — EKP-P01–P10 foundation
 - [Clean Code](clean-code.md) — function/file readability (EKP-CC)
+- [Refactoring](refactoring.md) — structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
-- Planned: `knowledge/engineering/refactoring.md` — structural change procedures
 - Planned: `knowledge/engineering/design-patterns.md` — named patterns (depends on this document)
 - Planned: `knowledge/architecture/layering-and-boundaries.md` — system boundaries (EKP-P06)
 - [Engineering domain index](README.md)
+
