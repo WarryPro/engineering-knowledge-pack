@@ -514,6 +514,6 @@ engineering-principles
 - [SOLID](solid.md) — class/module design targets (EKP-SL)
 - [ADR-0004: Knowledge graph layering](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Architecture decision records](../architecture/decisions/README.md)
-- Planned: `knowledge/engineering/design-patterns.md` — named pattern structures
+- [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP)
 - Planned: `knowledge/architecture/layering-and-boundaries.md` — Level 4 escalation
 - [Engineering domain index](README.md)

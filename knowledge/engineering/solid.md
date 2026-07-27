@@ -1,6 +1,5 @@
 ---
-
-## title: SOLID
+title: SOLID
 domain: engineering
 tags: [solid, class-design, responsibility, dependencies, practices]
 severity: recommended
@@ -21,8 +20,7 @@ related:
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
 concept_ids: [EKP-SL01, EKP-SL02, EKP-SL03, EKP-SL04, EKP-SL05]
-
-
+---
 
 # SOLID
 
@@ -470,8 +468,8 @@ Structural fix procedures belong in `refactoring.md`—this table diagnoses only
 - [Engineering Principles](engineering-principles.md) — EKP-P01–P10 foundation
 - [Clean Code](clean-code.md) — function/file readability (EKP-CC)
 - [Refactoring](refactoring.md) — structural change procedures (EKP-RF; EKP-P03, EKP-P10)
+- [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP; EKP-P02, EKP-P05, EKP-P09)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
-- Planned: `knowledge/engineering/design-patterns.md` — named patterns (depends on this document)
 - Planned: `knowledge/architecture/layering-and-boundaries.md` — system boundaries (EKP-P06)
 - [Engineering domain index](README.md)
 

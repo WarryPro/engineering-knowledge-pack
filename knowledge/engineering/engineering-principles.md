@@ -10,6 +10,7 @@ related:
   - knowledge/engineering/clean-code.md
   - knowledge/engineering/solid.md
   - knowledge/engineering/refactoring.md
+  - knowledge/engineering/design-patterns.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
@@ -187,6 +188,7 @@ Prefer small, composable units over monolithic structures that accrete unrelated
 
 - Extract when duplication represents a **concept**, not a coincidence.
 - Class design heuristics (composition vs inheritance, dependency direction) are defined in `solid.md` (EKP-SL01–EKP-SL05).
+- Named pattern catalog is defined in `design-patterns.md` (EKP-DP01–EKP-DP18).
 
 Composition scales. Structures that grow by accumulation do not.
 
@@ -336,6 +338,7 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [clean-code.md](clean-code.md) | Published | EKP-P04, EKP-P10 | Naming, readability, code hygiene (EKP-CC) |
 | [solid.md](solid.md) | Published | EKP-P05, EKP-P09 | Class design and dependency management (EKP-SL) |
 | [refactoring.md](refactoring.md) | Published | EKP-P03, EKP-P10 | Safe structural change procedures (EKP-RF) |
+| [design-patterns.md](design-patterns.md) | Published | EKP-P02, EKP-P05, EKP-P09 | Named pattern catalog (EKP-DP) |
 | `knowledge/architecture/layering-and-boundaries.md` | Planned | EKP-P05, EKP-P06 | System structure and integration contracts |
 
 Downstream documents must reference this document in their `related` frontmatter and must not restate principles—only operationalize them.
@@ -353,5 +356,6 @@ Downstream documents must reference this document in their `related` frontmatter
 - [Clean Code](clean-code.md) — readability and hygiene practices (EKP-CC; EKP-P04, EKP-P10)
 - [SOLID](solid.md) — class/module design practices (EKP-SL; EKP-P05, EKP-P09)
 - [Refactoring](refactoring.md) — safe structural change procedures (EKP-RF; EKP-P03, EKP-P10)
+- [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP; EKP-P02, EKP-P05, EKP-P09)
 - Decision records: [architecture/decisions/README.md](../architecture/decisions/README.md)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
