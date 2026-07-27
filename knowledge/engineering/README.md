@@ -20,6 +20,4 @@ Navigation index for the `knowledge/engineering/` domain. See each document for 
 
 - [refactoring.md](refactoring.md) — EKP-RF; EKP-P03, EKP-P10
 
-## Planned
-
-- `testing.md`
+Testing guidance lives in the dedicated [knowledge/testing/](../testing/) domain.

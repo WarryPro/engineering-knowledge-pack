@@ -17,6 +17,7 @@ related:
   - knowledge/engineering/design-patterns.md
   - knowledge/engineering/refactoring.md
   - knowledge/engineering/clean-code.md
+  - knowledge/testing/testing.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -476,7 +477,7 @@ Explicit layering and boundaries improve local reasoning and integration safety.
 - Project-specific topology (microservices vs monolith) → ADR in `decisions/`
 - Framework module configuration → stack domains (`symfony/`, `typescript/`)
 - Error handling philosophy detail → [error-handling.md](../engineering/error-handling.md) (EKP-EH; EKP-P07)
-- Test strategy → future `testing/` domain guides
+- Test strategy → [testing.md](../testing/testing.md) (EKP-TS; EKP-P03, EKP-P10)
 
 ## Knowledge graph position
 
@@ -507,5 +508,6 @@ engineering-principles
 - [Design Patterns](../engineering/design-patterns.md) — in-process patterns (EKP-DP)
 - [Refactoring](../engineering/refactoring.md) — Level 4 escalation (EKP-RF07)
 - [Clean Code](../engineering/clean-code.md) — function/file readability (EKP-CC)
+- [Testing](../testing/testing.md) — verification at boundaries (EKP-TS)
 - [ADR-0004: Knowledge graph layering](decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Architecture decision records](decisions/README.md)

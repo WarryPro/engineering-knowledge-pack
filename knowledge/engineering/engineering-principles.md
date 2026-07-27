@@ -12,6 +12,7 @@ related:
   - knowledge/engineering/refactoring.md
   - knowledge/engineering/design-patterns.md
   - knowledge/engineering/error-handling.md
+  - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
@@ -129,6 +130,7 @@ When two options are equally viable, choose the one that is cheaper to change la
 - Use feature flags, interface boundaries, and configuration over hard-coded branching where rollback matters.
 - Separate "decide" from "commit"—prototype behind an interface before baking in a dependency.
 - Safe structural change procedures are defined in `refactoring.md` (EKP-RF01–EKP-RF07).
+- Verification confidence for reversible change is defined in `knowledge/testing/testing.md` (EKP-TS01–EKP-TS12).
 
 One-way doors deserve design review. Two-way doors deserve speed.
 
@@ -203,6 +205,7 @@ Optimize for the cost of change over the cost of initial authorship.
 - Keep changes reviewable and scoped to the stated problem.
 - Structural change procedures are defined in `refactoring.md` (EKP-RF01–EKP-RF07).
 - Code hygiene practices are defined in `clean-code.md` (EKP-CC01–EKP-CC08).
+- Executable verification practices are defined in `knowledge/testing/testing.md` (EKP-TS01–EKP-TS12).
 
 Technical debt is a loan. Unacknowledged debt is insolvency.
 
@@ -345,6 +348,12 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [design-patterns.md](design-patterns.md) | Published | EKP-P02, EKP-P05, EKP-P09 | Named pattern catalog (EKP-DP) |
 | [error-handling.md](error-handling.md) | Published | EKP-P07 | Failure handling practice (EKP-EH) |
 
+### Testing domain (builds upon principles)
+
+| Layer | Document | Principles | Scope |
+|-------|----------|------------|-------|
+| testing | [testing.md](../testing/testing.md) | EKP-P03, EKP-P10 | Verification and test strategy (EKP-TS01–12) |
+
 ### Architecture layer (builds upon principles)
 
 | Document | Layer | Status |
@@ -368,6 +377,7 @@ Downstream documents must reference this document in their `related` frontmatter
 - [Refactoring](refactoring.md) — safe structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP; EKP-P02, EKP-P05, EKP-P09)
 - [Error Handling](error-handling.md) — failure handling practice (EKP-EH; EKP-P07)
+- [Testing](../testing/testing.md) — verification and test strategy (EKP-TS; EKP-P03, EKP-P10)
 - [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system structure and integration contracts (EKP-LB; EKP-P05, EKP-P06)
 - Decision records: [architecture/decisions/README.md](../architecture/decisions/README.md)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)

@@ -16,6 +16,7 @@ related:
   - knowledge/engineering/solid.md
   - knowledge/engineering/refactoring.md
   - knowledge/engineering/error-handling.md
+  - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -448,6 +449,7 @@ Structural extraction steps belong in `refactoring.md`—this table diagnoses on
 - [SOLID](solid.md) — class/module design (EKP-SL)
 - [Refactoring](refactoring.md) — structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - [Error Handling](error-handling.md) — failure handling practice (EKP-EH; EKP-P07)
+- [Testing](../testing/testing.md) — readable test code (EKP-CC; EKP-TS)
 - [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system boundaries (EKP-LB; EKP-P05, EKP-P06)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Engineering domain index](README.md)

@@ -16,6 +16,7 @@ related:
   - knowledge/engineering/solid.md
   - knowledge/engineering/design-patterns.md
   - knowledge/engineering/refactoring.md
+  - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
@@ -464,6 +465,7 @@ engineering-principles
 - [SOLID](solid.md) — responsibility ownership (EKP-SL)
 - [Design Patterns](design-patterns.md) — structural organization of handlers (EKP-DP)
 - [Refactoring](refactoring.md) — safe migration of error paths (EKP-RF)
+- [Testing](../testing/testing.md) — failure behavior verification (EKP-TS)
 - [Layering and Boundaries](../architecture/layering-and-boundaries.md) — cross-service failure contracts (EKP-LB)
 - [ADR-0004: Knowledge graph layering](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Architecture decision records](../architecture/decisions/README.md)
