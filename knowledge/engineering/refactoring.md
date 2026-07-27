@@ -16,6 +16,7 @@ related:
   - knowledge/engineering/clean-code.md
   - knowledge/engineering/solid.md
   - knowledge/engineering/design-patterns.md
+  - knowledge/engineering/error-handling.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
@@ -515,5 +516,6 @@ engineering-principles
 - [ADR-0004: Knowledge graph layering](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Architecture decision records](../architecture/decisions/README.md)
 - [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP)
+- [Error Handling](error-handling.md) — failure handling practice (EKP-EH; EKP-P07)
 - [Layering and Boundaries](../architecture/layering-and-boundaries.md) — Level 4 escalation (EKP-LB)
 - [Engineering domain index](README.md)

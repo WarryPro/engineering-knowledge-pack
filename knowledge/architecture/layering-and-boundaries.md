@@ -239,7 +239,7 @@ Layers may map to packages, modules, or directories—consistency matters more t
 **Rules:**
 
 - Parse and validate input at delivery/infrastructure edge before domain logic executes.
-- Reject invalid input with explicit error semantics—do not coerce silently unless documented safe default (**EKP-P07** defers error-handling detail to future `error-handling.md`).
+- Reject invalid input with explicit error semantics—do not coerce silently unless documented safe default (failure handling practice: [error-handling.md](../engineering/error-handling.md) EKP-EH; boundary contracts: EKP-LB11).
 - Map external representations to domain types in the outer layer—domain should not parse raw HTTP or SQL row shapes.
 - Idempotency keys and auth tokens are boundary concerns—validate before use-case execution.
 
@@ -475,7 +475,7 @@ Explicit layering and boundaries improve local reasoning and integration safety.
 - Refactoring steps → `refactoring.md` (EKP-RF)
 - Project-specific topology (microservices vs monolith) → ADR in `decisions/`
 - Framework module configuration → stack domains (`symfony/`, `typescript/`)
-- Error handling philosophy detail → future `error-handling.md` (EKP-P07)
+- Error handling philosophy detail → [error-handling.md](../engineering/error-handling.md) (EKP-EH; EKP-P07)
 - Test strategy → future `testing/` domain guides
 
 ## Knowledge graph position

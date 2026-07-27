@@ -18,6 +18,7 @@ related:
   - knowledge/engineering/solid.md
   - knowledge/engineering/clean-code.md
   - knowledge/engineering/refactoring.md
+  - knowledge/engineering/error-handling.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
@@ -520,6 +521,7 @@ engineering-principles
 - [SOLID](solid.md) — class/module design prerequisite (EKP-SL)
 - [Clean Code](clean-code.md) — function/file readability (EKP-CC)
 - [Refactoring](refactoring.md) — structural change procedures (EKP-RF)
+- [Error Handling](error-handling.md) — failure handling practice (EKP-EH; EKP-P07)
 - [ADR-0004: Knowledge graph layering](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Architecture decision records](../architecture/decisions/README.md)
 - [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system boundaries (EKP-LB; EKP-P05, EKP-P06)

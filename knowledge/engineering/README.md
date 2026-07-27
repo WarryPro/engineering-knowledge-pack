@@ -10,6 +10,7 @@ Navigation index for the `knowledge/engineering/` domain. See each document for 
 
 - [clean-code.md](clean-code.md) — EKP-CC; EKP-P04, EKP-P10
 - [solid.md](solid.md) — EKP-SL; EKP-P05, EKP-P09
+- [error-handling.md](error-handling.md) — EKP-EH; EKP-P07
 
 ## Patterns
 
@@ -22,4 +23,3 @@ Navigation index for the `knowledge/engineering/` domain. See each document for 
 ## Planned
 
 - `testing.md`
-- `error-handling.md`

@@ -15,6 +15,7 @@ related:
   - knowledge/engineering/engineering-principles.md
   - knowledge/engineering/solid.md
   - knowledge/engineering/refactoring.md
+  - knowledge/engineering/error-handling.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -189,7 +190,7 @@ function createInvoice(request: CreateInvoiceRequest) { ... }
 | Gain | Cost |
 |------|------|
 | Readable happy path | Early returns can feel scattered in validation-heavy functions |
-| Fewer missed edge cases | Guard-heavy functions need consistent error semantics (see error-handling docs) |
+| Fewer missed edge cases | Guard-heavy functions need consistent error semantics (see [error-handling.md](error-handling.md)) |
 
 **When not to apply strictly:**
 
@@ -412,7 +413,7 @@ Applying clean-code practices consistently improves review throughput and reduce
 - Class-level design → `solid.md`
 - How to restructure code safely → `refactoring.md`
 - System boundaries and API contracts → `layering-and-boundaries.md`
-- Error handling semantics → future `error-handling.md`
+- Error handling semantics → [error-handling.md](error-handling.md)
 
 Relax practices per **EKP-P02** when lifespan and blast radius are low. Document the exception in the PR when reviewers might otherwise object.
 
@@ -446,6 +447,7 @@ Structural extraction steps belong in `refactoring.md`—this table diagnoses on
 - [Engineering Principles](engineering-principles.md) — EKP-P01–P10 foundation
 - [SOLID](solid.md) — class/module design (EKP-SL)
 - [Refactoring](refactoring.md) — structural change procedures (EKP-RF; EKP-P03, EKP-P10)
+- [Error Handling](error-handling.md) — failure handling practice (EKP-EH; EKP-P07)
 - [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system boundaries (EKP-LB; EKP-P05, EKP-P06)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Engineering domain index](README.md)

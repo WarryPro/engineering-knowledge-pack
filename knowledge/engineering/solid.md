@@ -16,6 +16,7 @@ related:
   - knowledge/engineering/clean-code.md
   - knowledge/engineering/refactoring.md
   - knowledge/engineering/design-patterns.md
+  - knowledge/engineering/error-handling.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -469,6 +470,7 @@ Structural fix procedures belong in `refactoring.md`—this table diagnoses only
 - [Clean Code](clean-code.md) — function/file readability (EKP-CC)
 - [Refactoring](refactoring.md) — structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP; EKP-P02, EKP-P05, EKP-P09)
+- [Error Handling](error-handling.md) — failure handling practice (EKP-EH; EKP-P07)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
 - [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system boundaries (EKP-LB; EKP-P05, EKP-P06)
 - [Engineering domain index](README.md)

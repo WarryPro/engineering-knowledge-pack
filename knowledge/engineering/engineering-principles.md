@@ -11,6 +11,7 @@ related:
   - knowledge/engineering/solid.md
   - knowledge/engineering/refactoring.md
   - knowledge/engineering/design-patterns.md
+  - knowledge/engineering/error-handling.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
@@ -171,6 +172,7 @@ Errors should surface at the point of failure—or as close as possible—with e
 - Log with correlation identifiers across service boundaries.
 - Prefer structured errors over boolean success flags that hide failure reason.
 - In user-facing paths, fail gracefully; in internal pipelines, fail loudly.
+- Error handling practices are defined in `error-handling.md` (EKP-EH01–EKP-EH12).
 
 Silent failure is the most expensive bug class. It compounds until production data is wrong.
 
@@ -341,6 +343,7 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [solid.md](solid.md) | Published | EKP-P05, EKP-P09 | Class design and dependency management (EKP-SL) |
 | [refactoring.md](refactoring.md) | Published | EKP-P03, EKP-P10 | Safe structural change procedures (EKP-RF) |
 | [design-patterns.md](design-patterns.md) | Published | EKP-P02, EKP-P05, EKP-P09 | Named pattern catalog (EKP-DP) |
+| [error-handling.md](error-handling.md) | Published | EKP-P07 | Failure handling practice (EKP-EH) |
 
 ### Architecture layer (builds upon principles)
 
@@ -364,6 +367,7 @@ Downstream documents must reference this document in their `related` frontmatter
 - [SOLID](solid.md) — class/module design practices (EKP-SL; EKP-P05, EKP-P09)
 - [Refactoring](refactoring.md) — safe structural change procedures (EKP-RF; EKP-P03, EKP-P10)
 - [Design Patterns](design-patterns.md) — named pattern catalog (EKP-DP; EKP-P02, EKP-P05, EKP-P09)
+- [Error Handling](error-handling.md) — failure handling practice (EKP-EH; EKP-P07)
 - [Layering and Boundaries](../architecture/layering-and-boundaries.md) — system structure and integration contracts (EKP-LB; EKP-P05, EKP-P06)
 - Decision records: [architecture/decisions/README.md](../architecture/decisions/README.md)
 - [ADR-0004: Clean Code position in knowledge graph](../architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md)
