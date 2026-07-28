@@ -1,0 +1,48 @@
+# EKP cursor-core profile
+# Minimal knowledge bundle for Cursor AI-assisted development.
+# Consumed by scripts/assemble/assemble.py (Phase 3A) to generate .cursor/rules/.
+#
+# Document roles in this profile:
+#   always-on  — loaded on every session; orchestrator + decision framework
+#   routing    — invoked by the AI Decision Flow when the task class matches
+
+name: cursor-core
+description: Minimal EKP knowledge bundle for Cursor AI-assisted development.
+
+# All knowledge paths included in this bundle.
+# Adapters derive .mdc rules from these documents — do not list rule paths here.
+knowledge:
+  # --- Always-on: foundation + AI orchestrator ---
+  # engineering-principles.md — EKP-P01–P10; required severity; apex decision framework
+  - knowledge/engineering/engineering-principles.md
+  # ai-assisted-development.md — EKP-AI01–12; master AI Decision Flow (alwaysApply target)
+  - knowledge/ai/ai-assisted-development.md
+
+  # --- Routing: sibling Decision Flows escalated from EKP-AI step 4–6 ---
+  # refactoring.md — structural change levels, Risk Matrix (EKP-RF; EKP-AI steps 3, 7)
+  - knowledge/engineering/refactoring.md
+  # testing.md — verification philosophy; tests define done (EKP-TS; EKP-AI step 5)
+  - knowledge/testing/testing.md
+  # error-handling.md — failure semantics and contracts (EKP-EH; EKP-AI step 6)
+  - knowledge/engineering/error-handling.md
+  # layering-and-boundaries.md — boundary detection and layer rules (EKP-LB; EKP-AI step 4)
+  - knowledge/architecture/layering-and-boundaries.md
+
+# Narrow concept/rule inclusion within listed documents.
+filters:
+  severity:
+    - required
+    - recommended
+
+# Adapter generation settings for assemble.py.
+adapter:
+  target:
+    - cursor
+  include:
+    # Emit only high-priority concepts and Decision Flow sections.
+    # Medium/low priority concepts in routing docs are excluded from initial bundle.
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor

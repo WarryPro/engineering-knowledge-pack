@@ -2,6 +2,10 @@
 
 Guidance on using AI assistants responsibly in software engineering workflows.
 
+## Published
+
+- [ai-assisted-development.md](ai-assisted-development.md) — EKP-AI; EKP-P01, EKP-P03, EKP-P10
+
 ## Scope
 
 - When and how to use AI during design, implementation, and review

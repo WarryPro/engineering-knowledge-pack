@@ -40,6 +40,37 @@
         }
       }
     },
+    "adapter": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Adapter generation settings for assemble.py",
+      "properties": {
+        "target": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["cursor", "copilot", "claude"]
+          },
+          "minItems": 1,
+          "description": "Target tools for rule generation"
+        },
+        "include": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "adapter_priority": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["high", "medium", "low"]
+              },
+              "minItems": 1,
+              "description": "Filter concepts by adapter_priority from knowledge frontmatter"
+            }
+          }
+        }
+      }
+    },
     "outputs": {
       "type": "array",
       "items": {

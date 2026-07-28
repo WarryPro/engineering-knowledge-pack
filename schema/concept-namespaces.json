@@ -30,5 +30,9 @@
   "EKP-TS": {
     "owner": "knowledge/testing/testing.md",
     "format": "^EKP-TS[0-9]{2}$"
+  },
+  "EKP-AI": {
+    "owner": "knowledge/ai/ai-assisted-development.md",
+    "format": "^EKP-AI[0-9]{2}$"
   }
 }
