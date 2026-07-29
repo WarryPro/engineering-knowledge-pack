@@ -16,6 +16,7 @@ related:
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/ai/ai-assisted-development.md
   - knowledge/security/security-fundamentals.md
+  - knowledge/performance/performance-mindset.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -350,6 +351,7 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [design-patterns.md](design-patterns.md) | Published | EKP-P02, EKP-P05, EKP-P09 | Named pattern catalog (EKP-DP) |
 | [error-handling.md](error-handling.md) | Published | EKP-P07 | Failure handling practice (EKP-EH) |
 | [security-fundamentals.md](../security/security-fundamentals.md) | Published | EKP-P02, EKP-P06, EKP-P07 | Security fundamentals (EKP-SF) |
+| [performance-mindset.md](../performance/performance-mindset.md) | Published | EKP-P02, EKP-P08 | Performance mindset (EKP-PM) |
 
 ### Testing domain (builds upon principles)
 

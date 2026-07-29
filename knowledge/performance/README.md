@@ -2,6 +2,10 @@
 
 Profiling, optimization, and caching principles.
 
+## Published
+
+- [performance-mindset.md](performance-mindset.md) — EKP-PM; EKP-P02, EKP-P08
+
 ## Scope
 
 - Performance mindset and measurement-first approach

@@ -52,7 +52,7 @@ Code changes constantly. Without verification, every edit is a gamble: regressio
 | System/integration boundary contracts | `layering-and-boundaries.md` (EKP-LB) | Escalation for cross-service verification |
 | Framework test APIs (PHPUnit, Jest, PyTest) | Stack domains (`php/`, `typescript/`) | Out of scope |
 | CI pipeline configuration | `devops/` | Out of scope |
-| Load/stress testing | `performance/` | Out of scope |
+| Load/stress testing | `performance/performance-mindset.md` (EKP-PM), `devops/` | Out of scope |
 | Security testing | `security/` | Out of scope |
 
 **Out of scope:** test runner configuration, assertion library syntax, snapshot tooling tutorials, deployment smoke-test playbooks, coverage gate thresholds in CI YAML.
@@ -274,7 +274,7 @@ Testing is a **practice-layer** artifact in the `testing` domain per EKP roadmap
 - Use coverage to find **untested code paths**, not as a merge gate for its own sake.
 - 100% line coverage does not imply correct assertions.
 - Critical domains (payments, auth, data migration) deserve explicit behavioral tests regardless of coverage percentage.
-- Evidence-based optimization of test investment aligns with **EKP-P08** (future `performance/` domain)—do not implement P08 here.
+- Evidence-based optimization of test investment aligns with **EKP-P08** — see `performance/performance-mindset.md` (EKP-PM); do not implement P08 here.
 
 **Review signals:** Coverage increased with empty or trivial assertions; untested error branches in revenue path despite high overall percentage.
 
