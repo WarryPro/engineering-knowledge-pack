@@ -14,6 +14,7 @@ related:
   - knowledge/engineering/error-handling.md
   - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
+  - knowledge/ai/ai-assisted-development.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []

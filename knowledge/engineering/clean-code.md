@@ -6,6 +6,7 @@ severity: recommended
 applies_to: [backend, frontend, api, mobile]
 type: guide
 role: practice
+adapter_priority: medium
 depends_on:
   - knowledge/engineering/engineering-principles.md
 implements:
