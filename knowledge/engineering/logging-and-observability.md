@@ -8,7 +8,6 @@ type: guide
 role: practice
 depends_on:
   - knowledge/engineering/engineering-principles.md
-  - knowledge/engineering/error-handling.md
 implements:
   - EKP-P04
   - EKP-P07
@@ -271,7 +270,7 @@ Skip formal structured logging when **all** apply:
 | Field | Value |
 |-------|-------|
 | `role` | `practice` |
-| `depends_on` | `engineering-principles.md`, `error-handling.md` |
+| `depends_on` | `engineering-principles.md` |
 | `implements` | EKP-P04, EKP-P07 |
 | `concept_ids` | EKP-LO01–EKP-LO08 |
 | `adapter_priority` | medium |
