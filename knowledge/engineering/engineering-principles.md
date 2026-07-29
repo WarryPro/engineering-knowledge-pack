@@ -14,6 +14,11 @@ related:
   - knowledge/engineering/error-handling.md
   - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
+  - knowledge/architecture/adr-practices.md
+  - knowledge/architecture/coupling-and-cohesion.md
+  - knowledge/architecture/api-design.md
+  - knowledge/architecture/integration-patterns.md
+  - knowledge/database/database-design.md
   - knowledge/ai/ai-assisted-development.md
   - knowledge/security/security-fundamentals.md
   - knowledge/performance/performance-mindset.md
