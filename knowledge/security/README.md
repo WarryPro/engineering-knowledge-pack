@@ -2,6 +2,10 @@
 
 Security principles and practices across all layers.
 
+## Published
+
+- [security-fundamentals.md](security-fundamentals.md) — EKP-SF; EKP-P02, EKP-P06, EKP-P07
+
 ## Scope
 
 - Input validation and output encoding

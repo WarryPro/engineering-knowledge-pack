@@ -15,6 +15,7 @@ related:
   - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/ai/ai-assisted-development.md
+  - knowledge/security/security-fundamentals.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -348,6 +349,7 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [refactoring.md](refactoring.md) | Published | EKP-P03, EKP-P10 | Safe structural change procedures (EKP-RF) |
 | [design-patterns.md](design-patterns.md) | Published | EKP-P02, EKP-P05, EKP-P09 | Named pattern catalog (EKP-DP) |
 | [error-handling.md](error-handling.md) | Published | EKP-P07 | Failure handling practice (EKP-EH) |
+| [security-fundamentals.md](../security/security-fundamentals.md) | Published | EKP-P02, EKP-P06, EKP-P07 | Security fundamentals (EKP-SF) |
 
 ### Testing domain (builds upon principles)
 

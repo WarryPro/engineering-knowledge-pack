@@ -16,6 +16,7 @@ related:
   - knowledge/engineering/refactoring.md
   - knowledge/testing/testing.md
   - knowledge/engineering/error-handling.md
+  - knowledge/security/security-fundamentals.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/engineering/clean-code.md
 extends: []
@@ -70,7 +71,7 @@ Without governance, teams experience:
 | Failure semantics | `error-handling.md` (EKP-EH) | Escalation — error paths |
 | System/integration boundaries | `layering-and-boundaries.md` (EKP-LB) | Escalation — boundary detection |
 | Readable code | `clean-code.md` (EKP-CC) | Cross-reference only |
-| Security deep practices | `security/` (future) | EKP-AI08 minimum bar only |
+| Security deep practices | `security/security-fundamentals.md` (EKP-SF) | EKP-AI08 minimum bar; route to EKP-SF Decision Flow |
 | Tool rule file format | `rules/cursor/`, adapters | Out of scope — derived output |
 
 **Out of scope:** prompt engineering tutorials for specific LLMs, model selection, token budgeting, RAG pipeline design, embedding indexes, automatic code-fix bots, CI adapter configuration.
@@ -318,6 +319,7 @@ AI-assisted development is a **practice-layer** artifact in the `ai` domain. Ada
 - Verification → `testing.md` (EKP-TS) Decision Flow.
 - Errors/failures → `error-handling.md` (EKP-EH).
 - System/integration boundary → `layering-and-boundaries.md` (EKP-LB) Decision Flow.
+- Security-sensitive change (auth, PII, payment, secrets) → `security/security-fundamentals.md` (EKP-SF) Decision Flow.
 - Do not duplicate sibling content—cite and route.
 
 **Good:** "This is a Level 2 extract method refactor—applying EKP-RF Decision Flow step 3."
@@ -515,7 +517,7 @@ Governed AI assistance improves reviewability and reduces risk. It is not free.
 - Error contracts → `error-handling.md` (EKP-EH)
 - Layer and service boundaries → `layering-and-boundaries.md` (EKP-LB)
 - Naming and readability → `clean-code.md` (EKP-CC)
-- Security practices beyond secret handling → `security/` (future)
+- Security practices beyond secret handling → `security/security-fundamentals.md` (EKP-SF)
 
 ## Knowledge graph position
 
