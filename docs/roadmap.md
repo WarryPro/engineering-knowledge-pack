@@ -7,9 +7,9 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase | Status | Summary |
 |-------|--------|---------|
 | Phase 1 — Foundation | **Complete** | Structure, templates, schemas, validation skeleton |
-| Phase 2 — Core engineering knowledge | **In progress** | 12 guides published; Phase 2C cross-cutting complete |
+| Phase 2 — Core engineering knowledge | **In progress** | 12 guides; Phase 2C complete |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble |
-| Phase 3B — Architecture knowledge expansion | **Planned** | Deeper architecture and database knowledge |
+| Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
 | Phase 4 — Technology knowledge | **Planned** | Stack-specific domains (PHP, Symfony, Flutter, etc.) |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot and Claude pending |
 
@@ -90,20 +90,25 @@ Build the transformation layer that converts knowledge into deployable AI assist
 
 ## Phase 3B: Architecture knowledge expansion
 
-**Status:** Planned
+**Status:** Complete
 
-Expand system design and architectural decision-making knowledge beyond current boundary coverage.
+Expand system design and architectural decision-making knowledge beyond boundary coverage.
 
 **Target domains:**
 
-- `knowledge/architecture/` — additional patterns (hexagonal, CQRS, event-driven), ADR practices
-- `knowledge/database/` — schema design, migrations, transaction boundaries, query patterns
+- `knowledge/architecture/` — ADR practices, coupling/cohesion, API design, integration patterns
+- `knowledge/database/` — schema design, migrations, transaction boundaries
 
 **Deliverables:**
 
-- Architecture decision record examples in `examples/`
-- Knowledge documents covering common architectural patterns
-- Review checklist template populated with architecture-specific items
+- [x] `adr-practices.md` — EKP-AD
+- [x] `coupling-and-cohesion.md` — EKP-MC
+- [x] `api-design.md` — EKP-AP
+- [x] `integration-patterns.md` — EKP-IN
+- [x] `database-design.md` — EKP-DB (database domain)
+- [x] EKP-AI10 escalation routes to Phase 3B guides
+- [ ] Architecture decision record examples in `examples/` *(deferred — Phase 3B.1)*
+- [ ] Review checklist template populated with architecture-specific items *(deferred — Phase 3B.1)*
 
 **Exit criteria:** A tech lead can use EKP to guide architecture reviews and document decisions consistently.
 

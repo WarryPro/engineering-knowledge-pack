@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `knowledge/engineering/engineering-principles.md` — foundational engineering principles (EKP-P01–P10).
 - ADR-0004: Clean Code position in the EKP knowledge graph.
 - Validator v2.0–v2.3: graph validation, concept registry, incremental validation (`--changed-only`), tiered passes (`--tier`), index generation (`--generate-index`), scale and adapter reports.
-- `schema/concept-namespaces.json` — namespace ownership registry (EKP-P, EKP-CC, EKP-SL, EKP-DP, EKP-RF, EKP-EH, EKP-TS, EKP-LB, EKP-AI, EKP-SF, EKP-PM, EKP-LO).
+- `schema/concept-namespaces.json` — namespace registry (through EKP-IN).
 - `schema/vocabularies.json` — controlled vocabulary (not enforced yet).
 - Core engineering knowledge guides: clean-code, solid, design-patterns, refactoring, error-handling, testing, layering-and-boundaries.
 - `knowledge/ai/ai-assisted-development.md` — EKP-AI01–12 AI Decision Flow and orchestrator concepts.
@@ -32,6 +32,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `knowledge/performance/performance-mindset.md` — EKP-PM01–PM07; EKP-P02, EKP-P08.
   - `knowledge/engineering/logging-and-observability.md` — EKP-LO01–LO08; EKP-P04, EKP-P07.
 - Namespaces EKP-SF, EKP-PM, EKP-LO in `schema/concept-namespaces.json`.
+- Phase 3B architecture knowledge expansion:
+  - `knowledge/architecture/adr-practices.md` — EKP-AD01–AD07.
+  - `knowledge/architecture/coupling-and-cohesion.md` — EKP-MC01–MC07.
+  - `knowledge/architecture/api-design.md` — EKP-AP01–AP09; AI Decision Flow.
+  - `knowledge/architecture/integration-patterns.md` — EKP-IN01–IN08.
+  - `knowledge/database/database-design.md` — EKP-DB01–DB08.
+- Namespaces EKP-AD, EKP-MC, EKP-AP, EKP-DB, EKP-IN.
+- Graph exception: `integration-patterns.md` → `layering-and-boundaries.md` (documented in `graph-rules.yaml`).
 
 ### Changed
 
@@ -39,8 +47,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validation excludes `adr-*.md` files from knowledge frontmatter checks (decision record format).
 - Extended `schema/profile.schema.json` with `adapter` block (`target`, `include.adapter_priority`).
 - Documentation aligned with operational pipeline state (Phase 2B / 3A stabilize).
-- `ai-assisted-development.md` — EKP-AI10 routes to security-fundamentals; boundaries updated.
+- `ai-assisted-development.md` — EKP-AI10 routes to Phase 2C and 3B guides.
 - `error-handling.md`, `testing.md`, `engineering-principles.md` — cross-links to Phase 2C guides.
+- `layering-and-boundaries.md` — LB04 escalation to coupling-and-cohesion.
+- `architecture/README.md`, `database/README.md` — published indexes.
 
 ## [0.1.0] - 2026-07-23
 
