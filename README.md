@@ -15,7 +15,7 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 | [`rules/`](rules/) | Scaffold for tool-specific rule layouts; **not** the primary bundle source |
 | [`templates/`](templates/) | Document templates for knowledge, rules, reviews, and decisions |
 | [`docs/`](docs/) | Project vision, architecture, roadmap, and contribution guidance |
-| [`examples/`](examples/) | Reference implementations and usage examples (scaffold) |
+| [`examples/`](examples/) | Educational ADR and review checklist examples |
 
 ## Knowledge pipeline
 
@@ -72,9 +72,21 @@ py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 | Phase | Status | Scope |
 |-------|--------|-------|
 | Phase 1 — Foundation | **Complete** | Structure, templates, validation skeleton, schemas |
-| Phase 2 — Core engineering knowledge | **In progress** | 9 published guides across engineering, testing, architecture, and AI |
+| Phase 2 — Core engineering knowledge | **In progress** | 16 published guides; Phase 2C cross-cutting complete |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble pipeline |
-| Phase 3B — Architecture knowledge expansion | **Planned** | Deeper architecture and database knowledge |
+| Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
+| Phase 3B.1 — Repository consolidation | **In progress** | Documentation sync, CI, examples, release preparation |
+
+### Repository metrics
+
+| Metric | Value |
+|--------|-------|
+| Knowledge guides | 16 |
+| Concepts | 155 |
+| Namespaces | 17 |
+| Graph depth | 2 |
+| Adapter-ready | 100% |
+| `cursor-core` bundle | 65 rules |
 
 See [`docs/roadmap.md`](docs/roadmap.md) for the full development plan.
 

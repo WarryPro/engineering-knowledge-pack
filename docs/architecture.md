@@ -2,29 +2,41 @@
 
 ## Overview
 
-EKP follows a **knowledge-first, adapter-second** architecture. Human-authored engineering knowledge is the canonical source. Everything else—AI rules, profiles, checklists—is derived or composed from that source.
+EKP follows a **knowledge-first, adapter-second** architecture. Human-authored engineering knowledge is the canonical source. Profiles, indexes, and tool-specific rules are derived or composed from that source through the operational pipeline (Phase 3A).
+
+```
+knowledge/
+    ↓ validate
+    ↓ generate-index  →  dist/*.json
+    ↓ adapter         →  dist/<profile>/<tool>/
+    ↓ assemble        →  bundle-manifest.json
+    ↓ deploy          →  consumer project (e.g. .cursor/rules/)
+```
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     knowledge/                          │
-│         (tool-agnostic markdown, source of truth)     │
+│         (tool-agnostic markdown, source of truth)       │
 └────────────────────────┬────────────────────────────────┘
                          │
            ┌─────────────┼─────────────┐
            ▼             ▼             ▼
     ┌──────────┐  ┌──────────┐  ┌──────────┐
-    │  rules/  │  │ profiles/│  │ examples/│
-    │ (per-tool│  │ (composed│  │ (reference│
-    │  output) │  │  sets)   │  │  usage)  │
-    └────┬─────┘  └────┬─────┘  └──────────┘
-         │             │
-         └──────┬──────┘
-                ▼
-         ┌──────────┐
-         │ scripts/ │
-         │(adapters)│
-         └──────────┘
+    │ profiles/│  │ examples/│  │ templates│
+    │ (compose │  │ (educational│ │ (authoring│
+    │  sets)   │  │  samples) │  │ scaffolds)│
+    └────┬─────┘  └──────────┘  └──────────┘
+         │
+         ▼
+    ┌──────────┐     ┌──────────┐
+    │ scripts/ │ ──► │  dist/   │  (gitignored, generated)
+    │ validate │     │ bundles  │
+    │ adapters │     └──────────┘
+    │ assemble │
+    └──────────┘
 ```
+
+See [`adapter-architecture.md`](adapter-architecture.md) for pipeline details.
 
 ## Repository layers
 
@@ -32,8 +44,8 @@ EKP follows a **knowledge-first, adapter-second** architecture. Human-authored e
 
 Contains engineering knowledge as markdown documents organized by domain:
 
-- **Cross-cutting domains** — `engineering/`, `architecture/`, `security/`, `testing/`, `performance/`, `devops/`, `ai/`
-- **Technology domains** — `php/`, `symfony/`, `flutter/`, `typescript/`, `frontend/`, `database/`
+- **Cross-cutting domains** — `engineering/`, `architecture/`, `security/`, `testing/`, `performance/`, `devops/`, `ai/`, `database/`
+- **Technology domains** — `php/`, `symfony/`, `flutter/`, `typescript/`, `frontend/` (Phase 4 — stubs today)
 
 Each document follows the [knowledge document template](../templates/knowledge-document-template.md) and adheres to the [style guide](style-guide.md).
 
@@ -43,150 +55,118 @@ Knowledge documents must be:
 - Free of tool-specific syntax (no Cursor frontmatter, no Copilot directives)
 - Self-contained enough to be useful alone, with links to related documents
 
-### `rules/` — Tool-specific outputs
+**Current scale:** 16 published guides, 155 concepts, 17 namespaces.
 
-Contains rules formatted for AI assistants and IDEs. These are **not** the primary authoring surface.
+### `rules/` — Scaffold (not primary output)
 
-Rules may be:
+Layout reference for tool-specific rule formats. **Deployable output is generated in `dist/`** by the assemble pipeline—not authored directly under `rules/`.
 
-- **Generated** — produced by scripts in `scripts/` that transform knowledge documents
-- **Curated** — manually refined when automatic transformation is insufficient
-
-A rule should always trace back to one or more knowledge documents. If a rule cannot be justified by knowledge, it should not exist.
+Rules trace back to knowledge documents. If a rule cannot be justified by knowledge, it should not exist.
 
 ### `profiles/` — Composed contexts
 
-A profile defines which knowledge and rules apply to a specific context:
+A profile defines which knowledge applies to a specific context (team, role, workflow). Profiles reference **knowledge paths only**—adapters derive rules at build time.
 
-- A team ("backend platform team")
-- A technology stack ("Symfony + PostgreSQL API")
-- A role ("tech lead doing architecture reviews")
-- A project type ("greenfield microservice" vs. "legacy migration")
-
-Profiles are composition manifests—not duplicates of knowledge. They reference **knowledge documents only**. Adapters derive tool-specific rules from the selected knowledge at build time.
-
-Example profile:
+Operational example (`profiles/cursor-core.yaml`):
 
 ```yaml
-name: symfony-api-backend
-description: Backend API development with Symfony and PostgreSQL
+name: cursor-core
+description: Minimal EKP knowledge bundle for Cursor AI-assisted development.
 knowledge:
+  - knowledge/engineering/engineering-principles.md
+  - knowledge/ai/ai-assisted-development.md
+  - knowledge/engineering/refactoring.md
+  - knowledge/testing/testing.md
   - knowledge/engineering/error-handling.md
-  - knowledge/symfony/service-layer.md
-  - knowledge/database/transaction-boundaries.md
-  - knowledge/security/authentication.md
+  - knowledge/architecture/layering-and-boundaries.md
+adapter:
+  target:
+    - cursor
+  include:
+    adapter_priority:
+      - high
 outputs:
   - cursor
-  - copilot
-  - claude
 ```
 
 See `templates/profile-template.yaml` and `schema/profile.schema.json`.
 
 ### `templates/` — Authoring scaffolds
 
-Reusable document structures that ensure consistency across contributions. Templates define required sections, metadata fields, and quality expectations.
+Reusable document structures for knowledge, ADRs, checklists, profiles, and rules.
 
-### `examples/` — Reference usage
+### `examples/` — Educational samples
 
-Demonstrates how knowledge, profiles, and adapters work together in practice. Populated in later phases.
+Demonstrates ADR format and review checklists. **Not** production decisions—see [`examples/README.md`](../examples/README.md).
 
-### `scripts/` — Adapters and tooling
+### `scripts/` — Operational pipeline
 
-Build scripts that:
+| Component | Path | Role |
+|-----------|------|------|
+| Validator | `scripts/validate/` | Structure, graph, concepts, links |
+| Adapters | `scripts/adapters/` | Knowledge → tool formats (Cursor operational) |
+| Assemble | `scripts/assemble/` | Profile → deployable bundle + manifest |
 
-- Transform knowledge documents into tool-specific rule formats
-- Validate document structure and cross-references
-- Assemble profiles into deployable bundles
-- Generate indexes and navigation
+Scripts are idempotent, testable, and documented. See [`DEVELOPMENT.md`](../DEVELOPMENT.md).
 
-Scripts are the **adapter layer**. They should be idempotent, testable, and documented.
+### `dist/` — Generated artifacts (gitignored)
+
+- `dist/concept-index.json`, `knowledge-graph.json`, `adapter-manifest.json` — from `validate --generate-index`
+- `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json` — from `assemble`
+
+Never commit `dist/`. Regenerate locally or in CI.
 
 ### `docs/` — Project meta-documentation
 
-Documentation about the repository itself—not engineering knowledge. Vision, architecture, roadmap, contribution process.
+Vision, architecture, roadmap, contribution process—not engineering knowledge.
 
 ## Knowledge vs. rules vs. profiles
 
-| Aspect | Knowledge | Rules | Profiles |
-|--------|-----------|-------|----------|
+| Aspect | Knowledge | Rules (generated) | Profiles |
+|--------|-----------|-------------------|----------|
 | **Audience** | Engineers (human and AI) | AI assistants | Both, scoped |
-| **Format** | Markdown | Tool-specific (`.mdc`, `.md`, JSON) | YAML or JSON manifest |
-| **Authored by** | Engineers | Generated or curated from knowledge | Composed from knowledge + rules |
-| **Stability** | High — changes require review | Medium — regenerated on knowledge changes | Low — easy to recompose |
+| **Format** | Markdown | Tool-specific (`.mdc`, etc.) | YAML manifest |
+| **Authored by** | Engineers | Adapters from knowledge | Composed from knowledge paths |
+| **Stability** | High — changes require review | Regenerated on knowledge changes | Low — easy to recompose |
 | **Contains reasoning** | Yes — trade-offs, context | No — concise directives only | No — references only |
 
-### When to write knowledge
-
-Write knowledge when you want to capture:
-
-- A principle with trade-offs ("prefer explicit error types over generic exceptions")
-- A pattern with constraints ("repository interfaces live in the domain layer")
-- A review criterion with rationale ("every public API method must have an integration test")
-
-### When to create a rule
-
-Create (or generate) a rule when:
-
-- Knowledge needs to be enforced during AI-assisted coding sessions
-- The guidance can be expressed as concise, unambiguous directives
-- A tool-specific format is required for the target assistant
-
-### When to create a profile
-
-Create a profile when:
-
-- A team or project needs a specific subset of knowledge
-- Different contexts require different rule strictness
-- You want a single artifact to configure an AI assistant for a workflow
-
-## How future adapters will consume knowledge
-
-Adapters in `scripts/` will follow a consistent pipeline:
+## Adapter pipeline (operational)
 
 ```
-1. Parse    — Read knowledge markdown; extract metadata, sections, directives
-2. Filter   — Apply profile scope; select relevant documents
-3. Transform — Map knowledge sections to target format (Cursor rule, Copilot instruction, etc.)
-4. Validate — Check output against tool schema and internal lint rules
-5. Emit     — Write to dist/<profile>/ or a deployment target
+1. Validate   — Frontmatter, graph, concepts, links
+2. Index      — dist/*.json for adapter consumption
+3. Extract    — scripts/adapters/common/ parses knowledge
+4. Transform  — scripts/adapters/cursor/ → .mdc rules
+5. Assemble   — Profile bundle + bundle-manifest.json + --verify
+6. Deploy     — Copy dist/<profile>/cursor/ to consumer .cursor/rules/
 ```
 
-### Design constraints for adapters
+### Design constraints
 
-- **Lossless where possible** — if a rule loses meaning compared to its source knowledge, flag it for human review rather than silently degrading.
-- **Deterministic** — the same knowledge + profile always produces the same output.
-- **Incremental** — adapters process individual documents; full rebuilds are not required for single-document changes.
-- **Extensible** — adding a new tool means adding a new adapter, not restructuring knowledge.
+- **Deterministic** — same knowledge + profile → same output
+- **Incremental** — changed-only validation for CI efficiency
+- **Explicit contract** — `adapter_priority`, concept IDs, Decision Flows
 
 ### Metadata contract
 
-Knowledge documents will include frontmatter (defined in the style guide) that adapters use for filtering and transformation:
-
-```yaml
----
-title: Service Layer Boundaries
-domain: symfony
-tags: [architecture, layering, dependency-injection]
-severity: recommended  # required | recommended | advisory
-applies_to: [backend, api]
-related:
-  - knowledge/architecture/hexagonal-architecture.md
----
-```
-
-Adapters read this metadata to decide inclusion, ordering, and formatting. The body content remains human-readable prose.
+Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.json`. Adapters filter on `adapter_priority`, `severity`, and profile `knowledge` paths.
 
 ## Extension points
 
-Current tooling:
+**Operational today:**
 
-- **Validation CLI** — `scripts/validate/validate.py` checks frontmatter, domain alignment, and links
-- **Schemas** — `schema/` defines contracts for knowledge frontmatter and profiles
+- Validator v2.3 with graph rules, namespaces, index generation, reports
+- Cursor adapter and `cursor-core` profile (65 rules)
+- Assemble pipeline with `--verify`
 
-Future phases may add:
+**Planned (Phase 4–5):**
 
-- **JSON Schema validation** in the validation CLI
-- **Index generation** — auto-generated table of contents per domain
-- **Versioning** — profile versioning for teams that pin to a specific EKP release
-- **Plugin adapters** — community-contributed transformers for additional AI tools
+- Additional technology domains and profiles
+- Copilot and Claude adapters
+- Profile versioning for pinned releases
+
+## Related
+
+- [`adapter-architecture.md`](adapter-architecture.md) — pipeline stages
+- [`folder-structure.md`](folder-structure.md) — directory layout
+- [`DEVELOPMENT.md`](../DEVELOPMENT.md) — local validation and CI
