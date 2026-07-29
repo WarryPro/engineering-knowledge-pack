@@ -367,6 +367,7 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 |----------|-------|--------|
 | [layering-and-boundaries.md](../architecture/layering-and-boundaries.md) | architecture | Published |
 | [adr-practices.md](../architecture/adr-practices.md) | procedure | Published |
+| [coupling-and-cohesion.md](../architecture/coupling-and-cohesion.md) | architecture | Published |
 
 Downstream documents must reference this document in their `related` frontmatter and must not restate principles—only operationalize them.
 
