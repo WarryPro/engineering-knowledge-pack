@@ -21,7 +21,7 @@ Thank you for your interest in Engineering Knowledge Pack (EKP).
 ## How to contribute
 
 1. Open an issue to discuss significant additions or structural changes.
-2. Fork the repository and create a branch from `main` or `staging` (follow your team's integration branch).
+2. Fork the repository and create a branch from `master` or `staging` (follow your team's integration branch).
 3. Write or update content following the style guide and relevant template.
 4. Run validation locally (see [`DEVELOPMENT.md`](DEVELOPMENT.md)).
 5. Open a pull request with a clear description of what changed and why.

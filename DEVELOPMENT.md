@@ -97,7 +97,7 @@ Regenerate after any knowledge or profile change.
 
 Workflow: [`.github/workflows/ekp-validation.yml`](.github/workflows/ekp-validation.yml)
 
-Triggers: `push` and `pull_request` to `main` and `staging`.
+Triggers: `push` and `pull_request` to `master` and `staging`.
 
 Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify`.
 

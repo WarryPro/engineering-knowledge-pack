@@ -3,11 +3,11 @@ name: EKP Validation
 on:
   push:
     branches:
-      - main
+      - master
       - staging
   pull_request:
     branches:
-      - main
+      - master
       - staging
 
 jobs:
