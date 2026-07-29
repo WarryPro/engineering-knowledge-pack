@@ -7,6 +7,10 @@ NAVIGATION_READMES = [
     "knowledge/engineering/README.md",
     "knowledge/testing/README.md",
     "knowledge/architecture/README.md",
+    "knowledge/ai/README.md",
+    "knowledge/security/README.md",
+    "knowledge/performance/README.md",
+    "knowledge/database/README.md",
 ]
 
 INDEX_SECTIONS = {
