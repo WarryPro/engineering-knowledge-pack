@@ -46,5 +46,9 @@
   "EKP-LO": {
     "owner": "knowledge/engineering/logging-and-observability.md",
     "format": "^EKP-LO[0-9]{2}$"
+  },
+  "EKP-AD": {
+    "owner": "knowledge/architecture/adr-practices.md",
+    "format": "^EKP-AD[0-9]{2}$"
   }
 }
