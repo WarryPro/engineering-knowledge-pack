@@ -17,6 +17,7 @@ related:
   - knowledge/ai/ai-assisted-development.md
   - knowledge/security/security-fundamentals.md
   - knowledge/performance/performance-mindset.md
+  - knowledge/engineering/logging-and-observability.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -352,6 +353,7 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [error-handling.md](error-handling.md) | Published | EKP-P07 | Failure handling practice (EKP-EH) |
 | [security-fundamentals.md](../security/security-fundamentals.md) | Published | EKP-P02, EKP-P06, EKP-P07 | Security fundamentals (EKP-SF) |
 | [performance-mindset.md](../performance/performance-mindset.md) | Published | EKP-P02, EKP-P08 | Performance mindset (EKP-PM) |
+| [logging-and-observability.md](logging-and-observability.md) | Published | EKP-P04, EKP-P07 | Logging and observability (EKP-LO) |
 
 ### Testing domain (builds upon principles)
 

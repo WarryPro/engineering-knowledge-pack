@@ -16,6 +16,7 @@ related:
   - knowledge/engineering/clean-code.md
   - knowledge/testing/testing.md
   - knowledge/performance/performance-mindset.md
+  - knowledge/engineering/logging-and-observability.md
   - knowledge/performance/README.md
 extends: []
 concept_ids: [EKP-PM01, EKP-PM02, EKP-PM03, EKP-PM04, EKP-PM05, EKP-PM06, EKP-PM07]
@@ -49,7 +50,7 @@ Performance work fails in two predictable ways: optimizing without measurement (
 | Load/stress test execution | `performance/` (future), `devops/` | Out of scope |
 | Infrastructure scaling, CDN, caching infra | `devops/` | Out of scope |
 | Framework-specific optimizations | Stack domains | Out of scope |
-| Logging and tracing for diagnosis | `logging-and-observability.md` (EKP-LO) | Complementary |
+| Logging and tracing for diagnosis | [logging-and-observability.md](../engineering/logging-and-observability.md) (EKP-LO) | Complementary |
 
 **Out of scope:** JVM tuning flags, GPU kernel optimization, kernel-level profiling, capacity planning spreadsheets, vendor APM setup tutorials.
 
@@ -233,7 +234,7 @@ Skip formal performance analysis when **all** apply:
 - Test strategy for regressions → `testing.md` (EKP-TS)
 - Schema and query design → `database/`
 - Load testing and capacity → `devops/`, future performance guides
-- Distributed tracing setup → `logging-and-observability.md` (EKP-LO), `devops/`
+- Distributed tracing setup → [logging-and-observability.md](../engineering/logging-and-observability.md) (EKP-LO), `devops/`
 
 ## Knowledge graph position
 

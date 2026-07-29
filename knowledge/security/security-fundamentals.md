@@ -17,6 +17,7 @@ related:
   - knowledge/engineering/error-handling.md
   - knowledge/architecture/layering-and-boundaries.md
   - knowledge/ai/ai-assisted-development.md
+  - knowledge/engineering/logging-and-observability.md
   - knowledge/security/README.md
 extends: []
 concept_ids: [EKP-SF01, EKP-SF02, EKP-SF03, EKP-SF04, EKP-SF05, EKP-SF06, EKP-SF07, EKP-SF08]
@@ -47,7 +48,7 @@ Security failures compound silently: leaked credentials, missing authorization c
 | Boundary validation and API contracts | `layering-and-boundaries.md` (EKP-LB09) | Escalation — do not duplicate |
 | Failure semantics and error contracts | `error-handling.md` (EKP-EH) | Complementary — security errors are failures |
 | Secrets in AI prompts and generated code | `ai-assisted-development.md` (EKP-AI08) | Reference only — do not restate |
-| Application logging and PII in logs | `logging-and-observability.md` (EKP-LO) | Cross-reference when guide exists |
+| Application logging and PII in logs | [logging-and-observability.md](../engineering/logging-and-observability.md) (EKP-LO) | Cross-reference |
 | Framework security config (Symfony, OAuth libs) | Stack domains | Out of scope |
 | Infrastructure hardening, WAF, network segmentation | `devops/` | Out of scope |
 | Threat modeling workshops, compliance (SOC2, PCI) | ADRs, security team process | Out of scope |
@@ -204,7 +205,7 @@ Security is a **practice-layer** artifact in the `security` domain. Adapters sho
 **Rules:**
 
 - Missing token, expired session, or failed validation → reject; do not proceed with anonymous elevated access.
-- Ambiguous authorization → deny and log (see `logging-and-observability.md` when available).
+- Ambiguous authorization → deny and log (see [logging-and-observability.md](../engineering/logging-and-observability.md) EKP-LO04).
 - Security configuration errors should surface at startup or test time—not silently in production.
 - Prefer explicit security exceptions over returning empty data that hides denial.
 
@@ -311,7 +312,7 @@ Canonical sequence for security-sensitive changes. Run after `ai-assisted-develo
 - API boundary contracts and validation placement → `layering-and-boundaries.md` (EKP-LB)
 - Error message design and leak prevention → `error-handling.md` (EKP-EH)
 - AI secret handling in prompts → `ai-assisted-development.md` (EKP-AI08)
-- Logging sensitive data → `logging-and-observability.md` (EKP-LO)
+- Logging sensitive data → [logging-and-observability.md](../engineering/logging-and-observability.md) (EKP-LO)
 - Framework OAuth, CSRF, CORS config → stack domains
 - Infrastructure WAF, TLS termination, IAM → `devops/`
 

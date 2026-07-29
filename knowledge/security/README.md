@@ -18,3 +18,4 @@ Security principles and practices across all layers.
 - Framework-specific security config → see stack domain (`symfony/`, etc.)
 - Infrastructure hardening → see `devops/`
 - General error handling → see `engineering/`
+- Application logging and PII in logs → see `engineering/logging-and-observability.md`

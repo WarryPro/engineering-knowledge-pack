@@ -18,3 +18,4 @@ Profiling, optimization, and caching principles.
 - Database index design → see `database/`
 - Infrastructure scaling → see `devops/`
 - Framework-specific optimizations → see stack domain
+- Application logging and tracing → see `engineering/logging-and-observability.md`
