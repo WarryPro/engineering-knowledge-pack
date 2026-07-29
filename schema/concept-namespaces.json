@@ -58,5 +58,13 @@
   "EKP-AP": {
     "owner": "knowledge/architecture/api-design.md",
     "format": "^EKP-AP[0-9]{2}$"
+  },
+  "EKP-DB": {
+    "owner": "knowledge/database/database-design.md",
+    "format": "^EKP-DB[0-9]{2}$"
+  },
+  "EKP-IN": {
+    "owner": "knowledge/architecture/integration-patterns.md",
+    "format": "^EKP-IN[0-9]{2}$"
   }
 }

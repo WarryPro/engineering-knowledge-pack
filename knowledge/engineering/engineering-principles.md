@@ -369,6 +369,13 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [adr-practices.md](../architecture/adr-practices.md) | procedure | Published |
 | [coupling-and-cohesion.md](../architecture/coupling-and-cohesion.md) | architecture | Published |
 | [api-design.md](../architecture/api-design.md) | architecture | Published |
+| [integration-patterns.md](../architecture/integration-patterns.md) | pattern | Published |
+
+### Database layer (builds upon principles)
+
+| Document | Layer | Status |
+|----------|-------|--------|
+| [database-design.md](../database/database-design.md) | architecture | Published |
 
 Downstream documents must reference this document in their `related` frontmatter and must not restate principles—only operationalize them.
 

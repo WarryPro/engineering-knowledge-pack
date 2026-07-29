@@ -33,6 +33,10 @@ roles:
 exceptions:
   - source: knowledge/engineering/design-patterns.md
     allowed_dependency: knowledge/engineering/solid.md
+  # Phase 3B: integration patterns require system boundary context (EKP-LB).
+  # Only cross-layer exception in this phase — pattern role otherwise allows foundation + practice only.
+  - source: knowledge/architecture/integration-patterns.md
+    allowed_dependency: knowledge/architecture/layering-and-boundaries.md
 
 depth:
   warn_at: 3
