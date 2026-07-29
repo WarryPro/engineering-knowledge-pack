@@ -58,8 +58,11 @@ py -3 -m pip install -r scripts/validate/requirements.txt
 2. Read [`docs/architecture.md`](docs/architecture.md) to understand how the repository is organized.
 3. Read [`docs/adapter-architecture.md`](docs/adapter-architecture.md) for the operational adapter pipeline.
 4. Read [`docs/contribution-guide.md`](docs/contribution-guide.md) before adding or changing content.
+5. Read [`DEVELOPMENT.md`](DEVELOPMENT.md) to run validation and assemble locally.
 
 ## Validation
+
+See [`DEVELOPMENT.md`](DEVELOPMENT.md) for the full pipeline. Quick check:
 
 ```bash
 py -3 scripts/validate/validate.py
@@ -75,7 +78,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 | Phase 2 — Core engineering knowledge | **In progress** | 16 published guides; Phase 2C cross-cutting complete |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble pipeline |
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
-| Phase 3B.1 — Repository consolidation | **In progress** | Documentation sync, CI, examples, release preparation |
+| Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, release prep |
 
 ### Repository metrics
 

@@ -10,6 +10,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 2 — Core engineering knowledge | **In progress** | 12 guides; Phase 2C complete |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble |
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
+| Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, release prep |
 | Phase 4 — Technology knowledge | **Planned** | Stack-specific domains (PHP, Symfony, Flutter, etc.) |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot and Claude pending |
 
@@ -107,10 +108,29 @@ Expand system design and architectural decision-making knowledge beyond boundary
 - [x] `integration-patterns.md` — EKP-IN
 - [x] `database-design.md` — EKP-DB (database domain)
 - [x] EKP-AI10 escalation routes to Phase 3B guides
-- [ ] Architecture decision record examples in `examples/` *(deferred — Phase 3B.1)*
-- [ ] Review checklist template populated with architecture-specific items *(deferred — Phase 3B.1)*
+- [x] Example ADR and review checklists in `examples/` (Phase 3B.1)
 
 **Exit criteria:** A tech lead can use EKP to guide architecture reviews and document decisions consistently.
+
+---
+
+## Phase 3B.1: Repository consolidation & release preparation
+
+**Status:** Complete
+
+Consolidate documentation, CI, examples, and release readiness for `v0.2.0` — **no new knowledge guides**.
+
+**Deliverables:**
+
+- [x] Documentation sync (README, architecture, CONTRIBUTING, rules READMEs)
+- [x] `DEVELOPMENT.md` — local validation and pipeline
+- [x] `NAVIGATION_READMES` extended (ai, security, performance, database)
+- [x] CI workflow `.github/workflows/ekp-validation.yml`
+- [x] `examples/` — ADR sample + architecture and API review checklists
+- [ ] Git tag `v0.2.0` *(human approval — post-merge)*
+- [ ] GitHub Release *(human approval)*
+
+**Exit criteria:** CI green; validator 0 README warnings; `cursor-core` stable at 65 rules; CHANGELOG ready for release cut.
 
 ---
 

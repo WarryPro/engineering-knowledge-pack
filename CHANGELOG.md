@@ -40,6 +40,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `knowledge/database/database-design.md` — EKP-DB01–DB08.
 - Namespaces EKP-AD, EKP-MC, EKP-AP, EKP-DB, EKP-IN.
 - Graph exception: `integration-patterns.md` → `layering-and-boundaries.md` (documented in `graph-rules.yaml`).
+- Phase 3B.1 repository consolidation:
+  - Documentation sync (README, architecture, CONTRIBUTING, rules READMEs).
+  - `DEVELOPMENT.md` — local validation and assemble pipeline.
+  - Extended `NAVIGATION_READMES` for ai, security, performance, database domains.
+  - CI workflow `.github/workflows/ekp-validation.yml`.
+  - `examples/` — ADR sample, architecture and API review checklists.
 
 ### Changed
 
@@ -51,6 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `error-handling.md`, `testing.md`, `engineering-principles.md` — cross-links to Phase 2C guides.
 - `layering-and-boundaries.md` — LB04 escalation to coupling-and-cohesion.
 - `architecture/README.md`, `database/README.md` — published indexes.
+
+### Release preparation
+
+The next release **`v0.2.0`** will include all `[Unreleased]` items above (Phase 2B through 3B.1). Tag and GitHub Release require separate human approval after merge to `main` and CI verification.
 
 ## [0.1.0] - 2026-07-23
 
