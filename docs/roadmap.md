@@ -7,7 +7,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase | Status | Summary |
 |-------|--------|---------|
 | Phase 1 — Foundation | **Complete** | Structure, templates, schemas, validation skeleton |
-| Phase 2 — Core engineering knowledge | **In progress** | 9 guides published; security/performance pending |
+| Phase 2 — Core engineering knowledge | **In progress** | 12 guides published; Phase 2C cross-cutting complete |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble |
 | Phase 3B — Architecture knowledge expansion | **Planned** | Deeper architecture and database knowledge |
 | Phase 4 — Technology knowledge | **Planned** | Stack-specific domains (PHP, Symfony, Flutter, etc.) |
@@ -44,10 +44,10 @@ Populate cross-cutting engineering domains that apply regardless of technology s
 
 **Target domains:**
 
-- `knowledge/engineering/` — principles, clean code, SOLID, design patterns, refactoring, error handling
+- `knowledge/engineering/` — principles, clean code, SOLID, design patterns, refactoring, error handling, logging
 - `knowledge/testing/` — testing philosophy, test pyramid, test naming, fixture management
-- `knowledge/security/` — input validation, authentication patterns, secrets management *(pending)*
-- `knowledge/performance/` — profiling mindset, caching principles, query awareness *(pending)*
+- `knowledge/security/` — input validation, authentication patterns, secrets management
+- `knowledge/performance/` — profiling mindset, caching principles, query awareness
 
 **Deliverables:**
 
@@ -56,8 +56,11 @@ Populate cross-cutting engineering domains that apply regardless of technology s
 - [x] Architecture boundary guide: `knowledge/architecture/layering-and-boundaries.md`
 - [x] AI orchestrator guide: `knowledge/ai/ai-assisted-development.md`
 - [x] First operational profile: `profiles/cursor-core.yaml`
+- [x] Security guide: `knowledge/security/security-fundamentals.md`
+- [x] Performance guide: `knowledge/performance/performance-mindset.md`
+- [x] Logging guide: `knowledge/engineering/logging-and-observability.md`
 - [ ] 15–25 focused knowledge documents across all core domains
-- [ ] Security and performance guides
+- [x] Security and performance guides (Phase 2C)
 - [ ] Cross-reference index per domain
 
 **Exit criteria:** A team can adopt EKP for code review and engineering standards without any technology-specific content.
