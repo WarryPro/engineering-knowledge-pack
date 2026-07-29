@@ -54,5 +54,9 @@
   "EKP-MC": {
     "owner": "knowledge/architecture/coupling-and-cohesion.md",
     "format": "^EKP-MC[0-9]{2}$"
+  },
+  "EKP-AP": {
+    "owner": "knowledge/architecture/api-design.md",
+    "format": "^EKP-AP[0-9]{2}$"
   }
 }
