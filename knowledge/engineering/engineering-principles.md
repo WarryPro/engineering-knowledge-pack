@@ -14,6 +14,15 @@ related:
   - knowledge/engineering/error-handling.md
   - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
+  - knowledge/architecture/adr-practices.md
+  - knowledge/architecture/coupling-and-cohesion.md
+  - knowledge/architecture/api-design.md
+  - knowledge/architecture/integration-patterns.md
+  - knowledge/database/database-design.md
+  - knowledge/ai/ai-assisted-development.md
+  - knowledge/security/security-fundamentals.md
+  - knowledge/performance/performance-mindset.md
+  - knowledge/engineering/logging-and-observability.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -347,6 +356,9 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | [refactoring.md](refactoring.md) | Published | EKP-P03, EKP-P10 | Safe structural change procedures (EKP-RF) |
 | [design-patterns.md](design-patterns.md) | Published | EKP-P02, EKP-P05, EKP-P09 | Named pattern catalog (EKP-DP) |
 | [error-handling.md](error-handling.md) | Published | EKP-P07 | Failure handling practice (EKP-EH) |
+| [security-fundamentals.md](../security/security-fundamentals.md) | Published | EKP-P02, EKP-P06, EKP-P07 | Security fundamentals (EKP-SF) |
+| [performance-mindset.md](../performance/performance-mindset.md) | Published | EKP-P02, EKP-P08 | Performance mindset (EKP-PM) |
+| [logging-and-observability.md](logging-and-observability.md) | Published | EKP-P04, EKP-P07 | Logging and observability (EKP-LO) |
 
 ### Testing domain (builds upon principles)
 
@@ -359,6 +371,16 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 | Document | Layer | Status |
 |----------|-------|--------|
 | [layering-and-boundaries.md](../architecture/layering-and-boundaries.md) | architecture | Published |
+| [adr-practices.md](../architecture/adr-practices.md) | procedure | Published |
+| [coupling-and-cohesion.md](../architecture/coupling-and-cohesion.md) | architecture | Published |
+| [api-design.md](../architecture/api-design.md) | architecture | Published |
+| [integration-patterns.md](../architecture/integration-patterns.md) | pattern | Published |
+
+### Database layer (builds upon principles)
+
+| Document | Layer | Status |
+|----------|-------|--------|
+| [database-design.md](../database/database-design.md) | architecture | Published |
 
 Downstream documents must reference this document in their `related` frontmatter and must not restate principles—only operationalize them.
 

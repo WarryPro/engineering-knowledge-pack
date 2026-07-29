@@ -1,7 +1,9 @@
-# GitHub Copilot Instructions
+# Copilot Rules
 
-Generated Copilot instruction files. Output format to be defined in Phase 5.
+Scaffold for GitHub Copilot instruction layout. **Not yet operational** — Copilot adapter is planned (Phase 5).
 
-Rules are derived from knowledge documents by adapters. Do not author instructions here without a corresponding knowledge document.
+When implemented, output will follow the same pattern as Cursor: knowledge → adapter → `dist/<profile>/copilot/`.
 
-Deploy target: `.github/copilot-instructions.md` in consumer projects.
+Do not author Copilot instructions here without a corresponding knowledge document.
+
+See [`docs/adapter-architecture.md`](../../docs/adapter-architecture.md).

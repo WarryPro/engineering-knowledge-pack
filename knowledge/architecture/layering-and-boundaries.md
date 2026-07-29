@@ -139,6 +139,7 @@ A modular monolith with clear package boundaries may outperform premature servic
 | Domain imports ORM driver | EKP-SL05 (`solid.md`) | Layer placement and port ownership unclear |
 | Cross-service Adapter | EKP-DP10 (`design-patterns.md`) | Contract spans teams or deployment boundaries |
 | Level 4 refactor proposed | EKP-RF07 (`refactoring.md`) | **Always** — ADR + this document |
+| Circular package imports, `utils` sprawl | EKP-MC04 (`coupling-and-cohesion.md`) | Split implies new service/team boundary |
 
 **Rule:** If the fix requires changing *who owns the contract* between systems or layers, the problem is architectural (EKP-LB)—not a SOLID or pattern problem alone.
 

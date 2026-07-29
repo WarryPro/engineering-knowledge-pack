@@ -16,7 +16,13 @@ related:
   - knowledge/engineering/refactoring.md
   - knowledge/testing/testing.md
   - knowledge/engineering/error-handling.md
+  - knowledge/security/security-fundamentals.md
   - knowledge/architecture/layering-and-boundaries.md
+  - knowledge/architecture/adr-practices.md
+  - knowledge/architecture/api-design.md
+  - knowledge/architecture/coupling-and-cohesion.md
+  - knowledge/architecture/integration-patterns.md
+  - knowledge/database/database-design.md
   - knowledge/engineering/clean-code.md
 extends: []
 concept_ids: [EKP-AI01, EKP-AI02, EKP-AI03, EKP-AI04, EKP-AI05, EKP-AI06, EKP-AI07, EKP-AI08, EKP-AI09, EKP-AI10, EKP-AI11, EKP-AI12]
@@ -70,7 +76,12 @@ Without governance, teams experience:
 | Failure semantics | `error-handling.md` (EKP-EH) | Escalation — error paths |
 | System/integration boundaries | `layering-and-boundaries.md` (EKP-LB) | Escalation — boundary detection |
 | Readable code | `clean-code.md` (EKP-CC) | Cross-reference only |
-| Security deep practices | `security/` (future) | EKP-AI08 minimum bar only |
+| Security deep practices | `security/security-fundamentals.md` (EKP-SF) | EKP-AI08 minimum bar; route to EKP-SF Decision Flow |
+| HTTP API design | `architecture/api-design.md` (EKP-AP) | Route from EKP-AI10 — API Decision Flow |
+| Schema/migrations/transactions | `database/database-design.md` (EKP-DB) | Route from EKP-AI10 |
+| Module/package structure | `architecture/coupling-and-cohesion.md` (EKP-MC) | Route from EKP-AI10 |
+| Cross-service integration style | `architecture/integration-patterns.md` (EKP-IN) | Route from EKP-AI10 |
+| ADR / Level 4 governance | `architecture/adr-practices.md` (EKP-AD) | Route from EKP-AI10 |
 | Tool rule file format | `rules/cursor/`, adapters | Out of scope — derived output |
 
 **Out of scope:** prompt engineering tutorials for specific LLMs, model selection, token budgeting, RAG pipeline design, embedding indexes, automatic code-fix bots, CI adapter configuration.
@@ -318,6 +329,12 @@ AI-assisted development is a **practice-layer** artifact in the `ai` domain. Ada
 - Verification → `testing.md` (EKP-TS) Decision Flow.
 - Errors/failures → `error-handling.md` (EKP-EH).
 - System/integration boundary → `layering-and-boundaries.md` (EKP-LB) Decision Flow.
+- HTTP API add/change → `architecture/api-design.md` (EKP-AP) Decision Flow.
+- Schema, migration, or transaction scope → `database/database-design.md` (EKP-DB).
+- Module/package coupling or split → `architecture/coupling-and-cohesion.md` (EKP-MC).
+- Cross-service messaging or sync/async choice → `architecture/integration-patterns.md` (EKP-IN).
+- One-way door / Level 4 / ADR required → `architecture/adr-practices.md` (EKP-AD).
+- Security-sensitive change (auth, PII, payment, secrets) → `security/security-fundamentals.md` (EKP-SF) Decision Flow.
 - Do not duplicate sibling content—cite and route.
 
 **Good:** "This is a Level 2 extract method refactor—applying EKP-RF Decision Flow step 3."
@@ -515,7 +532,7 @@ Governed AI assistance improves reviewability and reduces risk. It is not free.
 - Error contracts → `error-handling.md` (EKP-EH)
 - Layer and service boundaries → `layering-and-boundaries.md` (EKP-LB)
 - Naming and readability → `clean-code.md` (EKP-CC)
-- Security practices beyond secret handling → `security/` (future)
+- Security practices beyond secret handling → `security/security-fundamentals.md` (EKP-SF)
 
 ## Knowledge graph position
 

@@ -40,6 +40,8 @@ domain: architecture
 
 ## When to write an ADR
 
+See [adr-practices.md](../adr-practices.md) (EKP-AD01) for the full process. Summary:
+
 - The decision is hard to reverse
 - Multiple valid approaches existed
 - The rationale will be questioned later
@@ -48,10 +50,13 @@ domain: architecture
 
 ## When not to write an ADR
 
+See [adr-practices.md](../adr-practices.md) (EKP-AD02). Summary:
+
 - Routine implementation choices covered by existing knowledge
 - Temporary or easily reversible decisions
 
 ## Related
 
 - [Architecture domain README](../README.md)
+- [ADR practices](../adr-practices.md) — EKP-AD process guide
 - [Decision record template](../../../../templates/decision-record-template.md)

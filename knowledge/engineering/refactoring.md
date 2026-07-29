@@ -19,6 +19,7 @@ related:
   - knowledge/engineering/error-handling.md
   - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
+  - knowledge/architecture/adr-practices.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -485,7 +486,7 @@ Consistent refactoring discipline improves long-term maintainability. It is not 
 - Readability targets → `clean-code.md` (EKP-CC)
 - Structural quality diagnosis → `solid.md` (EKP-SL)
 - Pattern structure after refactor → `design-patterns.md`
-- System boundaries and Level 4 design → `layering-and-boundaries.md` + ADR
+- System boundaries and Level 4 design → `layering-and-boundaries.md` + [adr-practices.md](../architecture/adr-practices.md)
 
 ## Knowledge graph position
 

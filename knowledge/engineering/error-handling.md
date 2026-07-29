@@ -18,6 +18,7 @@ related:
   - knowledge/engineering/refactoring.md
   - knowledge/testing/testing.md
   - knowledge/architecture/layering-and-boundaries.md
+  - knowledge/engineering/logging-and-observability.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -51,8 +52,8 @@ Failures are inevitable: invalid input, violated business rules, unavailable dep
 | Readable error paths and names | `clean-code.md` (EKP-CC) | Cross-reference only |
 | Who owns recovery logic | `solid.md` (EKP-SL) | Cross-reference only |
 | Cross-service error contracts | `layering-and-boundaries.md` (EKP-LB) | Escalation |
-| Logging configuration, log levels, appenders | `devops/`, stack domains | Out of scope |
-| Metrics, tracing, dashboards | `performance/`, observability stacks | Out of scope |
+| Logging configuration, log levels, appenders | `logging-and-observability.md` (EKP-LO) | Out of scope |
+| Metrics, tracing, dashboards | `logging-and-observability.md` (EKP-LO), `devops/` | Out of scope |
 | Retry/backoff library usage | Stack domains | Out of scope |
 | Input validation at API boundary | `layering-and-boundaries.md` (EKP-LB09) | Complementary—not duplicated |
 
@@ -433,7 +434,7 @@ Explicit failure handling improves reliability and debuggability. It is not free
 - Class ownership of handlers → `solid.md` (EKP-SL)
 - Cross-service error codes and idempotency → `layering-and-boundaries.md` (EKP-LB)
 - Safe migration of error paths → `refactoring.md` (EKP-RF)
-- Logging setup, log aggregation → `devops/`, stack domains
+- Logging setup, log aggregation → `logging-and-observability.md` (EKP-LO), `devops/`
 - Framework exception hierarchy → `symfony/`, `typescript/`, etc.
 
 ## Knowledge graph position
