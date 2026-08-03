@@ -1,0 +1,36 @@
+# EKP cursor-php profile
+# PHP language knowledge on top of the cursor-core L0 subset.
+# Explicit composition — no profile extends (v0.3.0 policy).
+# Does not modify cursor-core.yaml.
+
+name: cursor-php
+description: EKP Cursor bundle for PHP language work (fundamentals + core engineering routing).
+
+knowledge:
+  # --- Always-on: foundation + AI orchestrator (same subset as cursor-core) ---
+  - knowledge/engineering/engineering-principles.md
+  - knowledge/ai/ai-assisted-development.md
+
+  # --- Routing: L0 siblings ---
+  - knowledge/engineering/refactoring.md
+  - knowledge/testing/testing.md
+  - knowledge/engineering/error-handling.md
+  - knowledge/architecture/layering-and-boundaries.md
+
+  # --- L1: PHP ---
+  - knowledge/php/php-fundamentals.md
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  target:
+    - cursor
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor
