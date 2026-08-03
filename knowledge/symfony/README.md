@@ -14,3 +14,7 @@ Symfony framework patterns, conventions, and project structure.
 - Generic PHP idioms → see `php/`
 - Database schema and migrations → see `database/`
 - General layering principles → see `architecture/`
+
+## Published
+
+- [symfony-architecture.md](symfony-architecture.md) — EKP-SY01–SY08; depends on EKP-PH; applies EKP-P04, P05, P06, P09

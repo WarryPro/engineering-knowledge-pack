@@ -82,6 +82,8 @@ Without governance, teams experience:
 | Module/package structure | `architecture/coupling-and-cohesion.md` (EKP-MC) | Route from EKP-AI10 |
 | Cross-service integration style | `architecture/integration-patterns.md` (EKP-IN) | Route from EKP-AI10 |
 | ADR / Level 4 governance | `architecture/adr-practices.md` (EKP-AD) | Route from EKP-AI10 |
+| PHP language design | `php/php-fundamentals.md` (EKP-PH) | Route from EKP-AI10 — Phase 4 |
+| Symfony application structure | `symfony/symfony-architecture.md` (EKP-SY) | Route from EKP-AI10 — Phase 4 |
 | Tool rule file format | `rules/cursor/`, adapters | Out of scope — derived output |
 
 **Out of scope:** prompt engineering tutorials for specific LLMs, model selection, token budgeting, RAG pipeline design, embedding indexes, automatic code-fix bots, CI adapter configuration.
@@ -335,6 +337,8 @@ AI-assisted development is a **practice-layer** artifact in the `ai` domain. Ada
 - Cross-service messaging or sync/async choice → `architecture/integration-patterns.md` (EKP-IN).
 - One-way door / Level 4 / ADR required → `architecture/adr-practices.md` (EKP-AD).
 - Security-sensitive change (auth, PII, payment, secrets) → `security/security-fundamentals.md` (EKP-SF) Decision Flow.
+- PHP language/module design (types, Composer, globals, config edge) → `php/php-fundamentals.md` (EKP-PH) Decision Flow.
+- Symfony application structure (DI, thin controllers, modules, Messenger, Security wiring) → `symfony/symfony-architecture.md` (EKP-SY) Decision Flow.
 - Do not duplicate sibling content—cite and route.
 
 **Good:** "This is a Level 2 extract method refactor—applying EKP-RF Decision Flow step 3."
