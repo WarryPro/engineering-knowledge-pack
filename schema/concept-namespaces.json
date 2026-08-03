@@ -66,5 +66,13 @@
   "EKP-IN": {
     "owner": "knowledge/architecture/integration-patterns.md",
     "format": "^EKP-IN[0-9]{2}$"
+  },
+  "EKP-PH": {
+    "owner": "knowledge/php/php-fundamentals.md",
+    "format": "^EKP-PH[0-9]{2}$"
+  },
+  "EKP-SY": {
+    "owner": "knowledge/symfony/symfony-architecture.md",
+    "format": "^EKP-SY[0-9]{2}$"
   }
 }

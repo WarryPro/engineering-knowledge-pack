@@ -37,6 +37,10 @@ exceptions:
   # Only cross-layer exception in this phase — pattern role otherwise allows foundation + practice only.
   - source: knowledge/architecture/integration-patterns.md
     allowed_dependency: knowledge/architecture/layering-and-boundaries.md
+  # Phase 4 (V2 graph policy): framework architecture may depend on language practice.
+  # No technology role yet — revisit V1 (role: technology) if exceptions proliferate.
+  - source: knowledge/symfony/symfony-architecture.md
+    allowed_dependency: knowledge/php/php-fundamentals.md
 
 depth:
   warn_at: 3
