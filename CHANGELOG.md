@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Phase 4 Wave 0–1 (technology knowledge):
+  - `knowledge/php/php-fundamentals.md` — EKP-PH01–PH08
+  - `knowledge/symfony/symfony-architecture.md` — EKP-SY01–SY08
+  - Namespaces `EKP-PH`, `EKP-SY` (reserved for later: `EKP-TY`, `EKP-FE`)
+  - Profiles `cursor-php`, `cursor-symfony` (explicit composition; `cursor-core` unchanged)
+  - Templates: `technology-knowledge-document-template.md`, `technology-guide-checklist.md`
+  - Graph V2 exception: Symfony architecture → PHP fundamentals
+  - CI assemble `--verify` for `cursor-core`, `cursor-php`, `cursor-symfony`
+
+### Changed
+
+- Documentation: architecture domain map (L0–L3), roadmap Phase 4 in progress, README/DEVELOPMENT multi-profile assemble
+- `ai-assisted-development.md` — EKP-AI10 routes to EKP-PH and EKP-SY
+
 ## [0.2.0] - 2026-07-30
 
 ### Added

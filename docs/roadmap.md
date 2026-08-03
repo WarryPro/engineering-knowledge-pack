@@ -11,7 +11,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble |
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, release prep |
-| Phase 4 — Technology knowledge | **Planned** | Stack-specific domains (PHP, Symfony, Flutter, etc.) |
+| Phase 4 — Technology knowledge | **In progress** | Wave 1: PHP + Symfony; TS/Frontend later |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot and Claude pending |
 
 ---
@@ -136,26 +136,34 @@ Consolidate documentation, CI, examples, and release readiness for `v0.2.0` — 
 
 ## Phase 4: Technology knowledge
 
-**Status:** Planned
+**Status:** In progress (Wave 1 — PHP / Symfony)
 
-Add stack-specific guidance for the technologies this project targets.
+Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
+
+**Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
 **Target domains:**
 
-- `knowledge/php/`
-- `knowledge/symfony/`
-- `knowledge/flutter/`
-- `knowledge/typescript/`
-- `knowledge/frontend/`
-- `knowledge/devops/`
+- `knowledge/php/` (L1) — **Wave 1**
+- `knowledge/symfony/` (L2) — **Wave 1**
+- `knowledge/typescript/` (L1) — Wave 2 / v0.3.1 candidate (`EKP-TY`)
+- `knowledge/frontend/` (L2) — Wave 2 (`EKP-FE`; no separate `vue/` domain)
+- `knowledge/devops/` (L3) — Wave 3
+- `knowledge/flutter/` (L2) — Wave 3
 
 **Deliverables:**
 
-- Technology-specific knowledge documents with clear scope boundaries
-- Profiles per major stack (e.g., `profiles/symfony-api.yaml`, `profiles/flutter-mobile.yaml`)
-- Examples showing how generic engineering principles apply within a specific stack
+- [x] Wave 0: namespaces `EKP-PH` / `EKP-SY`, graph V2 exception (Symfony → PHP), tech templates/checklist, docs
+- [x] `php-fundamentals.md` (EKP-PH)
+- [x] `symfony-architecture.md` (EKP-SY)
+- [x] Profiles `cursor-php`, `cursor-symfony` (explicit composition; `cursor-core` unchanged)
+- [x] CI assemble `--verify` for `cursor-core`, `cursor-php`, `cursor-symfony`
+- [ ] TypeScript / Frontend guides and profiles (Wave 2)
+- [ ] DevOps / Flutter (Wave 3)
 
-**Exit criteria:** A developer working in a supported stack can find actionable guidance for common tasks without wading through irrelevant content.
+**Exit criteria:** A developer on a supported stack can find actionable guidance without wading through unrelated stacks; tech guides cite L0 concepts instead of duplicating them.
+
+**v0.3.0 target (must-only):** PHP + Symfony guides and profiles above — release cut is a separate human-approved step (no tag in this implementation).
 
 ---
 

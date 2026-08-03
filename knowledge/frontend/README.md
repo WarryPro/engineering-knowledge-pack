@@ -25,3 +25,7 @@ Frontend architecture, UI patterns, and user-facing concerns.
 | Shared types between API and UI | `typescript/` (type design) + link to `frontend/` |
 
 When a document spans both, place it in the domain of the primary concern and link to the other.
+
+## Namespace
+
+Reserved namespace for Frontend guides: **EKP-FE**. Framework-specific content (React or Vue) stays in this domain — do not create a separate `vue/` domain.
