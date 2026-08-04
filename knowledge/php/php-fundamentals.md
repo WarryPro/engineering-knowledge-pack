@@ -14,6 +14,7 @@ implements:
   - EKP-P06
   - EKP-P07
   - EKP-P09
+  - EKP-P10
 related:
   - knowledge/engineering/engineering-principles.md
   - knowledge/engineering/solid.md
@@ -32,7 +33,7 @@ adapter_priority: high
 
 ## Summary
 
-Language-layer guidance for **modern PHP** as used in application code: typing, nullability, Composer boundaries, PSR conventions, runtime configuration, and testable units. This document **applies** **EKP-P04** (Explicit), **EKP-P05** (Local reasoning), **EKP-P06** (Own the boundary), **EKP-P07** (Fail fast), and **EKP-P09** (Compose)—it does not redefine those principles.
+Language-layer guidance for **modern PHP** as used in application code: typing, nullability, Composer boundaries, PSR conventions, runtime configuration, and testable units. This document **applies** **EKP-P04** (Explicit), **EKP-P05** (Local reasoning), **EKP-P06** (Own the boundary), **EKP-P07** (Fail fast), **EKP-P09** (Compose), and **EKP-P10** (where testability/design-for-change applies)—it does not redefine those principles.
 
 Apply when writing or reviewing PHP outside a single framework tutorial. Framework structure belongs in [`symfony-architecture.md`](../symfony/symfony-architecture.md) (EKP-SY). Relax per **EKP-P02** for throwaway scripts with no shared consumers.
 
