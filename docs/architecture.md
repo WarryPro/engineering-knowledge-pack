@@ -45,7 +45,7 @@ See [`adapter-architecture.md`](adapter-architecture.md) for pipeline details.
 Contains engineering knowledge as markdown documents organized by domain:
 
 - **Cross-cutting domains** — `engineering/`, `architecture/`, `security/`, `testing/`, `performance/`, `devops/`, `ai/`, `database/`
-- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1 stub), `frontend/` (L2 stub), `flutter/` (L2 stub), `devops/` (L3 stub)
+- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1), `frontend/` (L2), `flutter/` (L2 stub), `devops/` (L3 stub)
 
 Technology knowledge **applies** foundation concepts; it must not redefine them. Layering:
 
@@ -53,9 +53,9 @@ Technology knowledge **applies** foundation concepts; it must not redefine them.
 L0 Foundation → L1 Language (php, typescript) → L2 Framework (symfony, frontend, flutter) → L3 Ops (devops)
 ```
 
-Dependency direction is downward only. Graph policy for Phase 4 is **V2**: reuse existing roles (`practice`, `architecture`, …); add explicit `graph-rules.yaml` exceptions when a framework guide must `depends_on` a language guide (e.g. Symfony → PHP). Do not introduce a `technology` role until exceptions become costly.
+Dependency direction is downward only. Graph policy for Phase 4 is **V2**: reuse existing roles (`practice`, `architecture`, …); add explicit `graph-rules.yaml` exceptions when an L2 guide must `depends_on` an L1 guide (e.g. Symfony → PHP, Frontend → TypeScript). Do not introduce a `technology` role until exceptions become costly.
 
-**Reserved concept namespaces (not yet owned):** `EKP-TY` (TypeScript), `EKP-FE` (Frontend). Do not reuse `EKP-TS` (Testing) or `EKP-SF` (Security).
+**Technology namespaces:** `EKP-PH`, `EKP-SY`, `EKP-TY`, `EKP-FE`. Do not reuse `EKP-TS` (Testing) or `EKP-SF` (Security).
 
 Each document follows the [knowledge document template](../templates/knowledge-document-template.md) or, for stack guides, the [technology knowledge template](../templates/technology-knowledge-document-template.md), and adheres to the [style guide](style-guide.md).
 
@@ -65,7 +65,7 @@ Knowledge documents must be:
 - Free of tool-specific syntax (no Cursor frontmatter, no Copilot directives)
 - Self-contained enough to be useful alone, with links to related documents
 
-**Current scale:** 18 published guides; namespaces include foundation set plus `EKP-PH`, `EKP-SY`.
+**Current scale:** 20 published guides; 187 concepts; 21 namespaces.
 
 ### `rules/` — Scaffold (not primary output)
 
@@ -84,6 +84,8 @@ Operational profiles:
 | `cursor-core` | Minimal L0 bundle (65 rules) — **frozen** for Phase 4 waves unless explicitly approved |
 | `cursor-php` | Core L0 subset + `php-fundamentals` |
 | `cursor-symfony` | Core L0 subset + PHP + `symfony-architecture` |
+| `cursor-typescript` | Core L0 subset + `typescript-fundamentals` |
+| `cursor-frontend` | Core L0 subset + TypeScript + `frontend-architecture` |
 
 Profiles use **explicit knowledge lists** (no YAML `extends` in v0.3.0). Example (`profiles/cursor-core.yaml`):
 
@@ -174,13 +176,12 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Operational today:**
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
-- Cursor adapter; profiles `cursor-core`, `cursor-php`, `cursor-symfony`
-- Assemble pipeline with `--verify` (CI verifies all three Cursor profiles)
+- Cursor adapter; profiles `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`
+- Assemble pipeline with `--verify` (CI verifies all five Cursor profiles)
 
-**Planned (Phase 4 Wave 2+ / Phase 5):**
+**Planned (Phase 4 Wave 3 / Phase 5):**
 
-- TypeScript / Frontend technology guides (`EKP-TY`, `EKP-FE`) and profiles
-- Copilot and Claude adapters
+- DevOps / Flutter technology guides and profiles
 - Optional profile `extends` only if duplication becomes painful
 - Optional graph role `technology` (V1) if V2 exceptions proliferate
 

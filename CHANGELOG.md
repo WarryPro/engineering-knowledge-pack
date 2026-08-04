@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Phase 4 Wave 2 (TypeScript + Frontend):
+  - `knowledge/typescript/typescript-fundamentals.md` — EKP-TY01–TY08
+  - `knowledge/frontend/frontend-architecture.md` — EKP-FE01–FE08
+  - Namespaces EKP-TY, EKP-FE
+  - Profiles `cursor-typescript`, `cursor-frontend`
+  - Graph V2 exception: frontend-architecture → typescript-fundamentals
+  - CI assemble `--verify` for `cursor-typescript`, `cursor-frontend`
+
+### Changed
+
+- Documentation: README/DEVELOPMENT metrics and multi-profile assemble
+- `ai-assisted-development.md` — EKP-AI10 routes to EKP-TY and EKP-FE
+- engineering-principles downstream technology table
+
 ## [0.3.0] - 2026-08-04
 
 ### Added

@@ -9,7 +9,7 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 | Area | Purpose |
 |------|---------|
 | [`knowledge/`](knowledge/) | Tool-agnostic engineering knowledge (patterns, practices, guidelines) |
-| [`profiles/`](profiles/) | Composed sets of knowledge for specific contexts (`cursor-core`, `cursor-php`, `cursor-symfony`) |
+| [`profiles/`](profiles/) | Composed sets of knowledge (`cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`) |
 | [`scripts/`](scripts/) | Validation, adapters, and assembly pipeline |
 | [`dist/`](dist/) | Generated deployable bundles (gitignored; produced by `assemble`) |
 | [`rules/`](rules/) | Scaffold for tool-specific rule layouts; **not** the primary bundle source |
@@ -70,6 +70,8 @@ py -3 scripts/validate/validate.py --generate-index
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-php --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-typescript --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 ```
 
 ## Status
@@ -81,19 +83,19 @@ py -3 scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble pipeline |
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 release |
-| Phase 4 — Technology knowledge | **In progress** | Wave 1: PHP + Symfony guides and profiles |
+| Phase 4 — Technology knowledge | **In progress** | Wave 1–2: PHP/Symfony + TypeScript/Frontend |
 
 ### Repository metrics
 
 | Metric | Value |
 |--------|-------|
-| Knowledge guides | 18 |
-| Concepts | 171 |
-| Namespaces | 19 |
+| Knowledge guides | 20 |
+| Concepts | 187 |
+| Namespaces | 21 |
 | Graph depth | 2–3 (tech L2 → L1 → L0) |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (unchanged) |
-| Tech profiles | `cursor-php`, `cursor-symfony` |
+| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend` |
 
 See [`docs/roadmap.md`](docs/roadmap.md) for the full development plan.
 
