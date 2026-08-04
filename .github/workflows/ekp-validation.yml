@@ -45,3 +45,9 @@ jobs:
 
       - name: Assemble cursor-symfony bundle
         run: python scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
+
+      - name: Assemble cursor-typescript bundle
+        run: python scripts/assemble/assemble.py --profile cursor-typescript --clean --verify
+
+      - name: Assemble cursor-frontend bundle
+        run: python scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
