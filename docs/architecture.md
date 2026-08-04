@@ -45,9 +45,19 @@ See [`adapter-architecture.md`](adapter-architecture.md) for pipeline details.
 Contains engineering knowledge as markdown documents organized by domain:
 
 - **Cross-cutting domains** — `engineering/`, `architecture/`, `security/`, `testing/`, `performance/`, `devops/`, `ai/`, `database/`
-- **Technology domains** — `php/`, `symfony/`, `flutter/`, `typescript/`, `frontend/` (Phase 4 — stubs today)
+- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1 stub), `frontend/` (L2 stub), `flutter/` (L2 stub), `devops/` (L3 stub)
 
-Each document follows the [knowledge document template](../templates/knowledge-document-template.md) and adheres to the [style guide](style-guide.md).
+Technology knowledge **applies** foundation concepts; it must not redefine them. Layering:
+
+```
+L0 Foundation → L1 Language (php, typescript) → L2 Framework (symfony, frontend, flutter) → L3 Ops (devops)
+```
+
+Dependency direction is downward only. Graph policy for Phase 4 is **V2**: reuse existing roles (`practice`, `architecture`, …); add explicit `graph-rules.yaml` exceptions when a framework guide must `depends_on` a language guide (e.g. Symfony → PHP). Do not introduce a `technology` role until exceptions become costly.
+
+**Reserved concept namespaces (not yet owned):** `EKP-TY` (TypeScript), `EKP-FE` (Frontend). Do not reuse `EKP-TS` (Testing) or `EKP-SF` (Security).
+
+Each document follows the [knowledge document template](../templates/knowledge-document-template.md) or, for stack guides, the [technology knowledge template](../templates/technology-knowledge-document-template.md), and adheres to the [style guide](style-guide.md).
 
 Knowledge documents must be:
 
@@ -55,7 +65,7 @@ Knowledge documents must be:
 - Free of tool-specific syntax (no Cursor frontmatter, no Copilot directives)
 - Self-contained enough to be useful alone, with links to related documents
 
-**Current scale:** 16 published guides, 155 concepts, 17 namespaces.
+**Current scale:** 18 published guides; namespaces include foundation set plus `EKP-PH`, `EKP-SY`.
 
 ### `rules/` — Scaffold (not primary output)
 
@@ -67,7 +77,15 @@ Rules trace back to knowledge documents. If a rule cannot be justified by knowle
 
 A profile defines which knowledge applies to a specific context (team, role, workflow). Profiles reference **knowledge paths only**—adapters derive rules at build time.
 
-Operational example (`profiles/cursor-core.yaml`):
+Operational profiles:
+
+| Profile | Role |
+|---------|------|
+| `cursor-core` | Minimal L0 bundle (65 rules) — **frozen** for Phase 4 waves unless explicitly approved |
+| `cursor-php` | Core L0 subset + `php-fundamentals` |
+| `cursor-symfony` | Core L0 subset + PHP + `symfony-architecture` |
+
+Profiles use **explicit knowledge lists** (no YAML `extends` in v0.3.0). Example (`profiles/cursor-core.yaml`):
 
 ```yaml
 name: cursor-core
@@ -156,14 +174,15 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Operational today:**
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
-- Cursor adapter and `cursor-core` profile (65 rules)
-- Assemble pipeline with `--verify`
+- Cursor adapter; profiles `cursor-core`, `cursor-php`, `cursor-symfony`
+- Assemble pipeline with `--verify` (CI verifies all three Cursor profiles)
 
-**Planned (Phase 4–5):**
+**Planned (Phase 4 Wave 2+ / Phase 5):**
 
-- Additional technology domains and profiles
+- TypeScript / Frontend technology guides (`EKP-TY`, `EKP-FE`) and profiles
 - Copilot and Claude adapters
-- Profile versioning for pinned releases
+- Optional profile `extends` only if duplication becomes painful
+- Optional graph role `technology` (V1) if V2 exceptions proliferate
 
 ## Related
 

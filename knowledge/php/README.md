@@ -14,3 +14,7 @@ PHP language idioms, ecosystem conventions, and runtime considerations.
 - Symfony framework patterns → see `symfony/`
 - General engineering practices → see `engineering/`
 - Database access patterns → see `database/`
+
+## Published
+
+- [php-fundamentals.md](php-fundamentals.md) — EKP-PH01–PH08; applies EKP-P04–P07, P09

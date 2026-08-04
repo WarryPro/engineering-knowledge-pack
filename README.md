@@ -9,7 +9,7 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 | Area | Purpose |
 |------|---------|
 | [`knowledge/`](knowledge/) | Tool-agnostic engineering knowledge (patterns, practices, guidelines) |
-| [`profiles/`](profiles/) | Composed sets of knowledge for specific contexts (team, stack, role) |
+| [`profiles/`](profiles/) | Composed sets of knowledge for specific contexts (`cursor-core`, `cursor-php`, `cursor-symfony`) |
 | [`scripts/`](scripts/) | Validation, adapters, and assembly pipeline |
 | [`dist/`](dist/) | Generated deployable bundles (gitignored; produced by `assemble`) |
 | [`rules/`](rules/) | Scaffold for tool-specific rule layouts; **not** the primary bundle source |
@@ -39,7 +39,7 @@ deploy artifact
 |-------|---------|--------|
 | Validate | `py -3 scripts/validate/validate.py` | Structural and graph checks |
 | Generate index | `py -3 scripts/validate/validate.py --generate-index` | `dist/concept-index.json`, `dist/knowledge-graph.json`, `dist/adapter-manifest.json` |
-| Assemble | `py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify` | `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json` |
+| Assemble | `py -3 scripts/assemble/assemble.py --profile <name> --clean --verify` | `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json` |
 
 Install validator dependencies first:
 
@@ -68,6 +68,8 @@ See [`DEVELOPMENT.md`](DEVELOPMENT.md) for the full pipeline. Quick check:
 py -3 scripts/validate/validate.py
 py -3 scripts/validate/validate.py --generate-index
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-php --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
 ```
 
 ## Status
@@ -75,21 +77,23 @@ py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 | Phase | Status | Scope |
 |-------|--------|-------|
 | Phase 1 — Foundation | **Complete** | Structure, templates, validation skeleton, schemas |
-| Phase 2 — Core engineering knowledge | **In progress** | 16 published guides; Phase 2C cross-cutting complete |
+| Phase 2 — Core engineering knowledge | **In progress** | Cross-cutting guides; Phase 2C complete |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble pipeline |
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
-| Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, release prep |
+| Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 release |
+| Phase 4 — Technology knowledge | **In progress** | Wave 1: PHP + Symfony guides and profiles |
 
 ### Repository metrics
 
 | Metric | Value |
 |--------|-------|
-| Knowledge guides | 16 |
-| Concepts | 155 |
-| Namespaces | 17 |
-| Graph depth | 2 |
+| Knowledge guides | 18 |
+| Concepts | 171 |
+| Namespaces | 19 |
+| Graph depth | 2–3 (tech L2 → L1 → L0) |
 | Adapter-ready | 100% |
-| `cursor-core` bundle | 65 rules |
+| `cursor-core` bundle | 65 rules (unchanged) |
+| Tech profiles | `cursor-php`, `cursor-symfony` |
 
 See [`docs/roadmap.md`](docs/roadmap.md) for the full development plan.
 

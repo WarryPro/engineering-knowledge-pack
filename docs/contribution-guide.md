@@ -23,6 +23,8 @@ For straightforward additions (a new knowledge document in an existing domain), 
 
 1. Identify the correct domain in `knowledge/` — read the domain `README.md` (see [folder-structure.md](folder-structure.md))
 2. Copy the relevant template from `templates/`
+   - Cross-cutting guides: `knowledge-document-template.md`
+   - Technology (Phase 4) guides: `technology-knowledge-document-template.md` + `technology-guide-checklist.md`
 3. Write the document following the [style guide](style-guide.md)
 4. Place it in the correct directory:
    - Guides: `knowledge/<domain>/<topic>.md`

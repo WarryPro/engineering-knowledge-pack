@@ -19,7 +19,7 @@ On Linux/macOS CI uses `python`; on Windows use `py -3` if configured.
 | Path | Role |
 |------|------|
 | `knowledge/` | Source of truth — validated on every change |
-| `profiles/` | Bundle composition (`cursor-core.yaml` operational) |
+| `profiles/` | Bundle composition (`cursor-core`, `cursor-php`, `cursor-symfony`) |
 | `scripts/validate/` | Validator CLI |
 | `scripts/adapters/` | Knowledge → tool format transformers |
 | `scripts/assemble/` | Profile → deployable bundle |
@@ -66,22 +66,26 @@ py -3 -m unittest discover -s scripts/adapters/tests -v
 py -3 -m unittest discover -s scripts/assemble/tests -v
 ```
 
-### 5. Assemble and verify bundle
+### 5. Assemble and verify bundles
 
 ```bash
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-php --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
 ```
 
-Output: `dist/cursor-core/cursor/*.mdc` + `bundle-manifest.json`.
+Output: `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json`.
 
-**Expected:** 65 rules for `cursor-core` (do not change without explicit profile work).
+**Expected:** 65 rules for `cursor-core` (do not change without explicit profile work). Tech profiles add PHP/Symfony rules on top of the same L0 subset.
 
 ### Deploy to a consumer project
 
 Copy generated rules:
 
 ```
-dist/cursor-core/cursor/  →  <project>/.cursor/rules/
+dist/cursor-core/cursor/      →  <project>/.cursor/rules/
+dist/cursor-php/cursor/       →  <project>/.cursor/rules/   # PHP work
+dist/cursor-symfony/cursor/   →  <project>/.cursor/rules/   # Symfony work
 ```
 
 Regenerate after any knowledge or profile change.
@@ -99,7 +103,7 @@ Workflow: [`.github/workflows/ekp-validation.yml`](.github/workflows/ekp-validat
 
 Triggers: `push` and `pull_request` to `master` and `staging`.
 
-Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify`.
+Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for `cursor-core`, `cursor-php`, and `cursor-symfony`.
 
 ## Before opening a PR
 
