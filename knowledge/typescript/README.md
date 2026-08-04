@@ -23,6 +23,8 @@ TypeScript language patterns, type system usage, and tooling.
 | React/Vue component architecture, state management | `frontend/` |
 | Shared types between API and UI | `typescript/` (type design) + link to `frontend/` |
 
-## Boundary with future TypeScript work
+When a document spans both, place it in the domain of the primary concern and link to the other.
 
-Reserved namespace for TypeScript guides: **EKP-TY** (do not use `EKP-TS` — reserved for Testing).
+## Published
+
+- [typescript-fundamentals.md](typescript-fundamentals.md) — EKP-TY01–TY08; applies EKP-P04–P07, P09

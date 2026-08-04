@@ -84,6 +84,8 @@ Without governance, teams experience:
 | ADR / Level 4 governance | `architecture/adr-practices.md` (EKP-AD) | Route from EKP-AI10 |
 | PHP language design | `php/php-fundamentals.md` (EKP-PH) | Route from EKP-AI10 — Phase 4 |
 | Symfony application structure | `symfony/symfony-architecture.md` (EKP-SY) | Route from EKP-AI10 — Phase 4 |
+| TypeScript language design | `typescript/typescript-fundamentals.md` (EKP-TY) | Route from EKP-AI10 — Phase 4 Wave 2 |
+| Frontend UI architecture | `frontend/frontend-architecture.md` (EKP-FE) | Route from EKP-AI10 — Phase 4 Wave 2 |
 | Tool rule file format | `rules/cursor/`, adapters | Out of scope — derived output |
 
 **Out of scope:** prompt engineering tutorials for specific LLMs, model selection, token budgeting, RAG pipeline design, embedding indexes, automatic code-fix bots, CI adapter configuration.
@@ -339,6 +341,8 @@ AI-assisted development is a **practice-layer** artifact in the `ai` domain. Ada
 - Security-sensitive change (auth, PII, payment, secrets) → `security/security-fundamentals.md` (EKP-SF) Decision Flow.
 - PHP language/module design (types, Composer, globals, config edge) → `php/php-fundamentals.md` (EKP-PH) Decision Flow.
 - Symfony application structure (DI, thin controllers, modules, Messenger, Security wiring) → `symfony/symfony-architecture.md` (EKP-SY) Decision Flow.
+- TypeScript language/module design (strict, unknown, unions, modules, runtime boundaries) → `typescript/typescript-fundamentals.md` (EKP-TY) Decision Flow.
+- Frontend UI architecture (components, state, async UI, a11y, rendering boundaries) → `frontend/frontend-architecture.md` (EKP-FE) Decision Flow.
 - Do not duplicate sibling content—cite and route.
 
 **Good:** "This is a Level 2 extract method refactor—applying EKP-RF Decision Flow step 3."
