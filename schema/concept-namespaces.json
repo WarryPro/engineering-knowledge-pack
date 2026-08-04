@@ -74,5 +74,13 @@
   "EKP-SY": {
     "owner": "knowledge/symfony/symfony-architecture.md",
     "format": "^EKP-SY[0-9]{2}$"
+  },
+  "EKP-TY": {
+    "owner": "knowledge/typescript/typescript-fundamentals.md",
+    "format": "^EKP-TY[0-9]{2}$"
+  },
+  "EKP-FE": {
+    "owner": "knowledge/frontend/frontend-architecture.md",
+    "format": "^EKP-FE[0-9]{2}$"
   }
 }

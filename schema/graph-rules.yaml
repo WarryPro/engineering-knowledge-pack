@@ -41,6 +41,9 @@ exceptions:
   # No technology role yet — revisit V1 (role: technology) if exceptions proliferate.
   - source: knowledge/symfony/symfony-architecture.md
     allowed_dependency: knowledge/php/php-fundamentals.md
+  # Phase 4 Wave 2: frontend architecture may depend on TypeScript language practice.
+  - source: knowledge/frontend/frontend-architecture.md
+    allowed_dependency: knowledge/typescript/typescript-fundamentals.md
 
 depth:
   warn_at: 3
