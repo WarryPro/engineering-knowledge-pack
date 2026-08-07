@@ -14,7 +14,7 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 | [`dist/`](dist/) | Generated deployable bundles (gitignored; produced by `assemble`) |
 | [`rules/`](rules/) | Scaffold for tool-specific rule layouts; **not** the primary bundle source |
 | [`templates/`](templates/) | Document templates for knowledge, rules, reviews, and decisions |
-| [`docs/`](docs/) | Project vision, architecture, roadmap, and contribution guidance |
+| [`docs/`](docs/) | Project vision, architecture, governance, roadmap, and contribution guidance |
 | [`examples/`](examples/) | Educational ADR and review checklist examples |
 
 ## Knowledge pipeline
@@ -56,9 +56,10 @@ py -3 -m pip install -r scripts/validate/requirements.txt
 
 1. Read [`docs/vision.md`](docs/vision.md) to understand why EKP exists.
 2. Read [`docs/architecture.md`](docs/architecture.md) to understand how the repository is organized.
-3. Read [`docs/adapter-architecture.md`](docs/adapter-architecture.md) for the operational adapter pipeline.
-4. Read [`docs/contribution-guide.md`](docs/contribution-guide.md) before adding or changing content.
-5. Read [`DEVELOPMENT.md`](DEVELOPMENT.md) to run validation and assemble locally.
+3. Read [`docs/governance.md`](docs/governance.md) for lifecycle, namespaces, profiles, and releases.
+4. Read [`docs/adapter-architecture.md`](docs/adapter-architecture.md) for the operational adapter pipeline.
+5. Read [`docs/contribution-guide.md`](docs/contribution-guide.md) before adding or changing content.
+6. Read [`DEVELOPMENT.md`](DEVELOPMENT.md) to run validation and assemble locally.
 
 ## Validation
 
@@ -82,8 +83,9 @@ py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 | Phase 2 — Core engineering knowledge | **In progress** | Cross-cutting guides; Phase 2C complete |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble pipeline |
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
-| Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 release |
-| Phase 4 — Technology knowledge | **In progress** | Wave 1–2: PHP/Symfony + TypeScript/Frontend |
+| Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, v0.2.0 release |
+| Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
+| Phase 4 — Technology knowledge | **In progress** | Wave 1–2 on staging; Wave 3 next |
 
 ### Repository metrics
 

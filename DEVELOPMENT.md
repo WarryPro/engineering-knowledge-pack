@@ -36,7 +36,7 @@ Run from repository root:
 py -3 scripts/validate/validate.py
 ```
 
-Checks frontmatter, graph, concepts, namespaces, links, README indexes, profiles.
+Checks frontmatter, graph, concepts, namespaces, links, README indexes, profiles, optional lifecycle `status` (default: published).
 
 Optional flags: `--strict`, `--changed-only`, `--tier`, `--report scale|adapters|graph`.
 

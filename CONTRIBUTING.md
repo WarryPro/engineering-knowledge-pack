@@ -9,6 +9,7 @@ Thank you for your interest in Engineering Knowledge Pack (EKP).
 3. Read [`docs/contribution-guide.md`](docs/contribution-guide.md) — follow the knowledge authoring workflow.
 4. Read [`docs/style-guide.md`](docs/style-guide.md) — follow naming and formatting conventions.
 5. Read [`DEVELOPMENT.md`](DEVELOPMENT.md) — run validation and the assemble pipeline locally.
+6. Read [`docs/governance.md`](docs/governance.md) — lifecycle, namespaces, profiles, and release policy.
 
 ## Quick rules
 
@@ -24,7 +25,8 @@ Thank you for your interest in Engineering Knowledge Pack (EKP).
 2. Fork the repository and create a branch from `master` or `staging` (follow your team's integration branch).
 3. Write or update content following the style guide and relevant template.
 4. Run validation locally (see [`DEVELOPMENT.md`](DEVELOPMENT.md)).
-5. Open a pull request with a clear description of what changed and why.
+5. Use [`templates/knowledge-review-checklist.md`](templates/knowledge-review-checklist.md) for knowledge changes.
+6. Open a pull request with a clear description of what changed and why.
 
 ## Code of conduct
 

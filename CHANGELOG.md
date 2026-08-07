@@ -17,11 +17,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Graph V2 exception: frontend-architecture → typescript-fundamentals
   - CI assemble `--verify` for `cursor-typescript`, `cursor-frontend`
 
+- Phase 3C Governance foundation (EKP-AI16):
+  - `docs/governance.md`
+  - `templates/knowledge-review-checklist.md`
+  - ADR-0005, ADR-0006, ADR-0007
+  - Optional frontmatter `status` (default: published)
+  - `.github/CODEOWNERS` ownership boundaries
+  - PR template governance section
+
 ### Changed
 
 - Documentation: README/DEVELOPMENT metrics and multi-profile assemble
 - `ai-assisted-development.md` — EKP-AI10 routes to EKP-TY and EKP-FE
 - engineering-principles downstream technology table
+- Roadmap: v0.2.0/v0.3.0 released; Phase 3A CI complete; Phase 2 exit criteria revised; Phase 3C added
 
 ## [0.3.0] - 2026-08-04
 
