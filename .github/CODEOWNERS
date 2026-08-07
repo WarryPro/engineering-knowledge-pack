@@ -1,0 +1,15 @@
+# EKP CODEOWNERS — governance ownership boundaries
+#
+# Assign GitHub teams or usernames to the paths below when a maintainer roster
+# is defined. See docs/governance.md for roles (domain owner, platform owner).
+#
+# Example (uncomment and replace with real handles):
+# /knowledge/           @your-org/ekp-knowledge
+# /profiles/            @your-org/ekp-platform
+# /schema/              @your-org/ekp-platform
+# /scripts/             @your-org/ekp-platform
+# /docs/governance.md   @your-org/ekp-platform
+# /templates/           @your-org/ekp-knowledge
+#
+# Until handles are assigned, ownership is documented in docs/governance.md only.
+# GitHub will not request reviews from commented lines.

@@ -37,6 +37,9 @@ domain: architecture
 | ADR | Title | Status |
 |-----|-------|--------|
 | [adr-0004](adr-0004-clean-code-position-in-knowledge-graph.md) | Clean Code position in the EKP knowledge graph | Accepted |
+| [adr-0005](adr-0005-technology-knowledge-evolution.md) | Technology knowledge evolution | Accepted |
+| [adr-0006](adr-0006-versioning-and-compatibility.md) | Versioning & compatibility | Accepted |
+| [adr-0007](adr-0007-knowledge-and-concept-lifecycle.md) | Knowledge & concept lifecycle | Accepted |
 
 ## When to write an ADR
 

@@ -19,7 +19,7 @@ On Linux/macOS CI uses `python`; on Windows use `py -3` if configured.
 | Path | Role |
 |------|------|
 | `knowledge/` | Source of truth — validated on every change |
-| `profiles/` | Bundle composition (`cursor-core`, `cursor-php`, `cursor-symfony`) |
+| `profiles/` | Bundle composition (`cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`) |
 | `scripts/validate/` | Validator CLI |
 | `scripts/adapters/` | Knowledge → tool format transformers |
 | `scripts/assemble/` | Profile → deployable bundle |
@@ -36,7 +36,7 @@ Run from repository root:
 py -3 scripts/validate/validate.py
 ```
 
-Checks frontmatter, graph, concepts, namespaces, links, README indexes, profiles.
+Checks frontmatter, graph, concepts, namespaces, links, README indexes, profiles, optional lifecycle `status` (default: published).
 
 Optional flags: `--strict`, `--changed-only`, `--tier`, `--report scale|adapters|graph`.
 
@@ -72,6 +72,8 @@ py -3 -m unittest discover -s scripts/assemble/tests -v
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-php --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-typescript --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 ```
 
 Output: `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json`.
@@ -83,9 +85,11 @@ Output: `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json`.
 Copy generated rules:
 
 ```
-dist/cursor-core/cursor/      →  <project>/.cursor/rules/
-dist/cursor-php/cursor/       →  <project>/.cursor/rules/   # PHP work
-dist/cursor-symfony/cursor/   →  <project>/.cursor/rules/   # Symfony work
+dist/cursor-core/cursor/        →  <project>/.cursor/rules/
+dist/cursor-php/cursor/         →  <project>/.cursor/rules/
+dist/cursor-symfony/cursor/     →  <project>/.cursor/rules/
+dist/cursor-typescript/cursor/  →  <project>/.cursor/rules/
+dist/cursor-frontend/cursor/    →  <project>/.cursor/rules/
 ```
 
 Regenerate after any knowledge or profile change.
@@ -103,7 +107,7 @@ Workflow: [`.github/workflows/ekp-validation.yml`](.github/workflows/ekp-validat
 
 Triggers: `push` and `pull_request` to `master` and `staging`.
 
-Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for `cursor-core`, `cursor-php`, and `cursor-symfony`.
+Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all five Cursor profiles.
 
 ## Before opening a PR
 

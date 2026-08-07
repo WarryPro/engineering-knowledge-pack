@@ -104,6 +104,11 @@
     "adapter_priority": {
       "type": "string",
       "enum": ["high", "medium", "low"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "review", "validated", "published", "deprecated", "retired"],
+      "description": "Lifecycle state; omitted means published (see ADR-0007)"
     }
   },
   "allOf": [

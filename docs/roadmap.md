@@ -7,11 +7,12 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase | Status | Summary |
 |-------|--------|---------|
 | Phase 1 — Foundation | **Complete** | Structure, templates, schemas, validation skeleton |
-| Phase 2 — Core engineering knowledge | **In progress** | 12 guides; Phase 2C complete |
+| Phase 2 — Core engineering knowledge | **Substantially complete** | Cross-cutting L0 guides; quality bar over doc count |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble |
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
-| Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, release prep |
-| Phase 4 — Technology knowledge | **In progress** | Wave 1: PHP + Symfony; TS/Frontend later |
+| Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
+| Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
+| Phase 4 — Technology knowledge | **In progress** | Wave 1–2 on staging; Wave 3 pending |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot and Claude pending |
 
 ---
@@ -39,9 +40,13 @@ Establish the repository structure, meta-documentation, templates, and contribut
 
 ## Phase 2: Core engineering knowledge
 
-**Status:** In progress
+**Status:** Substantially complete
 
 Populate cross-cutting engineering domains that apply regardless of technology stack.
+
+**Exit criteria (revised):** A team can adopt EKP for code review and engineering standards without any technology-specific content. Completion is measured by **coverage and quality** of cross-cutting guides, not a fixed document count.
+
+**Note:** The earlier “15–25 documents” target is **retired** as a simplistic completion metric. Further L0 expansion is opportunistic, not a gate for Phase 4.
 
 **Target domains:**
 
@@ -60,11 +65,8 @@ Populate cross-cutting engineering domains that apply regardless of technology s
 - [x] Security guide: `knowledge/security/security-fundamentals.md`
 - [x] Performance guide: `knowledge/performance/performance-mindset.md`
 - [x] Logging guide: `knowledge/engineering/logging-and-observability.md`
-- [ ] 15–25 focused knowledge documents across all core domains
-- [x] Security and performance guides (Phase 2C)
-- [ ] Cross-reference index per domain
-
-**Exit criteria:** A team can adopt EKP for code review and engineering standards without any technology-specific content.
+- [x] Cross-cutting security and performance guides (Phase 2C)
+- [ ] Cross-reference index per domain (ongoing)
 
 ---
 
@@ -82,7 +84,7 @@ Build the transformation layer that converts knowledge into deployable AI assist
 - [x] Cursor adapter (`scripts/adapters/cursor/`) — knowledge → `.mdc` rules
 - [x] Assemble pipeline (`scripts/assemble/assemble.py`) with `--verify` and `bundle-manifest.json`
 - [x] Profile `cursor-core` producing `dist/cursor-core/cursor/*.mdc`
-- [ ] CI workflow for validate → generate-index → tests → assemble
+- [x] CI workflow for validate → generate-index → tests → assemble (5 profiles)
 - [ ] Deploy documentation for consumer projects
 
 **Exit criteria:** A team can select a profile, run the pipeline, and deploy engineering context to Cursor. Changes to knowledge propagate to generated rules via assemble.
@@ -118,7 +120,7 @@ Expand system design and architectural decision-making knowledge beyond boundary
 
 **Status:** Complete
 
-Consolidate documentation, CI, examples, and release readiness for `v0.2.0` — **no new knowledge guides**.
+Consolidated documentation, CI, examples, and release readiness.
 
 **Deliverables:**
 
@@ -127,18 +129,43 @@ Consolidate documentation, CI, examples, and release readiness for `v0.2.0` — 
 - [x] `NAVIGATION_READMES` extended (ai, security, performance, database)
 - [x] CI workflow `.github/workflows/ekp-validation.yml`
 - [x] `examples/` — ADR sample + architecture and API review checklists
-- [ ] Git tag `v0.2.0` *(human approval — post-merge)*
-- [ ] GitHub Release *(human approval)*
+- [x] Git tag `v0.2.0` and GitHub Release
 
-**Exit criteria:** CI green; validator 0 README warnings; `cursor-core` stable at 65 rules; CHANGELOG ready for release cut.
+**Exit criteria:** CI green; validator 0 README warnings; `cursor-core` stable at 65 rules.
+
+---
+
+## Phase 3C: Governance foundation
+
+**Status:** Complete (EKP-AI16)
+
+Establish lightweight governance so EKP scales beyond 20 guides without semantic drift.
+
+**Deliverables:**
+
+- [x] `docs/governance.md` — single governance entry point
+- [x] `templates/knowledge-review-checklist.md`
+- [x] ADR-0005 — Technology knowledge evolution
+- [x] ADR-0006 — Versioning & compatibility
+- [x] ADR-0007 — Knowledge & concept lifecycle
+- [x] Optional frontmatter `status` (default: published)
+- [x] `.github/CODEOWNERS` ownership boundaries (documented)
+- [x] PR template governance section
+- [x] Roadmap and meta-doc synchronization
+
+**Deferred:** profile `includes`, `technology` validator role, automated deprecation enforcement, Copilot/Claude adapters.
+
+**Exit criteria:** Contributors can follow documented lifecycle, namespace, profile, and release rules without ad hoc convention.
 
 ---
 
 ## Phase 4: Technology knowledge
 
-**Status:** In progress (Wave 1 — PHP / Symfony)
+**Status:** In progress (Wave 1–2 complete on `staging`; release pending human approval)
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
+
+**Releases:** `v0.3.0` (PHP/Symfony) published on `master`. Wave 2 (TypeScript/Frontend) on `staging` — target `v0.3.1` or `v0.4.0` per release decision.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
@@ -146,8 +173,8 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 - `knowledge/php/` (L1) — **Wave 1**
 - `knowledge/symfony/` (L2) — **Wave 1**
-- `knowledge/typescript/` (L1) — Wave 2 / v0.3.1 candidate (`EKP-TY`)
-- `knowledge/frontend/` (L2) — Wave 2 (`EKP-FE`; no separate `vue/` domain)
+- `knowledge/typescript/` (L1) — **Wave 2** — complete
+- `knowledge/frontend/` (L2) — **Wave 2** — complete
 - `knowledge/devops/` (L3) — Wave 3
 - `knowledge/flutter/` (L2) — Wave 3
 
@@ -158,12 +185,14 @@ Add stack-specific guidance for the technologies this project targets, without c
 - [x] `symfony-architecture.md` (EKP-SY)
 - [x] Profiles `cursor-php`, `cursor-symfony` (explicit composition; `cursor-core` unchanged)
 - [x] CI assemble `--verify` for `cursor-core`, `cursor-php`, `cursor-symfony`
-- [ ] TypeScript / Frontend guides and profiles (Wave 2)
+- [x] Wave 2: `typescript-fundamentals.md` (EKP-TY), `frontend-architecture.md` (EKP-FE)
+- [x] Profiles `cursor-typescript`, `cursor-frontend`
+- [x] CI assemble `--verify` for all five Cursor profiles
 - [ ] DevOps / Flutter (Wave 3)
 
 **Exit criteria:** A developer on a supported stack can find actionable guidance without wading through unrelated stacks; tech guides cite L0 concepts instead of duplicating them.
 
-**v0.3.0 target (must-only):** PHP + Symfony guides and profiles above — release cut is a separate human-approved step (no tag in this implementation).
+**v0.3.1 / v0.4.0 target:** Wave 2 release (TypeScript/Frontend) — separate human-approved release step after governance (EKP-AI16).
 
 ---
 

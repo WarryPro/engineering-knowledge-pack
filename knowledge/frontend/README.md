@@ -14,7 +14,7 @@ Frontend architecture, UI patterns, and user-facing concerns.
 
 - TypeScript language features → see `typescript/`
 - Flutter mobile UI → see `flutter/`
-- API design and backend concerns → see `symfony/`, `architecture/`
+- API design and backend concerns → see `architecture/`
 
 ## Boundary with `typescript/`
 
@@ -26,6 +26,6 @@ Frontend architecture, UI patterns, and user-facing concerns.
 
 When a document spans both, place it in the domain of the primary concern and link to the other.
 
-## Namespace
+## Published
 
-Reserved namespace for Frontend guides: **EKP-FE**. Framework-specific content (React or Vue) stays in this domain — do not create a separate `vue/` domain.
+- [frontend-architecture.md](frontend-architecture.md) — EKP-FE01–FE08; depends on EKP-TY; applies EKP-P04, P05, P06, P09

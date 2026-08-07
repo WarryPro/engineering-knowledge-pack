@@ -25,6 +25,8 @@ related:
   - knowledge/engineering/logging-and-observability.md
   - knowledge/php/php-fundamentals.md
   - knowledge/symfony/symfony-architecture.md
+  - knowledge/typescript/typescript-fundamentals.md
+  - knowledge/frontend/frontend-architecture.md
   - knowledge/architecture/decisions/README.md
   - knowledge/architecture/decisions/adr-0004-clean-code-position-in-knowledge-graph.md
 extends: []
@@ -388,8 +390,10 @@ This document has **no upstream knowledge dependencies** (`depends_on: []`). It 
 
 | Document | Layer | Status | Principles |
 |----------|-------|--------|------------|
-| [php-fundamentals.md](../php/php-fundamentals.md) | language (L1) | Published | EKP-P04–P07, P09 (EKP-PH) |
+| [php-fundamentals.md](../php/php-fundamentals.md) | language (L1) | Published | EKP-P04–P07, P09, P10 (EKP-PH) |
 | [symfony-architecture.md](../symfony/symfony-architecture.md) | framework (L2) | Published | EKP-P04, P05, P06, P09 (EKP-SY) |
+| [typescript-fundamentals.md](../typescript/typescript-fundamentals.md) | language (L1) | Published | EKP-P04–P07, P09 (EKP-TY) |
+| [frontend-architecture.md](../frontend/frontend-architecture.md) | frontend (L2) | Published | EKP-P04, P05, P06, P09 (EKP-FE) |
 
 Downstream documents must reference this document in their `related` frontmatter and must not restate principles—only operationalize them.
 
