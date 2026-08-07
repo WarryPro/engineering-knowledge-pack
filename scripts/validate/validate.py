@@ -31,6 +31,7 @@ from modules.git_changes import (
 )
 from modules.graph_validate import validate_graph
 from modules.index_generate import write_indexes
+from modules.lifecycle_validate import validate_lifecycle
 from modules.models import DocumentNode
 from modules.namespace_validate import validate_namespaces
 from modules.principle_validate import validate_principles
@@ -165,6 +166,9 @@ def run_structural(nodes, result, node_filter=None):
     for node in targets:
         result.add_errors(validate_legacy_fields(node))
         result.add_errors(validate_schema(node.frontmatter, node.path))
+        lifecycle_errors, lifecycle_warnings = validate_lifecycle([node])
+        result.add_errors(lifecycle_errors)
+        result.add_warnings(lifecycle_warnings)
         result.add_errors(validate_markdown_links(node))
 
 
