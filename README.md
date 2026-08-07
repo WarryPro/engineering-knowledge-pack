@@ -75,12 +75,17 @@ py -3 scripts/assemble/assemble.py --profile cursor-typescript --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 ```
 
+## Release status
+
+- **Latest published release:** `v0.3.0` (on `master`)
+- **Current staging release candidate:** `v0.3.1` — Phase 4 Wave 2 (TypeScript/Frontend) and governance foundation; **not yet tagged or published**
+
 ## Status
 
 | Phase | Status | Scope |
 |-------|--------|-------|
 | Phase 1 — Foundation | **Complete** | Structure, templates, validation skeleton, schemas |
-| Phase 2 — Core engineering knowledge | **In progress** | Cross-cutting guides; Phase 2C complete |
+| Phase 2 — Core engineering knowledge | **Substantially complete** | Cross-cutting L0 guides; quality bar over doc count |
 | Phase 3A — AI operational pipeline | **Operational** | Validator v2.3, profiles, Cursor adapter, assemble pipeline |
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, v0.2.0 release |
@@ -94,7 +99,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 | Knowledge guides | 20 |
 | Concepts | 187 |
 | Namespaces | 21 |
-| Graph depth | 2–3 (tech L2 → L1 → L0) |
+| Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (unchanged) |
 | Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend` |
