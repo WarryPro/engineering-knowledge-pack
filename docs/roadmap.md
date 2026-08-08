@@ -12,7 +12,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Wave 1–2 on staging; Wave 3 pending |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 on staging; Flutter deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot and Claude pending |
 
 ---
@@ -161,11 +161,11 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 ## Phase 4: Technology knowledge
 
-**Status:** In progress (Wave 1–2 complete on `staging`; release pending human approval)
+**Status:** In progress (Waves 1–3 complete on `staging`; release pending human approval)
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony) published on `master`. Wave 2 (TypeScript/Frontend) on `staging` — target `v0.3.1` or `v0.4.0` per release decision.
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance) published on `master`. Wave 3 (DevOps) on `staging` — target `v0.3.2` per release decision (not yet tagged).
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
@@ -175,8 +175,8 @@ Add stack-specific guidance for the technologies this project targets, without c
 - `knowledge/symfony/` (L2) — **Wave 1**
 - `knowledge/typescript/` (L1) — **Wave 2** — complete
 - `knowledge/frontend/` (L2) — **Wave 2** — complete
-- `knowledge/devops/` (L3) — Wave 3
-- `knowledge/flutter/` (L2) — Wave 3
+- `knowledge/devops/` (L3) — **Wave 3** — complete
+- `knowledge/flutter/` (L2) — **Deferred** (post–Wave 3)
 
 **Deliverables:**
 
@@ -188,11 +188,17 @@ Add stack-specific guidance for the technologies this project targets, without c
 - [x] Wave 2: `typescript-fundamentals.md` (EKP-TY), `frontend-architecture.md` (EKP-FE)
 - [x] Profiles `cursor-typescript`, `cursor-frontend`
 - [x] CI assemble `--verify` for all five Cursor profiles
-- [ ] DevOps / Flutter (Wave 3)
+- [x] Wave 3: `devops-fundamentals.md` (EKP-DV)
+- [x] Profile `cursor-devops`
+- [x] CI assemble `--verify` for six Cursor profiles
+- [ ] Flutter (deferred)
+- [ ] Profile `includes` / `extends` (deferred — 6th profile threshold reached; human decision pending)
+- [ ] `technology` validator role (deferred)
+- [ ] Copilot / Claude adapters (Phase 5)
 
 **Exit criteria:** A developer on a supported stack can find actionable guidance without wading through unrelated stacks; tech guides cite L0 concepts instead of duplicating them.
 
-**v0.3.1 / v0.4.0 target:** Wave 2 release (TypeScript/Frontend) — separate human-approved release step after governance (EKP-AI16).
+**v0.3.2 target:** Wave 3 release (DevOps) — separate human-approved release step after EKP-AI21 gate.
 
 ---
 

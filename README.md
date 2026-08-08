@@ -9,7 +9,7 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 | Area | Purpose |
 |------|---------|
 | [`knowledge/`](knowledge/) | Tool-agnostic engineering knowledge (patterns, practices, guidelines) |
-| [`profiles/`](profiles/) | Composed sets of knowledge (`cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`) |
+| [`profiles/`](profiles/) | Composed sets of knowledge (`cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`) |
 | [`scripts/`](scripts/) | Validation, adapters, and assembly pipeline |
 | [`dist/`](dist/) | Generated deployable bundles (gitignored; produced by `assemble`) |
 | [`rules/`](rules/) | Scaffold for tool-specific rule layouts; **not** the primary bundle source |
@@ -73,12 +73,13 @@ py -3 scripts/assemble/assemble.py --profile cursor-php --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-typescript --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 ```
 
 ## Release status
 
-- **Latest published release:** `v0.3.0` (on `master`)
-- **Current staging release candidate:** `v0.3.1` — Phase 4 Wave 2 (TypeScript/Frontend) and governance foundation; **not yet tagged or published**
+- **Latest published release:** `v0.3.1` (on `master`)
+- **Current staging work:** Phase 4 Wave 3 (DevOps) — implemented on `staging`; **not yet tagged or published**
 
 ## Status
 
@@ -90,19 +91,19 @@ py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, v0.2.0 release |
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Wave 1–2 on staging; Wave 3 next |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 on staging; Flutter deferred |
 
 ### Repository metrics
 
 | Metric | Value |
 |--------|-------|
-| Knowledge guides | 20 |
-| Concepts | 187 |
-| Namespaces | 21 |
+| Knowledge guides | 21 |
+| Concepts | 195 |
+| Namespaces | 22 |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (unchanged) |
-| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend` |
+| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops` |
 
 See [`docs/roadmap.md`](docs/roadmap.md) for the full development plan.
 

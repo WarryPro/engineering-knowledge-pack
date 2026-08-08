@@ -86,8 +86,9 @@ Operational profiles:
 | `cursor-symfony` | Core L0 subset + PHP + `symfony-architecture` |
 | `cursor-typescript` | Core L0 subset + `typescript-fundamentals` |
 | `cursor-frontend` | Core L0 subset + TypeScript + `frontend-architecture` |
+| `cursor-devops` | Core L0 subset + `devops-fundamentals` |
 
-Profiles use **explicit knowledge lists** (no YAML `extends` in v0.3.0). Example (`profiles/cursor-core.yaml`):
+Profiles use **explicit knowledge lists** (no YAML `extends` in v0.3.1). Example (`profiles/cursor-core.yaml`):
 
 ```yaml
 name: cursor-core
@@ -176,14 +177,15 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Operational today:**
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
-- Cursor adapter; profiles `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`
-- Assemble pipeline with `--verify` (CI verifies all five Cursor profiles)
+- Cursor adapter; profiles `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`
+- Assemble pipeline with `--verify` (CI verifies all six Cursor profiles)
 
-**Planned (Phase 4 Wave 3 / Phase 5):**
+**Planned (Phase 4 / Phase 5):**
 
-- DevOps / Flutter technology guides and profiles
-- Optional profile `extends` only if duplication becomes painful
-- Optional graph role `technology` (V1) if V2 exceptions proliferate
+- Flutter technology guide and profile (deferred)
+- Profile `includes` / `extends` — human decision pending (6th profile threshold reached)
+- Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
+- Copilot / Claude adapters (Phase 5)
 
 ## Related
 
