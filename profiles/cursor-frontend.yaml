@@ -1,26 +1,15 @@
 # EKP cursor-frontend profile
-# Frontend architecture + TypeScript fundamentals on top of the cursor-core L0 subset.
-# Explicit composition — no profile extends (v0.3.0 policy).
+# Frontend + TypeScript composed on cursor-core via includes.
 # Does not modify cursor-core.yaml.
 
 name: cursor-frontend
 description: EKP Cursor bundle for frontend application architecture (TypeScript + UI + core routing).
 
+includes:
+  - cursor-core
+
 knowledge:
-  # --- Always-on: foundation + AI orchestrator (same subset as cursor-core) ---
-  - knowledge/engineering/engineering-principles.md
-  - knowledge/ai/ai-assisted-development.md
-
-  # --- Routing: L0 siblings ---
-  - knowledge/engineering/refactoring.md
-  - knowledge/testing/testing.md
-  - knowledge/engineering/error-handling.md
-  - knowledge/architecture/layering-and-boundaries.md
-
-  # --- L1: TypeScript ---
   - knowledge/typescript/typescript-fundamentals.md
-
-  # --- L2: Frontend ---
   - knowledge/frontend/frontend-architecture.md
 
 filters:
