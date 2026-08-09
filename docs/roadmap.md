@@ -153,7 +153,7 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 - [x] PR template governance section
 - [x] Roadmap and meta-doc synchronization
 
-**Deferred:** profile `includes`, `technology` validator role, automated deprecation enforcement, Copilot/Claude adapters.
+**Deferred:** `technology` validator role, automated deprecation enforcement, Copilot/Claude adapters.
 
 **Exit criteria:** Contributors can follow documented lifecycle, namespace, profile, and release rules without ad hoc convention.
 
@@ -191,8 +191,8 @@ Add stack-specific guidance for the technologies this project targets, without c
 - [x] Wave 3: `devops-fundamentals.md` (EKP-DV)
 - [x] Profile `cursor-devops`
 - [x] CI assemble `--verify` for six Cursor profiles
+- [x] Profile `includes` (ADR-0008; `cursor-core` frozen; no `extends`)
 - [ ] Flutter (deferred)
-- [ ] Profile `includes` / `extends` (deferred — 6th profile threshold reached; human decision pending)
 - [ ] `technology` validator role (deferred)
 - [ ] Copilot / Claude adapters (Phase 5)
 

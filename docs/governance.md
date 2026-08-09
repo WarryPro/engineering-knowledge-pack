@@ -125,15 +125,16 @@ Future namespaces (DevOps, Flutter, etc.) are requested at implementation time �
 5. Update README / DEVELOPMENT  
 6. CHANGELOG entry  
 
-### Deferred: `includes` / `extends`
+### Profile composition (`includes`)
 
-Profile composition fragments remain **deferred** until:
+Profiles may declare `includes: [cursor-core, ...]` per ADR-0008.
 
-- **6th profile**, OR  
-- documented **L0 drift** between profiles, OR  
-- **>15% duplicate-path errors** in profile review  
+- Included profiles contribute **knowledge paths only** — not `adapter`, `filters`, or `outputs`.
+- Resolution is depth-first; included paths precede local paths; duplicates drop later occurrences.
+- **`extends` is not supported** — composition, not inheritance.
+- **`cursor-core` remains frozen** at 65 rules; stack profiles include it rather than duplicating L0 paths.
 
-Until then, duplicate the L0 subset explicitly (as `cursor-php`, `cursor-symfony`, etc. do today).
+Validator checks unknown includes, circular includes, and resolved path existence. Assembly resolves includes before Cursor rule generation.
 
 ---
 
