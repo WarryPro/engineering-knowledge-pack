@@ -17,6 +17,7 @@ from common.extract import (
 )
 from common.models import GeneratedRule
 from common.paths import get_dist_path, get_repo_root
+from common.profile_resolve import load_profile_yaml, resolve_profile_knowledge
 
 from cursor.mdc_writer import write_mdc_file
 from cursor.naming import (
@@ -59,38 +60,32 @@ def _parse_yaml_list(block, key):
 
 def load_profile(profile_path):
     # type: (Path) -> dict
-    """Load a minimal EKP profile YAML file without external dependencies."""
-    text = _strip_yaml_comments(profile_path.read_text(encoding="utf-8"))
+    """Load a profile and resolve includes into a flat knowledge path list."""
+    repo_root = get_repo_root()
+    data = load_profile_yaml(profile_path)
 
-    name_match = re.search(r"^name:\s*(\S+)", text, re.MULTILINE)
-    if not name_match:
+    name = data.get("name")
+    if not isinstance(name, str) or not name:
         raise ValueError("Profile missing name: {}".format(profile_path))
 
-    description_match = re.search(
-        r"^description:\s*(.+)$", text, re.MULTILINE
-    )
+    knowledge = resolve_profile_knowledge(repo_root, name)
 
-    knowledge = re.findall(
-        r"^[ \t]*-[ \t]+(knowledge/[^\s#]+\.md)\s*$", text, re.MULTILINE
-    )
+    adapter_priorities = ["high"]
+    adapter = data.get("adapter")
+    if isinstance(adapter, dict):
+        include = adapter.get("include")
+        if isinstance(include, dict):
+            priorities = include.get("adapter_priority")
+            if isinstance(priorities, list) and priorities:
+                adapter_priorities = [str(p) for p in priorities]
 
-    adapter_block_match = re.search(
-        r"^adapter:\s*\n(?P<body>(?:[ \t].+\n?)+)", text, re.MULTILINE
-    )
-    adapter_priorities = []
-    if adapter_block_match:
-        adapter_priorities = _parse_yaml_list(
-            adapter_block_match.group("body"), "adapter_priority"
-        )
-
-    if not adapter_priorities:
-        adapter_priorities = ["high"]
+    description = data.get("description")
+    if not isinstance(description, str):
+        description = ""
 
     return {
-        "name": name_match.group(1),
-        "description": description_match.group(1).strip()
-        if description_match
-        else "",
+        "name": name,
+        "description": description.strip(),
         "knowledge": knowledge,
         "adapter_priorities": adapter_priorities,
     }

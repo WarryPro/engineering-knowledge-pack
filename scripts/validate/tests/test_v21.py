@@ -224,7 +224,7 @@ class ProfileTests(unittest.TestCase):
             root = Path(tmp)
             profiles = root / "profiles"
             profiles.mkdir()
-            profile = profiles / "bad.yaml"
+            profile = profiles / "test-profile.yaml"
             profile.write_text(
                 yaml.dump(
                     {

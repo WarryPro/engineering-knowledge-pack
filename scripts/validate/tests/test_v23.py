@@ -29,6 +29,7 @@ from modules.scale_report import format_scale_report
 
 FIXTURES = Path(__file__).resolve().parent / "fixtures"
 REPO_ROOT = FIXTURES
+PROFILES_DIR = REPO_ROOT / "profiles"
 
 FOUNDATION = "knowledge/engineering/engineering-principles.md"
 
@@ -124,7 +125,8 @@ class ChangedOnlyTests(unittest.TestCase):
         }
         with patch.object(validate, "REPO_ROOT", REPO_ROOT):
             with patch.object(validate, "KNOWLEDGE_DIR", REPO_ROOT / "knowledge"):
-                code = validate.run_validation(changed_only=True, tier="all")
+                with patch.object(validate, "PROFILES_DIR", PROFILES_DIR):
+                    code = validate.run_validation(changed_only=True, tier="all")
         self.assertEqual(code, 0)
 
     @patch.object(validate, "get_changed_files")
@@ -140,7 +142,8 @@ class ChangedOnlyTests(unittest.TestCase):
         mock_graph.return_value = ([], [])
         with patch.object(validate, "REPO_ROOT", REPO_ROOT):
             with patch.object(validate, "KNOWLEDGE_DIR", REPO_ROOT / "knowledge"):
-                validate.run_validation(changed_only=True, tier="all")
+                with patch.object(validate, "PROFILES_DIR", PROFILES_DIR):
+                    validate.run_validation(changed_only=True, tier="all")
         mock_graph.assert_not_called()
 
     @patch.object(validate, "get_changed_files")
@@ -156,7 +159,8 @@ class ChangedOnlyTests(unittest.TestCase):
         mock_graph.return_value = ([], [])
         with patch.object(validate, "REPO_ROOT", REPO_ROOT):
             with patch.object(validate, "KNOWLEDGE_DIR", REPO_ROOT / "knowledge"):
-                validate.run_validation(changed_only=True, tier="all")
+                with patch.object(validate, "PROFILES_DIR", PROFILES_DIR):
+                    validate.run_validation(changed_only=True, tier="all")
         mock_graph.assert_called_once()
 
 
@@ -166,7 +170,8 @@ class TierTests(unittest.TestCase):
     def test_structural_only(self, mock_concepts, mock_graph):
         with patch.object(validate, "REPO_ROOT", REPO_ROOT):
             with patch.object(validate, "KNOWLEDGE_DIR", REPO_ROOT / "knowledge"):
-                validate.run_validation(tier="structural")
+                with patch.object(validate, "PROFILES_DIR", PROFILES_DIR):
+                    validate.run_validation(tier="structural")
         mock_graph.assert_not_called()
         mock_concepts.assert_not_called()
 
@@ -178,7 +183,8 @@ class TierTests(unittest.TestCase):
         mock_graph.return_value = ([], [])
         with patch.object(validate, "REPO_ROOT", REPO_ROOT):
             with patch.object(validate, "KNOWLEDGE_DIR", REPO_ROOT / "knowledge"):
-                validate.run_validation(tier="graph")
+                with patch.object(validate, "PROFILES_DIR", PROFILES_DIR):
+                    validate.run_validation(tier="graph")
         mock_graph.assert_called_once()
 
     @patch.object(validate, "validate_graph")
@@ -187,7 +193,8 @@ class TierTests(unittest.TestCase):
         mock_concepts.return_value = []
         with patch.object(validate, "REPO_ROOT", REPO_ROOT):
             with patch.object(validate, "KNOWLEDGE_DIR", REPO_ROOT / "knowledge"):
-                validate.run_validation(tier="registry")
+                with patch.object(validate, "PROFILES_DIR", PROFILES_DIR):
+                    validate.run_validation(tier="registry")
         mock_graph.assert_not_called()
         mock_concepts.assert_called_once()
 

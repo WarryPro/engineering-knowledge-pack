@@ -1,10 +1,22 @@
 """Profile YAML validation against JSON Schema."""
 
 import json
+import sys
 from pathlib import Path
 
 import yaml
 from jsonschema import Draft202012Validator
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+ADAPTERS_COMMON = SCRIPT_DIR.parents[1] / "adapters" / "common"
+if str(ADAPTERS_COMMON) not in sys.path:
+    sys.path.insert(0, str(ADAPTERS_COMMON))
+
+from profile_resolve import (
+    ProfileResolveError,
+    resolve_profile_knowledge,
+    validate_profile_includes,
+)
 
 SCHEMA_PATH = Path(__file__).resolve().parents[3] / "schema" / "profile.schema.json"
 
@@ -50,9 +62,25 @@ def validate_profiles(repo_root, profiles_dir):
                 "[PROFILE] {}: {}: {}".format(rel, location, error.message)
             )
 
-        knowledge = data.get("knowledge", [])
-        if isinstance(knowledge, list):
-            for entry in knowledge:
+        profile_name = data.get("name")
+        if isinstance(profile_name, str):
+            try:
+                resolved = resolve_profile_knowledge(
+                    repo_root, profile_name, profiles_dir=profiles_dir
+                )
+            except ProfileResolveError as exc:
+                errors.append("[PROFILE] {}: {}".format(rel, exc))
+            else:
+                for entry in resolved:
+                    doc_path = repo_root / entry
+                    if not doc_path.is_file():
+                        errors.append(
+                            "[PROFILE] {}: references missing document '{}'".format(
+                                rel, entry
+                            )
+                        )
+        elif isinstance(data.get("knowledge"), list):
+            for entry in data.get("knowledge", []):
                 if not isinstance(entry, str):
                     continue
                 doc_path = repo_root / entry
@@ -62,5 +90,7 @@ def validate_profiles(repo_root, profiles_dir):
                             rel, entry
                         )
                     )
+
+    errors.extend(validate_profile_includes(repo_root, profiles_dir))
 
     return errors
