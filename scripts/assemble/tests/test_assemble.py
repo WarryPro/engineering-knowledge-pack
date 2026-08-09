@@ -7,6 +7,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
+import yaml
+
 ASSEMBLE_DIR = Path(__file__).resolve().parents[1]
 REPO_ROOT = ASSEMBLE_DIR.parents[1]
 ADAPTERS_DIR = REPO_ROOT / "scripts" / "adapters"
@@ -121,6 +123,29 @@ class BundleContentTests(unittest.TestCase):
             get_dist_path() / "cursor-core" / "cursor" / orchestrator_filename()
         )
         self.assertTrue(orchestrator.is_file())
+
+
+class ProfileIsolationTests(unittest.TestCase):
+    FORBIDDEN_STACK_SEGMENTS = ("php", "symfony", "typescript", "frontend")
+
+    def test_cursor_devops_excludes_application_stacks(self):
+        profile_path = REPO_ROOT / "profiles" / "cursor-devops.yaml"
+        data = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+        paths = data.get("knowledge", [])
+        for path in paths:
+            for segment in self.FORBIDDEN_STACK_SEGMENTS:
+                self.assertNotIn(
+                    "/{}/".format(segment),
+                    path,
+                    msg="cursor-devops must not include {}: {}".format(segment, path),
+                )
+
+    def test_cursor_devops_profile_generates_bundle(self):
+        if verify_indexes(get_dist_path()):
+            self.skipTest("dist indexes not available")
+
+        manifest = assemble(profile_name="cursor-devops", clean=True, verify=True)
+        self.assertEqual(manifest["profile"], "cursor-devops")
 
 
 if __name__ == "__main__":

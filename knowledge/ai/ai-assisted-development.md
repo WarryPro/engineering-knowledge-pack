@@ -86,6 +86,7 @@ Without governance, teams experience:
 | Symfony application structure | `symfony/symfony-architecture.md` (EKP-SY) | Route from EKP-AI10 — Phase 4 |
 | TypeScript language design | `typescript/typescript-fundamentals.md` (EKP-TY) | Route from EKP-AI10 — Phase 4 Wave 2 |
 | Frontend UI architecture | `frontend/frontend-architecture.md` (EKP-FE) | Route from EKP-AI10 — Phase 4 Wave 2 |
+| Platform / CI/CD / deployment / ops boundaries | `devops/devops-fundamentals.md` (EKP-DV) | Route from EKP-AI10 — Phase 4 Wave 3 |
 | Tool rule file format | `rules/cursor/`, adapters | Out of scope — derived output |
 
 **Out of scope:** prompt engineering tutorials for specific LLMs, model selection, token budgeting, RAG pipeline design, embedding indexes, automatic code-fix bots, CI adapter configuration.
@@ -343,6 +344,7 @@ AI-assisted development is a **practice-layer** artifact in the `ai` domain. Ada
 - Symfony application structure (DI, thin controllers, modules, Messenger, Security wiring) → `symfony/symfony-architecture.md` (EKP-SY) Decision Flow.
 - TypeScript language/module design (strict, unknown, unions, modules, runtime boundaries) → `typescript/typescript-fundamentals.md` (EKP-TY) Decision Flow.
 - Frontend UI architecture (components, state, async UI, a11y, rendering boundaries) → `frontend/frontend-architecture.md` (EKP-FE) Decision Flow.
+- Platform, CI/CD, deployment, environments, operational observability, rollback safety, platform config/secrets → `devops/devops-fundamentals.md` (EKP-DV) Decision Flow.
 - Do not duplicate sibling content—cite and route.
 
 **Good:** "This is a Level 2 extract method refactor—applying EKP-RF Decision Flow step 3."

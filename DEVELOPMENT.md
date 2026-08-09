@@ -19,7 +19,7 @@ On Linux/macOS CI uses `python`; on Windows use `py -3` if configured.
 | Path | Role |
 |------|------|
 | `knowledge/` | Source of truth — validated on every change |
-| `profiles/` | Bundle composition (`cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`) |
+| `profiles/` | Bundle composition (`cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`) |
 | `scripts/validate/` | Validator CLI |
 | `scripts/adapters/` | Knowledge → tool format transformers |
 | `scripts/assemble/` | Profile → deployable bundle |
@@ -74,11 +74,12 @@ py -3 scripts/assemble/assemble.py --profile cursor-php --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-typescript --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 ```
 
 Output: `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json`.
 
-**Expected:** 65 rules for `cursor-core` (do not change without explicit profile work). Tech profiles add PHP/Symfony rules on top of the same L0 subset.
+**Expected:** 65 rules for `cursor-core` (do not change without explicit profile work). Single-stack tech profiles (`cursor-php`, `cursor-typescript`, `cursor-devops`) add ~9 rules on top of the same L0 subset (~74). Combined-stack profiles (`cursor-symfony`, `cursor-frontend`) are ~83.
 
 ### Deploy to a consumer project
 
@@ -90,6 +91,7 @@ dist/cursor-php/cursor/         →  <project>/.cursor/rules/
 dist/cursor-symfony/cursor/     →  <project>/.cursor/rules/
 dist/cursor-typescript/cursor/  →  <project>/.cursor/rules/
 dist/cursor-frontend/cursor/    →  <project>/.cursor/rules/
+dist/cursor-devops/cursor/      →  <project>/.cursor/rules/
 ```
 
 Regenerate after any knowledge or profile change.
@@ -107,7 +109,7 @@ Workflow: [`.github/workflows/ekp-validation.yml`](.github/workflows/ekp-validat
 
 Triggers: `push` and `pull_request` to `master` and `staging`.
 
-Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all five Cursor profiles.
+Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all six Cursor profiles.
 
 ## Before opening a PR
 

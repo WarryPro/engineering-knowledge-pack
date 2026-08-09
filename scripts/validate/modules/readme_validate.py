@@ -15,6 +15,7 @@ NAVIGATION_READMES = [
     "knowledge/symfony/README.md",
     "knowledge/typescript/README.md",
     "knowledge/frontend/README.md",
+    "knowledge/devops/README.md",
 ]
 
 INDEX_SECTIONS = {

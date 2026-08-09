@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-08-09
+
+### Added
+
+- Phase 4 Wave 3 (DevOps):
+  - `knowledge/devops/devops-fundamentals.md` — EKP-DV01–DV08
+  - Namespace EKP-DV
+  - Profile `cursor-devops`
+  - CI assemble `--verify` for `cursor-devops`
+  - Profile isolation tests for `cursor-devops`
+
+### Changed
+
+- `ai-assisted-development.md` — EKP-AI10 routes to EKP-DV
+- engineering-principles downstream technology table
+- Documentation: README, roadmap, architecture, DEVELOPMENT metrics
+
 ## [0.3.1] - 2026-08-07
 
 ### Added
