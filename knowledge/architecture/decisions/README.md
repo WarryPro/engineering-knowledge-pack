@@ -40,6 +40,7 @@ domain: architecture
 | [adr-0005](adr-0005-technology-knowledge-evolution.md) | Technology knowledge evolution | Accepted |
 | [adr-0006](adr-0006-versioning-and-compatibility.md) | Versioning & compatibility | Accepted |
 | [adr-0007](adr-0007-knowledge-and-concept-lifecycle.md) | Knowledge & concept lifecycle | Accepted |
+| [adr-0008](adr-0008-profile-composition-includes.md) | Profile composition (`includes`) | Accepted |
 
 ## When to write an ADR
 
