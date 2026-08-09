@@ -165,7 +165,7 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), and `v0.3.2` (DevOps — pending tag) on `master` after release gate.
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps) published on `master`.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
