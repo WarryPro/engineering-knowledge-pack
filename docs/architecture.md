@@ -45,7 +45,7 @@ See [`adapter-architecture.md`](adapter-architecture.md) for pipeline details.
 Contains engineering knowledge as markdown documents organized by domain:
 
 - **Cross-cutting domains** — `engineering/`, `architecture/`, `security/`, `testing/`, `performance/`, `devops/`, `ai/`, `database/`
-- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1), `frontend/` (L2), `flutter/` (L2 stub), `devops/` (L3 stub)
+- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1), `frontend/` (L2), `devops/` (L3), `flutter/` (L2 stub)
 
 Technology knowledge **applies** foundation concepts; it must not redefine them. Layering:
 

@@ -79,7 +79,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 ## Release status
 
 - **Latest published release:** `v0.3.1` (on `master`)
-- **Current staging work:** Phase 4 Wave 3 (DevOps) — implemented on `staging`; **not yet tagged or published**
+- **Pending release:** `v0.3.2` — Phase 4 Wave 3 (DevOps); release candidate on `staging` (**not yet tagged**)
 
 ## Status
 

@@ -161,11 +161,11 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 ## Phase 4: Technology knowledge
 
-**Status:** In progress (Waves 1–3 complete on `staging`; release pending human approval)
+**Status:** In progress (Waves 1–3 complete; `v0.3.2` release candidate on `staging`)
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance) published on `master`. Wave 3 (DevOps) on `staging` — target `v0.3.2` per release decision (not yet tagged).
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), and `v0.3.2` (DevOps — pending tag) on `master` after release gate.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
