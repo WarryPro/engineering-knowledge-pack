@@ -79,7 +79,9 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 
 Output: `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json`.
 
-**Expected:** 65 rules for `cursor-core` (do not change without explicit profile work). Single-stack tech profiles (`cursor-php`, `cursor-typescript`, `cursor-devops`) add ~9 rules on top of the same L0 subset (~74). Combined-stack profiles (`cursor-symfony`, `cursor-frontend`) are ~83.
+**Expected:** 65 rules for `cursor-core` (frozen — do not change without explicit approval). Stack profiles include `cursor-core` via `includes` and add stack-specific guides (~74 for single-stack, ~83 for combined-stack). Rule counts must remain stable across composition refactors.
+
+**Profile composition:** `includes` resolves knowledge paths depth-first before assembly. Included profiles contribute paths only; root profile owns `adapter`, `filters`, and `outputs`. See ADR-0008.
 
 ### Deploy to a consumer project
 

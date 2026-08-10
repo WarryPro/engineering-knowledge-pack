@@ -12,7 +12,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 on staging; Flutter deferred |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); Flutter deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot and Claude pending |
 
 ---
@@ -153,7 +153,7 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 - [x] PR template governance section
 - [x] Roadmap and meta-doc synchronization
 
-**Deferred:** profile `includes`, `technology` validator role, automated deprecation enforcement, Copilot/Claude adapters.
+**Deferred:** `technology` validator role, automated deprecation enforcement, Copilot/Claude adapters.
 
 **Exit criteria:** Contributors can follow documented lifecycle, namespace, profile, and release rules without ad hoc convention.
 
@@ -161,11 +161,11 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 ## Phase 4: Technology knowledge
 
-**Status:** In progress (Waves 1–3 complete; `v0.3.2` release candidate on `staging`)
+**Status:** In progress (Waves 1–3 published on `master`; profile composition `includes` released in `v0.3.3`)
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps) published on `master`.
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`) published on `master`.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
@@ -191,14 +191,14 @@ Add stack-specific guidance for the technologies this project targets, without c
 - [x] Wave 3: `devops-fundamentals.md` (EKP-DV)
 - [x] Profile `cursor-devops`
 - [x] CI assemble `--verify` for six Cursor profiles
+- [x] Profile `includes` (ADR-0008; `cursor-core` frozen; no `extends`)
 - [ ] Flutter (deferred)
-- [ ] Profile `includes` / `extends` (deferred — 6th profile threshold reached; human decision pending)
 - [ ] `technology` validator role (deferred)
 - [ ] Copilot / Claude adapters (Phase 5)
 
 **Exit criteria:** A developer on a supported stack can find actionable guidance without wading through unrelated stacks; tech guides cite L0 concepts instead of duplicating them.
 
-**v0.3.2 target:** Wave 3 release (DevOps) — separate human-approved release step after EKP-AI21 gate.
+**v0.3.3:** Profile composition (`includes`, ADR-0008) — stack profiles include `cursor-core`; assembled rule counts unchanged; `cursor-core` frozen.
 
 ---
 

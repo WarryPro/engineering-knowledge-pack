@@ -81,33 +81,23 @@ Operational profiles:
 
 | Profile | Role |
 |---------|------|
-| `cursor-core` | Minimal L0 bundle (65 rules) — **frozen** for Phase 4 waves unless explicitly approved |
-| `cursor-php` | Core L0 subset + `php-fundamentals` |
-| `cursor-symfony` | Core L0 subset + PHP + `symfony-architecture` |
-| `cursor-typescript` | Core L0 subset + `typescript-fundamentals` |
-| `cursor-frontend` | Core L0 subset + TypeScript + `frontend-architecture` |
-| `cursor-devops` | Core L0 subset + `devops-fundamentals` |
+| `cursor-core` | Minimal L0 bundle (65 rules) — **frozen**; included by stack profiles |
+| `cursor-php` | `includes: [cursor-core]` + `php-fundamentals` |
+| `cursor-symfony` | `includes: [cursor-core]` + PHP + `symfony-architecture` |
+| `cursor-typescript` | `includes: [cursor-core]` + `typescript-fundamentals` |
+| `cursor-frontend` | `includes: [cursor-core]` + TypeScript + `frontend-architecture` |
+| `cursor-devops` | `includes: [cursor-core]` + `devops-fundamentals` |
 
-Profiles use **explicit knowledge lists** (no YAML `extends` in v0.3.1). Example (`profiles/cursor-core.yaml`):
+Profiles compose knowledge via **`includes`** (ADR-0008). Included profiles contribute knowledge paths only; the root profile owns `adapter`, `filters`, and `outputs`. **`extends` is not supported.**
+
+Example stack profile (`profiles/cursor-php.yaml`):
 
 ```yaml
-name: cursor-core
-description: Minimal EKP knowledge bundle for Cursor AI-assisted development.
+name: cursor-php
+includes:
+  - cursor-core
 knowledge:
-  - knowledge/engineering/engineering-principles.md
-  - knowledge/ai/ai-assisted-development.md
-  - knowledge/engineering/refactoring.md
-  - knowledge/testing/testing.md
-  - knowledge/engineering/error-handling.md
-  - knowledge/architecture/layering-and-boundaries.md
-adapter:
-  target:
-    - cursor
-  include:
-    adapter_priority:
-      - high
-outputs:
-  - cursor
+  - knowledge/php/php-fundamentals.md
 ```
 
 See `templates/profile-template.yaml` and `schema/profile.schema.json`.
@@ -183,7 +173,6 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Planned (Phase 4 / Phase 5):**
 
 - Flutter technology guide and profile (deferred)
-- Profile `includes` / `extends` — human decision pending (6th profile threshold reached)
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
 - Copilot / Claude adapters (Phase 5)
 

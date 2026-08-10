@@ -16,6 +16,14 @@
       "type": "string",
       "minLength": 1
     },
+    "includes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+$"
+      },
+      "description": "Other profiles whose knowledge paths are composed into this profile (paths only; not inheritance)"
+    },
     "knowledge": {
       "type": "array",
       "items": { "type": "string", "pattern": "^knowledge/.+\\.md$" },

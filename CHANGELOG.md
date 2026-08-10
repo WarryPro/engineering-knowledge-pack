@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2026-08-10
+
+### Added
+
+- ADR-0008 — Profile composition via `includes` (no `extends`)
+- `scripts/adapters/common/profile_resolve.py` — recursive includes resolution with cycle detection
+- Profile schema optional `includes` array
+- Validator checks for unknown/circular includes and resolved knowledge paths
+- Tests for profile includes composition and rule-count regression
+
+### Changed
+
+- Stack profiles (`cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`) now `include: [cursor-core]` instead of duplicating L0 knowledge paths
+- Assembly resolves `includes` before Cursor rule generation (included profiles contribute knowledge paths only)
+- Documentation: governance, architecture, DEVELOPMENT, ADR index
+
 ## [0.3.2] - 2026-08-09
 
 ### Added
