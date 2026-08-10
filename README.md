@@ -78,8 +78,9 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.3.2` (on `master`)
-- **Phase 4 Wave 3 (DevOps):** released — see [CHANGELOG.md](CHANGELOG.md)
+- **Latest published release:** `v0.3.3` (on `master`)
+- **v0.3.3:** Profile composition via `includes` (ADR-0008) — stack profiles include `cursor-core` instead of duplicating L0 paths; assembled rule counts unchanged
+- See [CHANGELOG.md](CHANGELOG.md) for full release history
 
 ## Status
 
@@ -91,7 +92,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, v0.2.0 release |
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 on staging; Flutter deferred |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); Flutter deferred |
 
 ### Repository metrics
 
@@ -100,10 +101,11 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 | Knowledge guides | 21 |
 | Concepts | 195 |
 | Namespaces | 22 |
+| Profiles | 6 (`cursor-core` + 5 stack profiles via `includes`) |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
-| `cursor-core` bundle | 65 rules (unchanged) |
-| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops` |
+| `cursor-core` bundle | 65 rules (frozen) |
+| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops` (each `includes: [cursor-core]`) |
 
 See [`docs/roadmap.md`](docs/roadmap.md) for the full development plan.
 
