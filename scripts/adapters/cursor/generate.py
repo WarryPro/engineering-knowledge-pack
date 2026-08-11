@@ -1,7 +1,5 @@
 """Generate Cursor .mdc rules from EKP profiles and knowledge documents."""
 
-import json
-import re
 import sys
 from pathlib import Path
 
@@ -10,292 +8,46 @@ ADAPTERS_DIR = SCRIPT_DIR.parent
 if str(ADAPTERS_DIR) not in sys.path:
     sys.path.insert(0, str(ADAPTERS_DIR))
 
-from common.extract import (
-    CONCEPT_HEADING_RE,
-    extract_concepts,
-    extract_decision_flow,
-)
-from common.models import GeneratedRule
+from common.extract import extract_concepts, extract_decision_flow
 from common.paths import get_dist_path, get_repo_root
-from common.profile_resolve import load_profile_yaml, resolve_profile_knowledge
+from common.profile_loader import load_profile_by_name
+from common.selection import (
+    load_generation_indexes,
+    markdown_cache_for_profile,
+    select_manifest_rules,
+)
 
 from cursor.mdc_writer import write_mdc_file
-from cursor.naming import (
-    concept_filename,
-    decision_flow_filename,
-    foundation_filename,
-    orchestrator_filename,
+from cursor.normalize import (
+    build_concept_rule,
+    build_decision_flow_rule,
+    build_foundation_rule,
+    build_orchestrator_rule,
 )
 
 ORCHESTRATOR_PATH = "knowledge/ai/ai-assisted-development.md"
 FOUNDATION_PATH = "knowledge/engineering/engineering-principles.md"
-BLOCKING_AUTO_APPLY = ("block", "hard block")
+
+ADAPTER_NAME = "cursor"
 
 
-def _strip_yaml_comments(text):
-    # type: (str) -> str
-    lines = []
-    for line in text.splitlines():
-        if line.lstrip().startswith("#"):
-            continue
-        lines.append(line)
-    return "\n".join(lines)
-
-
-def _parse_yaml_list(block, key):
-    # type: (str, str) -> list
-    """Parse a simple YAML list for a top-level or nested key."""
-    pattern = r"^" + re.escape(key) + r":\s*\n((?:[ \t]+-\s+.+\n?)+)"
-    match = re.search(pattern, block, re.MULTILINE)
-    if not match:
-        return []
-
-    values = []
-    for line in match.group(1).splitlines():
-        item_match = re.match(r"^[ \t]+-\s+(.+)$", line)
-        if item_match:
-            values.append(item_match.group(1).strip())
-    return values
-
-
-def load_profile(profile_path):
-    # type: (Path) -> dict
-    """Load a profile and resolve includes into a flat knowledge path list."""
-    repo_root = get_repo_root()
-    data = load_profile_yaml(profile_path)
-
-    name = data.get("name")
-    if not isinstance(name, str) or not name:
-        raise ValueError("Profile missing name: {}".format(profile_path))
-
-    knowledge = resolve_profile_knowledge(repo_root, name)
-
-    adapter_priorities = ["high"]
-    adapter = data.get("adapter")
-    if isinstance(adapter, dict):
-        include = adapter.get("include")
-        if isinstance(include, dict):
-            priorities = include.get("adapter_priority")
-            if isinstance(priorities, list) and priorities:
-                adapter_priorities = [str(p) for p in priorities]
-
-    description = data.get("description")
-    if not isinstance(description, str):
-        description = ""
-
-    return {
-        "name": name,
-        "description": description.strip(),
-        "knowledge": knowledge,
-        "adapter_priorities": adapter_priorities,
-    }
-
-
-def load_json(path):
-    # type: (Path) -> dict
-    """Load a JSON file from disk."""
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def read_knowledge_document(repo_root, relative_path):
-    # type: (Path, str) -> str
-    """Read a knowledge markdown file."""
-    return (repo_root / relative_path).read_text(encoding="utf-8")
-
-
-def _extract_section(markdown, heading):
-    # type: (str, str) -> str
-    """Extract a level-2 markdown section body."""
-    match = re.search(
-        r"^## " + re.escape(heading) + r"\s*$", markdown, re.MULTILINE
-    )
-    if not match:
-        return ""
-
-    start = match.end()
-    next_heading = re.search(r"^## ", markdown[start:], re.MULTILINE)
-    end = start + next_heading.start() if next_heading else len(markdown)
-    return markdown[start:end].strip()
-
-
-def _enforcement_constraints(enforcement_rules):
-    # type: (list) -> list
-    """Convert adapter enforcement rows into constraint directives."""
-    constraints = []
-    for row in enforcement_rules:
-        auto_apply = row.get("auto_apply", "").lower()
-        if not any(token in auto_apply for token in BLOCKING_AUTO_APPLY):
-            continue
-        step = row.get("step", "Step")
-        notes = row.get("notes", "")
-        if notes:
-            constraints.append(
-                "Step {} — {}. {}".format(step, auto_apply, notes)
-            )
-        else:
-            constraints.append("Step {} — {}.".format(step, auto_apply))
-    return constraints
-
-
-def _flow_directives(flow_text):
-    # type: (str) -> list
-    """Split a decision flow into directive lines."""
-    directives = []
-    for line in flow_text.splitlines():
-        stripped = line.strip()
-        if stripped:
-            directives.append(stripped)
-    return directives
-
-
-def build_orchestrator_rule(flow):
-    # type: (object) -> GeneratedRule
-    """Build the always-on orchestrator GeneratedRule."""
-    directives = _flow_directives(flow.decision_flow)
-    constraints = _enforcement_constraints(flow.enforcement_rules)
-
-    return GeneratedRule(
-        name=orchestrator_filename(),
-        description="EKP master AI decision flow — apply before any implementation",
-        always_apply=True,
-        directives=directives,
-        constraints=constraints,
-        references=[
-            "`{}` — AI Decision Flow".format(flow.source_document),
-            "`{}` — EKP-AI01 through EKP-AI12".format(flow.source_document),
-        ],
-    )
-
-
-def build_foundation_rule(markdown, source_path):
-    # type: (str, str) -> GeneratedRule
-    """Build the always-on engineering principles GeneratedRule."""
-    summary = _extract_section(markdown, "Summary")
-    summary_lines = [
-        line.strip()
-        for line in summary.splitlines()
-        if line.strip() and not line.strip().startswith("|")
-    ]
-
-    directives = []
-    if summary_lines:
-        directives.append(summary_lines[0])
-
-    for match in CONCEPT_HEADING_RE.finditer(markdown):
-        concept_id = match.group(1)
-        if not concept_id.startswith("EKP-P"):
-            continue
-
-        title = match.group(2).strip()
-        body_start = match.end()
-        next_match = CONCEPT_HEADING_RE.search(markdown, body_start)
-        body_end = next_match.start() if next_match else len(markdown)
-        body = markdown[body_start:body_end].strip()
-
-        first_paragraph = ""
-        for line in body.splitlines():
-            stripped = line.strip()
-            if not stripped:
-                continue
-            if stripped.startswith("- ") or stripped.startswith("**"):
-                break
-            first_paragraph = stripped
-            break
-
-        directive = "{} — {}".format(concept_id, title)
-        if first_paragraph:
-            directive = "{} — {}".format(directive, first_paragraph)
-        directives.append(directive)
-
-    return GeneratedRule(
-        name=foundation_filename(),
-        description="EKP engineering principles — required decision framework",
-        always_apply=True,
-        directives=directives,
-        constraints=[
-            "Every technical decision must consider EKP-P01 through EKP-P10.",
-            "Deviation requires documented rationale.",
-        ],
-        references=[
-            "`{}` — Engineering Principles".format(source_path),
-        ],
-    )
-
-
-def build_decision_flow_rule(flow):
-    # type: (object) -> GeneratedRule
-    """Build a document-level decision flow GeneratedRule."""
-    directives = _flow_directives(flow.decision_flow)
-    constraints = _enforcement_constraints(flow.enforcement_rules)
-
-    return GeneratedRule(
-        name=flow.document_path,
-        description="EKP decision flow — {}".format(flow.title),
-        always_apply=False,
-        directives=directives,
-        constraints=constraints,
-        references=["`{}` — AI Decision Flow".format(flow.source_document)],
-    )
-
-
-def build_concept_rule(concept, concept_index_entry):
-    # type: (object, dict) -> GeneratedRule
-    """Build a concept-level GeneratedRule."""
-    concept_id = concept.concept_id
-    title = concept.title
-    description = "{} — {}".format(concept_id, title)
-
-    directives = []
-    if concept.intent:
-        directives.append(concept.intent)
-    directives.extend(concept.rules)
-
-    constraints = []
-    preferences = []
-
-    if concept.good_examples:
-        preferences.append("Good: {}".format(concept.good_examples))
-    if concept.bad_examples:
-        preferences.append("Bad: {}".format(concept.bad_examples))
-
-    if concept_id == "EKP-AI08":
-        constraints = list(concept.rules)
-        directives = [concept.intent] if concept.intent else []
-
-    references = ["`{}` — {}".format(concept.source_document, concept_id)]
-    if concept.implements:
-        references.append("Implements: {}".format(", ".join(concept.implements)))
-
-    severity = concept_index_entry.get("severity")
-    if severity:
-        references.append("Severity: {}".format(severity))
-
-    return GeneratedRule(
-        name=concept_filename(concept_id, title),
-        description=description,
-        always_apply=False,
-        directives=directives,
-        constraints=constraints,
-        references=references,
-    ), preferences
-
-
-def generate(profile_name="cursor-core", output_dir=None):
-    # type: (str, Path) -> list
+def generate(profile_name="cursor-core", output_dir=None, profile=None, repo_root=None):
+    # type: (str, Path, dict, Path) -> list
     """
     Generate Cursor .mdc rules for a profile.
 
+    Pipeline: extract → selection → normalization → Cursor writer.
+
     Returns a sorted list of written file paths.
     """
-    repo_root = get_repo_root()
-    profile_path = repo_root / "profiles" / "{}.yaml".format(profile_name)
-    profile = load_profile(profile_path)
+    root = repo_root or get_repo_root()
+    if profile is None:
+        profile = load_profile_by_name(profile_name, repo_root=root)
 
-    concept_index = load_json(get_dist_path() / "concept-index.json")
-    manifest = load_json(get_dist_path() / "adapter-manifest.json")
+    concept_index, manifest = load_generation_indexes(root / "dist")
 
     if output_dir is None:
-        output_dir = get_dist_path() / profile_name / "cursor"
+        output_dir = get_dist_path() / profile_name / ADAPTER_NAME
     else:
         output_dir = Path(output_dir)
 
@@ -305,15 +57,8 @@ def generate(profile_name="cursor-core", output_dir=None):
     output_dir.mkdir(parents=True, exist_ok=True)
 
     knowledge_set = set(profile["knowledge"])
-    priorities = set(profile["adapter_priorities"])
-    markdown_cache = {}
+    get_markdown = markdown_cache_for_profile(root, profile["knowledge"])
     written = []
-
-    def get_markdown(path):
-        # type: (str) -> str
-        if path not in markdown_cache:
-            markdown_cache[path] = read_knowledge_document(repo_root, path)
-        return markdown_cache[path]
 
     if ORCHESTRATOR_PATH not in knowledge_set:
         raise ValueError("Profile must include orchestrator document.")
@@ -325,7 +70,7 @@ def generate(profile_name="cursor-core", output_dir=None):
         raise ValueError("Orchestrator document missing AI Decision Flow.")
 
     orchestrator_rule = build_orchestrator_rule(orchestrator_flow)
-    orchestrator_path = output_dir / orchestrator_filename()
+    orchestrator_path = output_dir / orchestrator_rule.name
     write_mdc_file(
         orchestrator_path,
         orchestrator_rule,
@@ -339,7 +84,7 @@ def generate(profile_name="cursor-core", output_dir=None):
         foundation_rule = build_foundation_rule(
             foundation_markdown, FOUNDATION_PATH
         )
-        foundation_path = output_dir / foundation_filename()
+        foundation_path = output_dir / foundation_rule.name
         write_mdc_file(
             foundation_path,
             foundation_rule,
@@ -357,10 +102,9 @@ def generate(profile_name="cursor-core", output_dir=None):
         if flow is None:
             continue
 
-        flow_rule = build_decision_flow_rule(flow)
-        filename = decision_flow_filename(document_path, flow_sequence)
+        flow_rule = build_decision_flow_rule(flow, flow_sequence)
         flow_sequence += 1
-        output_path = output_dir / filename
+        output_path = output_dir / flow_rule.name
         write_mdc_file(
             output_path,
             flow_rule,
@@ -369,13 +113,11 @@ def generate(profile_name="cursor-core", output_dir=None):
         )
         written.append(str(output_path))
 
-    manifest_rules = [
-        entry
-        for entry in manifest.get("rules", [])
-        if entry.get("priority") in priorities
-        and entry.get("source") in knowledge_set
-    ]
-    manifest_rules.sort(key=lambda entry: entry.get("concept", ""))
+    manifest_rules = select_manifest_rules(
+        manifest,
+        profile["knowledge"],
+        profile["adapter_priorities"],
+    )
 
     for entry in manifest_rules:
         concept_id = entry["concept"]
@@ -389,8 +131,7 @@ def generate(profile_name="cursor-core", output_dir=None):
 
         index_entry = concept_index.get(concept_id, {})
         concept_rule, preferences = build_concept_rule(concept, index_entry)
-        filename = concept_filename(concept.concept_id, concept.title)
-        output_path = output_dir / filename
+        output_path = output_dir / concept_rule.name
         write_mdc_file(
             output_path,
             concept_rule,
@@ -401,6 +142,15 @@ def generate(profile_name="cursor-core", output_dir=None):
         written.append(str(output_path))
 
     return sorted(written)
+
+
+# Backward-compatible alias for callers expecting load_profile on this module.
+def load_profile(profile_path):
+    # type: (Path) -> dict
+    """Load a profile (delegates to common.profile_loader)."""
+    from common.profile_loader import load_profile as _load_profile
+
+    return _load_profile(profile_path)
 
 
 def main(argv=None):
