@@ -41,6 +41,7 @@ domain: architecture
 | [adr-0006](adr-0006-versioning-and-compatibility.md) | Versioning & compatibility | Accepted |
 | [adr-0007](adr-0007-knowledge-and-concept-lifecycle.md) | Knowledge & concept lifecycle | Accepted |
 | [adr-0008](adr-0008-profile-composition-includes.md) | Profile composition (`includes`) | Accepted |
+| [adr-0009](adr-0009-adapter-dispatch-architecture.md) | Adapter dispatch architecture | Accepted |
 
 ## When to write an ADR
 

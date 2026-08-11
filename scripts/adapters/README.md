@@ -9,7 +9,10 @@ Knowledge → tool-specific format transformers. One adapter per target tool.
 ## Planned
 
 - `copilot/` — knowledge → GitHub Copilot instructions
+- `antigravity/` — knowledge → Antigravity rules (format TBD)
 - `claude/` — knowledge → Claude Skills format
+
+Adapter dispatch is handled by `common/registry.py` (ADR-0009). Only Cursor is registered; future adapters implement `generate`, `verify`, and `build_manifest` without changing `assemble.py`.
 
 Each adapter follows the pipeline documented in `docs/adapter-architecture.md`.
 
@@ -83,8 +86,8 @@ EKP does not write to `.cursor/rules/` during assembly — bundles are produced 
 
 ```
 scripts/adapters/
-├── common/          # Shared extraction (concepts, decision flows)
-├── cursor/          # Cursor .mdc generator
+├── common/          # Shared extraction, selection, profile loading, registry
+├── cursor/          # Cursor .mdc generator (normalize, manifest, verify)
 └── tests/
 
 scripts/assemble/
