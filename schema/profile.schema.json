@@ -57,10 +57,10 @@
           "type": "array",
           "items": {
             "type": "string",
-            "enum": ["cursor", "copilot", "claude"]
+            "enum": ["cursor", "copilot", "antigravity", "claude"]
           },
           "minItems": 1,
-          "description": "Target tools for rule generation"
+          "description": "Legacy adapter targets; prefer profile outputs (ADR-0009)"
         },
         "include": {
           "type": "object",
@@ -83,9 +83,9 @@
       "type": "array",
       "items": {
         "type": "string",
-        "enum": ["cursor", "copilot", "claude"]
+        "enum": ["cursor", "copilot", "antigravity", "claude"]
       },
-      "description": "Target tools for adapter output (Phase 5)"
+      "description": "Canonical adapter outputs requested for this profile (ADR-0009)"
     }
   }
 }

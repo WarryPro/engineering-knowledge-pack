@@ -53,29 +53,38 @@ Adapters consume these JSON files instead of parsing markdown at runtime.
 
 ### 4. Adapter common extraction layer
 
-`scripts/adapters/common/` provides shared extraction logic used by all tool adapters:
+`scripts/adapters/common/` provides shared logic used by all tool adapters:
 
 | Module | Purpose |
 |--------|---------|
-| `models.py` | Data structures for concepts, sections, and extraction results |
-| `extract.py` | Parses knowledge markdown into adapter-ready concept blocks |
+| `models.py` | Data structures including `GeneratedRule` (in-memory IR) |
+| `extract.py` | Parses knowledge markdown into concept blocks and decision flows |
 | `paths.py` | Repository path resolution for knowledge and output targets |
+| `profile_resolve.py` | Profile `includes` resolution |
+| `profile_loader.py` | Profile loading; canonical `outputs` resolution |
+| `selection.py` | Shared adapter-manifest concept selection |
+| `registry.py` | Adapter dispatch registry (Cursor operational; others deferred) |
 
 ### 5. Cursor adapter
 
-`scripts/adapters/cursor/` transforms extracted concepts into Cursor Rules (`.mdc`):
+`scripts/adapters/cursor/` transforms extracted and normalized knowledge into Cursor Rules (`.mdc`):
 
 | Module | Purpose |
 |--------|---------|
-| `generate.py` | Orchestrates extraction and rule file generation |
+| `generate.py` | Orchestrates extract → selection → normalization → writer |
+| `normalize.py` | Builds `GeneratedRule` objects for Cursor |
 | `mdc_writer.py` | Writes `.mdc` files with Cursor frontmatter |
 | `naming.py` | Deterministic rule file naming from concept metadata |
+| `manifest.py` | Cursor bundle manifest generation |
+| `verify.py` | Cursor bundle verification |
 
 The adapter reads profile knowledge paths and `adapter.include.adapter_priority` filters to select which concepts become rules.
 
+**Only Cursor is implemented.** Copilot, Antigravity, and Claude are registered as future adapters (ADR-0009).
+
 ### 6. Assemble pipeline
 
-`scripts/assemble/assemble.py` composes a deployable bundle for a profile:
+`scripts/assemble/assemble.py` composes deployable bundles for a profile by dispatching to registered adapters based on profile `outputs`:
 
 ```bash
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
@@ -85,13 +94,15 @@ py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 |------|---------|
 | `--profile` | Profile YAML to assemble (e.g. `cursor-core`) |
 | `--clean` | Remove existing output before generation |
-| `--verify` | Validate bundle integrity after assembly |
+| `--verify` | Run per-adapter verification after assembly |
 
-Output structure:
+Profiles declare requested adapters with `outputs` (canonical). Legacy profiles may still use `adapter.target` as a fallback when `outputs` is omitted.
+
+Output structure (Cursor today):
 
 ```
 dist/<profile>/
-├── bundle-manifest.json    # Rule inventory, source refs, verification metadata
+├── bundle-manifest.json    # adapter: "cursor"
 └── cursor/
     └── *.mdc               # Generated Cursor rules
 ```
