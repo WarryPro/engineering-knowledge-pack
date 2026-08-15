@@ -44,7 +44,7 @@ class ProfileOutputsTests(unittest.TestCase):
         for profile_path in sorted(profiles_dir.glob("cursor-*.yaml")):
             data = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
             outputs = resolve_profile_outputs(data)
-            self.assertIn("cursor", outputs, msg=profile_path.name)
+            self.assertEqual(outputs, ["cursor"], msg=profile_path.name)
 
 
 class AdapterRegistryTests(unittest.TestCase):
@@ -137,6 +137,14 @@ class AssembleDispatchTests(unittest.TestCase):
         profile = load_profile_by_name("cursor-core", repo_root=REPO_ROOT)
         self.assertIn("outputs", profile)
         self.assertEqual(profile["outputs"], ["cursor"])
+
+    def test_ekp_core_outputs_remain_unimplemented(self):
+        profile = load_profile_by_name("ekp-core", repo_root=REPO_ROOT)
+        self.assertEqual(profile["outputs"], ["cursor", "copilot", "antigravity"])
+        registry = build_default_registry()
+        self.assertTrue(registry.is_implemented("cursor"))
+        self.assertFalse(registry.is_implemented("copilot"))
+        self.assertFalse(registry.is_implemented("antigravity"))
 
 
 if __name__ == "__main__":

@@ -71,6 +71,10 @@ def validate_profiles(repo_root, profiles_dir):
             except ProfileResolveError as exc:
                 errors.append("[PROFILE] {}: {}".format(rel, exc))
             else:
+                if not resolved:
+                    errors.append(
+                        "[PROFILE] {}: resolved knowledge is empty".format(rel)
+                    )
                 for entry in resolved:
                     doc_path = repo_root / entry
                     if not doc_path.is_file():

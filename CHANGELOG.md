@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Deterministic `assemble-manifest.json` for profile-level adapter assembly
+- Profile `ekp-core` (`includes: [cursor-core]`) declaring planned Copilot and Antigravity outputs
+
+### Changed
+
+- Assemble writes Cursor `bundle-manifest.json` only for the Cursor adapter (no overwrite by other adapters)
+- Unimplemented adapters fail before generation
+- Profile schema allows includes-only profiles (no local `knowledge` list)
+
 ## [0.3.4] - 2026-08-15
 
 ### Added

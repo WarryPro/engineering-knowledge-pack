@@ -4,7 +4,21 @@
   "title": "EKP Profile",
   "description": "Composition manifest selecting knowledge for a specific context",
   "type": "object",
-  "required": ["name", "description", "knowledge"],
+  "required": ["name", "description"],
+  "anyOf": [
+    {
+      "required": ["knowledge"],
+      "properties": {
+        "knowledge": { "minItems": 1 }
+      }
+    },
+    {
+      "required": ["includes"],
+      "properties": {
+        "includes": { "minItems": 1 }
+      }
+    }
+  ],
   "additionalProperties": false,
   "properties": {
     "name": {

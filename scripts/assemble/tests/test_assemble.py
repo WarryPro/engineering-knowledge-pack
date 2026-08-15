@@ -88,6 +88,12 @@ class AssembleBundleTests(unittest.TestCase):
         self.assertIn("rules", manifest)
         self.assertEqual(manifest["rules_count"], len(manifest["rules"]))
 
+        assemble_path = get_dist_path() / "cursor-core" / "assemble-manifest.json"
+        self.assertTrue(assemble_path.is_file())
+        assemble_payload = json.loads(assemble_path.read_text(encoding="utf-8"))
+        self.assertEqual(assemble_payload["adapters"], ["cursor"])
+        self.assertNotIn("generated_at", assemble_payload)
+
     def test_verify_passes(self):
         assemble(profile_name="cursor-core", clean=True, verify=True)
         verify_bundle(get_dist_path() / "cursor-core")
