@@ -98,25 +98,31 @@ py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 
 Profiles declare requested adapters with `outputs` (canonical). Legacy profiles may still use `adapter.target` as a fallback when `outputs` is omitted.
 
-Output structure (Cursor today):
+Output structure:
 
 ```
 dist/<profile>/
-├── bundle-manifest.json    # adapter: "cursor"
+├── assemble-manifest.json  # profile-level adapter list (deterministic)
+├── bundle-manifest.json    # Cursor contract when cursor is assembled
 └── cursor/
     └── *.mdc               # Generated Cursor rules
 ```
 
-### 7. Bundle manifest
+Additional adapters, once implemented, write under `dist/<profile>/<adapter>/` with `adapter-manifest.json`. Copilot, Antigravity, and Claude remain unimplemented; requesting them fails explicitly with no Cursor fallback.
 
-`dist/<profile>/bundle-manifest.json` records:
+Cursor `bundle-manifest.json` stays at the profile root and is never overwritten by another adapter.
+
+### 7. Bundle manifests
+
+`dist/<profile>/bundle-manifest.json` is the **Cursor** contract. It records:
 
 - Profile name and generation timestamp
 - Rule inventory with source knowledge paths
-- Concept IDs and adapter priorities included
-- Verification status when `--verify` is used
+- Concept IDs included
 
-Consumers can use the manifest to audit bundle contents without parsing individual rule files.
+`dist/<profile>/assemble-manifest.json` records the full assembly (profile, adapter list, per-adapter directories and manifest paths). It is deterministic and has no timestamp.
+
+Non-Cursor adapters use `dist/<profile>/<adapter>/adapter-manifest.json`. Copilot and Antigravity are not implemented; they do not produce these files yet.
 
 ### 8. Profiles
 
@@ -138,6 +144,8 @@ See `profiles/cursor-core.yaml` for the first operational profile.
 | Path | Role |
 |------|------|
 | `dist/<profile>/cursor/*.mdc` | **Deployable artifact** — copy to consumer `.cursor/rules/` |
+| `dist/<profile>/bundle-manifest.json` | Cursor bundle contract (profile root) |
+| `dist/<profile>/assemble-manifest.json` | Profile-level assembly inventory |
 | `dist/*.json` | Generated indexes for adapter consumption |
 | `rules/` | Scaffold only — **not** the primary bundle source |
 

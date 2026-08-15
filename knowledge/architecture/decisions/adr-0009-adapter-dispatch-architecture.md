@@ -78,6 +78,13 @@ The following invariants are mandatory:
 
 Cursor-specific concerns (`.mdc`, `alwaysApply`, orchestrator filename, manifest scanning) belong under `scripts/adapters/cursor/`. `assemble.py` must not contain format-specific verification logic.
 
+### Manifest layout
+
+- **Cursor** keeps the legacy-compatible profile-root file `dist/<profile>/bundle-manifest.json`. It is not moved into `cursor/`.
+- **Non-Cursor adapters** write `dist/<profile>/<adapter>/adapter-manifest.json`.
+- **Profile assembly** writes deterministic `dist/<profile>/assemble-manifest.json` listing adapters, output directories, and manifest paths. It does not include timestamps.
+- `assemble.py` resolves all requested `outputs` before generation. An unimplemented adapter fails explicitly; there is no Cursor fallback and no overwrite of the Cursor bundle manifest.
+
 ### Knowledge remains adapter-neutral
 
 Knowledge documents are not modified for adapter dispatch. Tool-specific hints remain in optional `### Cursor` / `### Claude` sections; adapters decide how to consume them.
@@ -119,7 +126,7 @@ Rejected — breaking change for existing six profiles; legacy fallback is suffi
 ### Negative
 
 - Slight indirection in assemble path
-- Multi-adapter manifest layout still TBD when second adapter ships
+- Cursor consumers must ignore `assemble-manifest.json` (additive file at profile root)
 
 ### Compliance
 

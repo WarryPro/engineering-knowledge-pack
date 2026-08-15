@@ -67,8 +67,13 @@ dist/cursor-core/
 │   ├── 01-ekp-foundation.mdc
 │   ├── ...
 │   └── concept-ekp-*.mdc
-└── bundle-manifest.json
+├── bundle-manifest.json
+└── assemble-manifest.json
 ```
+
+Cursor keeps `bundle-manifest.json` at the profile root. Future adapters write `<adapter>/adapter-manifest.json`. Copilot, Antigravity, and Claude remain unimplemented; assemble fails explicitly if they are requested, with no Cursor fallback.
+
+The `ekp-core` profile declares `outputs: [cursor, copilot, antigravity]` for packaging tests. Do not add a normal CI assemble job for it until Copilot and Antigravity are implemented.
 
 Options:
 
@@ -110,4 +115,4 @@ For development only:
 py -3 scripts/adapters/cursor/generate.py --profile cursor-core
 ```
 
-Prefer `assemble.py` for production bundles — it verifies indexes and writes `bundle-manifest.json`.
+Prefer `assemble.py` for production bundles — it verifies indexes and writes Cursor `bundle-manifest.json` plus `assemble-manifest.json`.
