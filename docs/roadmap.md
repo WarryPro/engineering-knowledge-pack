@@ -12,8 +12,8 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); Flutter deferred |
-| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot and Claude pending |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); Flutter deferred |
+| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; dispatch architecture (v0.3.4); Copilot, Antigravity, and Claude pending |
 
 ---
 
@@ -161,11 +161,11 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 ## Phase 4: Technology knowledge
 
-**Status:** In progress (Waves 1–3 published on `master`; profile composition `includes` released in `v0.3.3`)
+**Status:** In progress (Waves 1–3 published on `master`; profile composition `includes` released in `v0.3.3`; adapter dispatch released in `v0.3.4`)
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`) published on `master`.
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch) published on `master`.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
@@ -200,11 +200,13 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 **v0.3.3:** Profile composition (`includes`, ADR-0008) — stack profiles include `cursor-core`; assembled rule counts unchanged; `cursor-core` frozen.
 
+**v0.3.4:** Adapter dispatch (ADR-0009) — registry, canonical `outputs`, Cursor isolation; Copilot/Antigravity/Claude planned, not implemented; Cursor output unchanged.
+
 ---
 
 ## Phase 5: Additional AI adapters
 
-**Status:** Partial (Cursor complete)
+**Status:** Partial (Cursor complete; dispatch architecture in `v0.3.4`)
 
 Extend the adapter layer to additional AI assistant platforms.
 

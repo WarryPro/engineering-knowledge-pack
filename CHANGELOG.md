@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.4] - 2026-08-15
+
+### Added
+
+- ADR-0009 — Adapter dispatch architecture
+- Adapter registry (`scripts/adapters/common/registry.py`) with explicit failure for unimplemented adapters
+- Shared profile loading (`profile_loader.py`) and shared selection (`selection.py`)
+- In-memory Cursor `GeneratedRule` normalization (`cursor/normalize.py`)
+- Adapter-specific Cursor verification (`cursor/verify.py`) and bundle manifests (`cursor/manifest.py`)
+- Profile schema: `antigravity` added to adapter enum (planned, not implemented)
+
+### Changed
+
+- `outputs` is the canonical profile field; `adapter.target` remains a legacy fallback when `outputs` is absent
+- `assemble.py` dispatches through the adapter registry instead of calling Cursor generation directly
+- Cursor generation, verification, and manifests are isolated under `scripts/adapters/cursor/`
+
+### Compatibility
+
+- All six Cursor profiles unchanged: 65 / 74 / 83 / 74 / 83 / 74
+- Cursor output paths, filenames, and `.mdc` content byte-identical to `v0.3.3`
+- Copilot, Antigravity, and Claude remain planned, not implemented
+- No new knowledge guides, concepts, namespaces, or graph exceptions
+
 ## [0.3.3] - 2026-08-10
 
 ### Added
