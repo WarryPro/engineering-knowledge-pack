@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.5] - 2026-08-15
+
 ### Added
 
 - Deterministic `assemble-manifest.json` for profile-level adapter assembly
@@ -17,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Assemble writes Cursor `bundle-manifest.json` only for the Cursor adapter (no overwrite by other adapters)
 - Unimplemented adapters fail before generation
 - Profile schema allows includes-only profiles (no local `knowledge` list)
+
+### Compatibility
+
+- All six Cursor profiles unchanged: 65 / 74 / 83 / 74 / 83 / 74
+- Cursor output paths, filenames, and `.mdc` content byte-identical to `v0.3.4`
+- Copilot, Antigravity, and Claude remain planned, not implemented
+- No new knowledge guides, concepts, namespaces, or graph exceptions
 
 ## [0.3.4] - 2026-08-15
 

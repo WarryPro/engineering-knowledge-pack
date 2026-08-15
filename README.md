@@ -78,9 +78,9 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.3.4` (on `master`)
+- **Latest published release:** `v0.3.5` (on `master`)
+- **v0.3.5:** Multi-adapter packaging — deterministic `assemble-manifest.json`, fail-fast unimplemented adapters, `ekp-core` packaging pilot; assembled Cursor output unchanged vs `v0.3.4`
 - **v0.3.4:** Adapter dispatch architecture (ADR-0009) — registry, canonical `outputs`, Cursor isolation; assembled Cursor output unchanged vs `v0.3.3`
-- **v0.3.3:** Profile composition via `includes` (ADR-0008) — stack profiles include `cursor-core` instead of duplicating L0 paths; assembled rule counts unchanged
 - See [CHANGELOG.md](CHANGELOG.md) for full release history
 
 ## Status
@@ -93,7 +93,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, v0.2.0 release |
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); Flutter deferred |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); multi-adapter packaging (v0.3.5); Flutter deferred |
 
 ### Repository metrics
 
@@ -102,7 +102,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 | Knowledge guides | 21 |
 | Concepts | 195 |
 | Namespaces | 22 |
-| Profiles | 6 (`cursor-core` + 5 stack profiles via `includes`) |
+| Profiles | 6 operational Cursor (`cursor-core` + 5 stack via `includes`) + `ekp-core` packaging pilot |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (frozen) |
