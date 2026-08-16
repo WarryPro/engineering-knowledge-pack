@@ -206,11 +206,13 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 **v0.4.0:** Copilot + Antigravity adapter pilots via `ekp-core` (`outputs: [cursor, copilot, antigravity]`); six operational profiles remain Cursor-only; Cursor output unchanged; Claude remains the next adapter milestone.
 
+**Unreleased (AI30D → target v0.5.0):** Claude adapter pilot via `ekp-core` (`CLAUDE.md` + document-grouped Skills); six operational profiles remain Cursor-only; Cursor freeze vs `v0.4.0` required.
+
 ---
 
 ## Phase 5: Additional AI adapters
 
-**Status:** Partial (Cursor complete; Copilot + Antigravity pilots in `v0.4.0`; Claude pending)
+**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter implemented on the AI30D branch, pending `v0.5.0` release)
 
 Extend the adapter layer to additional AI assistant platforms.
 
@@ -219,7 +221,7 @@ Extend the adapter layer to additional AI assistant platforms.
 - [x] Adapter: knowledge → Cursor Rules (`.mdc`)
 - [x] Adapter: knowledge → GitHub Copilot instructions (`ekp-core` pilot)
 - [x] Adapter: knowledge → Antigravity workspace rules (`ekp-core` pilot)
-- [ ] Adapter: knowledge → Claude Skills format
+- [x] Adapter: knowledge → Claude Code `CLAUDE.md` + Skills (`ekp-core` pilot; release pending)
 - [x] Profile assembly script (knowledge + adapter → deployable bundle)
 - [x] Validation CLI (`scripts/validate`) for structure, metadata, and broken links
 - [ ] Documentation for deploying profiles to consumer projects
@@ -228,6 +230,8 @@ Extend the adapter layer to additional AI assistant platforms.
 **Exit criteria:** A team can select a profile, run a script, and deploy engineering context to their AI assistant of choice. Changes to knowledge automatically propagate to rules.
 
 **v0.4.0 note:** Antigravity generation is structurally validated; runtime activation in a live Antigravity workspace is not empirically validated in the current maintainer environment.
+
+**AI30D note:** Claude generation is structurally validated (`CLAUDE.md` + Skills, no pathless rules). Runtime Claude Code skill invocation is not empirically verified.
 
 ---
 

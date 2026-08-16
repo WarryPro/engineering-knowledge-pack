@@ -159,6 +159,49 @@ A future contributor who actively uses Antigravity may perform a runtime validat
 4. Record which files appear Always On vs ignored.
 5. Update this adapter only when the observation matches official documentation.
 
+### 5d. Claude adapter (AI30D pilot)
+
+`scripts/adapters/claude/` writes Claude Code project memory plus document-grouped Skills. Packaging follows the AI30C recommendation: compact `CLAUDE.md` + Skills — **not** 65 pathless `.claude/rules/*.md`.
+
+| Module | Purpose |
+|--------|---------|
+| `generate.py` | Orchestrates extract → `selected_knowledge` → Claude grouping → writer |
+| `grouping.py` | Always-on vs document skills; deterministic skill IDs |
+| `writer.py` | Renders `CLAUDE.md` and `SKILL.md` (official `name` / `description` frontmatter only) |
+| `manifest.py` | `adapter-manifest.json` (`kind`: `memory` \| `skill`) |
+| `verify.py` | Tree, frontmatter, sources, leakage, forbid `.claude/rules/` |
+
+**Output (under `dist/<profile>/claude/`):**
+
+```
+CLAUDE.md
+.claude/skills/<skill-id>/SKILL.md
+adapter-manifest.json
+```
+
+v1 model:
+
+- `CLAUDE.md` holds compact always-on material (orchestrator + engineering foundation) and a short skill index. Soft target: under ~200 lines.
+- Each remaining selected knowledge document becomes one Skill (for example `ekp-refactoring`, `ekp-testing`, `ekp-error-handling`, `ekp-layering`).
+- Pathless `.claude/rules/*.md` are intentionally **not** generated (they load at session start and recreate always-on context bloat).
+- No Cursor / Copilot / Antigravity activation metadata is emitted.
+- Shared `GeneratedRule` IR is not extended with Claude-specific fields.
+
+**Validation status (non-blocking for runtime):**
+
+Technically verified by generation, adapter verify, `ekp-core` assemble, automated tests, and CI:
+
+- expected Claude packaging tree
+- skill frontmatter and provenance
+- deterministic content (apart from manifest `generated_at`)
+- no cross-adapter leakage
+- no pathless rules directory
+
+Not verified, and not claimed:
+
+- runtime Claude Code skill auto-invocation
+- whether `/skill-name` or description-based loading behaves as expected in a live Claude Code session
+
 ### 6. Assemble pipeline
 
 `scripts/assemble/assemble.py` composes deployable bundles for a profile by dispatching to registered adapters based on profile `outputs`:
@@ -186,12 +229,16 @@ dist/<profile>/
 ├── copilot/                # when requested and implemented
 │   ├── .github/
 │   └── adapter-manifest.json
-└── antigravity/            # when requested and implemented
-    ├── .agents/rules/
+├── antigravity/            # when requested and implemented
+│   ├── .agents/rules/
+│   └── adapter-manifest.json
+└── claude/                 # when requested and implemented
+    ├── CLAUDE.md
+    ├── .claude/skills/
     └── adapter-manifest.json
 ```
 
-The `ekp-core` pilot assembles Cursor + Copilot + Antigravity. Operational `cursor-*` profiles remain Cursor-only. Claude remains unimplemented; requesting it fails explicitly with no Cursor fallback.
+The `ekp-core` pilot assembles Cursor + Copilot + Antigravity + Claude. Operational `cursor-*` profiles remain Cursor-only. Unknown adapters fail explicitly with no Cursor fallback.
 
 Cursor `bundle-manifest.json` stays at the profile root and is never overwritten by another adapter.
 
@@ -205,7 +252,7 @@ Cursor `bundle-manifest.json` stays at the profile root and is never overwritten
 
 `dist/<profile>/assemble-manifest.json` records the full assembly (profile, adapter list, per-adapter directories and manifest paths). It is deterministic and has no timestamp.
 
-Non-Cursor adapters use `dist/<profile>/<adapter>/adapter-manifest.json`. Copilot and Antigravity pilots write these files; Claude does not.
+Non-Cursor adapters use `dist/<profile>/<adapter>/adapter-manifest.json`. Copilot, Antigravity, and Claude pilots write these files.
 
 ### 8. Profiles
 
@@ -225,10 +272,11 @@ See `profiles/cursor-core.yaml` for the first operational Cursor profile and `pr
 ## Output locations
 
 | Path | Role |
-|------|------|
+|------|---------|
 | `dist/<profile>/cursor/*.mdc` | **Deployable artifact** — copy to consumer `.cursor/rules/` |
 | `dist/<profile>/copilot/.github/` | Copilot instructions (pilot; copy into a consumer repo root) |
 | `dist/<profile>/antigravity/.agents/rules/` | Antigravity rules (pilot; copy into a consumer workspace) |
+| `dist/<profile>/claude/` | Claude Code `CLAUDE.md` + Skills (pilot) |
 | `dist/<profile>/bundle-manifest.json` | Cursor bundle contract (profile root) |
 | `dist/<profile>/assemble-manifest.json` | Profile-level assembly inventory |
 | `dist/*.json` | Generated indexes for adapter consumption |

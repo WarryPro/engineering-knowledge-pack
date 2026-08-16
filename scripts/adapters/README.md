@@ -7,12 +7,9 @@ Knowledge → tool-specific format transformers. One adapter per target tool.
 - `cursor/` — knowledge → Cursor Rules (`.mdc`)
 - `copilot/` — knowledge → GitHub Copilot instructions (AI30B pilot)
 - `antigravity/` — knowledge → Antigravity workspace rules (AI30B pilot)
+- `claude/` — knowledge → Claude Code `CLAUDE.md` + Skills (AI30D pilot)
 
-## Planned
-
-- `claude/` — knowledge → Claude Skills format
-
-Adapter dispatch is handled by `common/registry.py` (ADR-0009). Each implemented adapter registers `generate`, `verify`, and `build_manifest`. Claude remains unimplemented and fails explicitly if requested.
+Adapter dispatch is handled by `common/registry.py` (ADR-0009). Each implemented adapter registers `generate`, `verify`, and `build_manifest`. Unknown adapters fail explicitly if requested.
 
 Each adapter follows the pipeline documented in `docs/adapter-architecture.md`.
 
@@ -78,12 +75,16 @@ dist/ekp-core/
 │   ├── .github/copilot-instructions.md
 │   ├── .github/instructions/testing.instructions.md
 │   └── adapter-manifest.json
-└── antigravity/
-    ├── .agents/rules/*.md
+├── antigravity/
+│   ├── .agents/rules/*.md
+│   └── adapter-manifest.json
+└── claude/
+    ├── CLAUDE.md
+    ├── .claude/skills/<skill-id>/SKILL.md
     └── adapter-manifest.json
 ```
 
-Cursor keeps `bundle-manifest.json` at the profile root. Copilot and Antigravity write `<adapter>/adapter-manifest.json`. Claude remains unimplemented.
+Cursor keeps `bundle-manifest.json` at the profile root. Copilot, Antigravity, and Claude write `<adapter>/adapter-manifest.json`.
 
 Options:
 
@@ -96,10 +97,11 @@ Options:
 - Cursor: copy `dist/<profile>/cursor/*.mdc` to the consumer `.cursor/rules/`
 - Copilot: copy `dist/<profile>/copilot/.github/` to the consumer repository root
 - Antigravity: copy `dist/<profile>/antigravity/.agents/rules/` to the consumer `.agents/rules/`
+- Claude: copy `dist/<profile>/claude/CLAUDE.md` and `.claude/skills/` into the consumer project
 
 EKP does not write into consumer tool directories during assembly — bundles are produced under `dist/` only.
 
-Antigravity generation is structurally validated; runtime activation in a live Antigravity workspace is not claimed. See `docs/adapter-architecture.md`.
+Antigravity and Claude generation are structurally validated; runtime activation in a live consumer tool is not claimed. See `docs/adapter-architecture.md`.
 
 ## Package layout
 
@@ -109,6 +111,7 @@ scripts/adapters/
 ├── cursor/          # Cursor .mdc generator
 ├── copilot/         # Copilot instructions generator (pilot)
 ├── antigravity/     # Antigravity rules generator (pilot)
+├── claude/          # Claude CLAUDE.md + Skills generator (pilot)
 └── tests/
 ```
 
