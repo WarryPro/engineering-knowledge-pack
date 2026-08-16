@@ -99,7 +99,7 @@ Options:
 
 EKP does not write into consumer tool directories during assembly — bundles are produced under `dist/` only.
 
-Antigravity file generation does not prove activation. See the empirical check in `docs/adapter-architecture.md`.
+Antigravity generation is structurally validated; runtime activation in a live Antigravity workspace is not claimed. See `docs/adapter-architecture.md`.
 
 ## Package layout
 

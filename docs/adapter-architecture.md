@@ -129,13 +129,35 @@ adapter-manifest.json
 
 Official Antigravity research did **not** establish a file-based YAML contract for Always On / Manual / Model Decision / Glob. This adapter therefore does **not** invent Cursor-style frontmatter (`alwaysApply` or otherwise). Skills and workflows are out of scope.
 
-**Empirical activation check (human, real Antigravity workspace):**
+**Validation status (non-blocking):**
+
+Technically verified by generation, adapter verify, `ekp-core` assemble, automated tests, and CI:
+
+- files are written under `.agents/rules/`
+- content is plain Markdown
+- each file is under the 12,000-character limit
+- output is deterministic
+- `adapter-manifest.json` matches the generated tree
+- source references are preserved
+
+Not verified, and not claimed:
+
+- runtime activation inside a real Antigravity workspace
+- whether generated files are automatically Always On
+- whether Manual / Model Decision / Glob activation can be persisted purely through generated files
+- any undocumented frontmatter or activation semantics
+
+Runtime activation status: structurally and deterministically validated, but not empirically validated in a live Antigravity workspace because the EKP maintainer does not currently use Antigravity. The adapter therefore makes no claim about runtime activation semantics beyond what is supported by official documentation.
+
+A future contributor who actively uses Antigravity may perform a runtime validation and update the adapter only if official/documented behavior supports it. Until then, this limitation is environmental, not an implementation failure.
+
+**Optional future runtime check (Antigravity user):**
 
 1. Copy `dist/ekp-core/antigravity/.agents/rules/` into a workspace `.agents/rules/`.
 2. Run a task that should exercise orchestrator and foundation guidance.
 3. Observe whether the agent follows or cites those files.
 4. Record which files appear Always On vs ignored.
-5. Treat that observation as activation evidence. **File generation is not proof of activation.**
+5. Update this adapter only when the observation matches official documentation.
 
 ### 6. Assemble pipeline
 
