@@ -5,20 +5,20 @@ Knowledge → tool-specific format transformers. One adapter per target tool.
 ## Implemented
 
 - `cursor/` — knowledge → Cursor Rules (`.mdc`)
+- `copilot/` — knowledge → GitHub Copilot instructions (AI30B pilot)
+- `antigravity/` — knowledge → Antigravity workspace rules (AI30B pilot)
 
 ## Planned
 
-- `copilot/` — knowledge → GitHub Copilot instructions
-- `antigravity/` — knowledge → Antigravity rules (format TBD)
 - `claude/` — knowledge → Claude Skills format
 
-Adapter dispatch is handled by `common/registry.py` (ADR-0009). Only Cursor is registered; future adapters implement `generate`, `verify`, and `build_manifest` without changing `assemble.py`.
+Adapter dispatch is handled by `common/registry.py` (ADR-0009). Each implemented adapter registers `generate`, `verify`, and `build_manifest`. Claude remains unimplemented and fails explicitly if requested.
 
 Each adapter follows the pipeline documented in `docs/adapter-architecture.md`.
 
 ## From profile to deployable bundle
 
-End-to-end workflow for producing a Cursor rule bundle:
+End-to-end workflow:
 
 ```
 1. Validate knowledge
@@ -54,26 +54,36 @@ Adapters consume these indexes instead of parsing markdown at runtime.
 
 ### 3. Assemble bundle
 
+Cursor-only operational profiles:
+
 ```bash
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 ```
 
-Reads `profiles/cursor-core.yaml`, invokes the Cursor adapter, and writes:
+Multi-adapter pilot:
+
+```bash
+py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
+```
+
+`ekp-core` writes:
 
 ```
-dist/cursor-core/
-├── cursor/
-│   ├── 00-ekp-orchestrator.mdc
-│   ├── 01-ekp-foundation.mdc
-│   ├── ...
-│   └── concept-ekp-*.mdc
+dist/ekp-core/
+├── assemble-manifest.json
 ├── bundle-manifest.json
-└── assemble-manifest.json
+├── cursor/
+│   └── *.mdc
+├── copilot/
+│   ├── .github/copilot-instructions.md
+│   ├── .github/instructions/testing.instructions.md
+│   └── adapter-manifest.json
+└── antigravity/
+    ├── .agents/rules/*.md
+    └── adapter-manifest.json
 ```
 
-Cursor keeps `bundle-manifest.json` at the profile root. Future adapters write `<adapter>/adapter-manifest.json`. Copilot, Antigravity, and Claude remain unimplemented; assemble fails explicitly if they are requested, with no Cursor fallback.
-
-The `ekp-core` profile declares `outputs: [cursor, copilot, antigravity]` for packaging tests. Do not add a normal CI assemble job for it until Copilot and Antigravity are implemented.
+Cursor keeps `bundle-manifest.json` at the profile root. Copilot and Antigravity write `<adapter>/adapter-manifest.json`. Claude remains unimplemented.
 
 Options:
 
@@ -83,20 +93,22 @@ Options:
 
 ### 4. Deploy
 
-Copy `dist/<profile>/cursor/*.mdc` to the consumer project's `.cursor/rules/` directory.
+- Cursor: copy `dist/<profile>/cursor/*.mdc` to the consumer `.cursor/rules/`
+- Copilot: copy `dist/<profile>/copilot/.github/` to the consumer repository root
+- Antigravity: copy `dist/<profile>/antigravity/.agents/rules/` to the consumer `.agents/rules/`
 
-EKP does not write to `.cursor/rules/` during assembly — bundles are produced under `dist/` only.
+EKP does not write into consumer tool directories during assembly — bundles are produced under `dist/` only.
+
+Antigravity file generation does not prove activation. See the empirical check in `docs/adapter-architecture.md`.
 
 ## Package layout
 
 ```
 scripts/adapters/
 ├── common/          # Shared extraction, selection, profile loading, registry
-├── cursor/          # Cursor .mdc generator (normalize, manifest, verify)
-└── tests/
-
-scripts/assemble/
-├── assemble.py      # Profile → bundle orchestrator
+├── cursor/          # Cursor .mdc generator
+├── copilot/         # Copilot instructions generator (pilot)
+├── antigravity/     # Antigravity rules generator (pilot)
 └── tests/
 ```
 
@@ -115,4 +127,4 @@ For development only:
 py -3 scripts/adapters/cursor/generate.py --profile cursor-core
 ```
 
-Prefer `assemble.py` for production bundles — it verifies indexes and writes Cursor `bundle-manifest.json` plus `assemble-manifest.json`.
+Prefer `assemble.py` for production bundles.
