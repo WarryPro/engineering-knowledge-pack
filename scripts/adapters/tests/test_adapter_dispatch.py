@@ -54,12 +54,17 @@ class AdapterRegistryTests(unittest.TestCase):
         adapter = registry.get("cursor")
         self.assertEqual(adapter["name"], "cursor")
 
-    def test_future_adapters_not_implemented(self):
+    def test_copilot_and_antigravity_are_implemented(self):
         registry = build_default_registry()
-        for name in ("copilot", "antigravity", "claude"):
-            self.assertFalse(registry.is_implemented(name))
-            with self.assertRaises(AdapterNotImplementedError):
-                registry.get(name)
+        for name in ("copilot", "antigravity"):
+            self.assertTrue(registry.is_implemented(name), msg=name)
+            self.assertEqual(registry.get(name)["name"], name)
+
+    def test_claude_not_implemented(self):
+        registry = build_default_registry()
+        self.assertFalse(registry.is_implemented("claude"))
+        with self.assertRaises(AdapterNotImplementedError):
+            registry.get("claude")
 
     def test_unknown_adapter_rejected(self):
         registry = build_default_registry()
@@ -138,13 +143,14 @@ class AssembleDispatchTests(unittest.TestCase):
         self.assertIn("outputs", profile)
         self.assertEqual(profile["outputs"], ["cursor"])
 
-    def test_ekp_core_outputs_remain_unimplemented(self):
+    def test_ekp_core_outputs_include_implemented_pilots(self):
         profile = load_profile_by_name("ekp-core", repo_root=REPO_ROOT)
         self.assertEqual(profile["outputs"], ["cursor", "copilot", "antigravity"])
         registry = build_default_registry()
         self.assertTrue(registry.is_implemented("cursor"))
-        self.assertFalse(registry.is_implemented("copilot"))
-        self.assertFalse(registry.is_implemented("antigravity"))
+        self.assertTrue(registry.is_implemented("copilot"))
+        self.assertTrue(registry.is_implemented("antigravity"))
+        self.assertFalse(registry.is_implemented("claude"))
 
 
 if __name__ == "__main__":

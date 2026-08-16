@@ -60,6 +60,12 @@ class AdapterRegistry(object):
 def build_default_registry():
     # type: () -> AdapterRegistry
     """Construct the default adapter registry with operational adapters."""
+    from antigravity.generate import generate as antigravity_generate
+    from antigravity.manifest import build_adapter_manifest as antigravity_build_manifest
+    from antigravity.verify import verify_antigravity_bundle
+    from copilot.generate import generate as copilot_generate
+    from copilot.manifest import build_adapter_manifest as copilot_build_manifest
+    from copilot.verify import verify_copilot_bundle
     from cursor.generate import generate as cursor_generate
     from cursor.manifest import build_bundle_manifest as cursor_build_manifest
     from cursor.verify import verify_cursor_bundle
@@ -70,5 +76,17 @@ def build_default_registry():
         generate_fn=cursor_generate,
         verify_fn=verify_cursor_bundle,
         build_manifest_fn=cursor_build_manifest,
+    )
+    registry.register(
+        "copilot",
+        generate_fn=copilot_generate,
+        verify_fn=verify_copilot_bundle,
+        build_manifest_fn=copilot_build_manifest,
+    )
+    registry.register(
+        "antigravity",
+        generate_fn=antigravity_generate,
+        verify_fn=verify_antigravity_bundle,
+        build_manifest_fn=antigravity_build_manifest,
     )
     return registry

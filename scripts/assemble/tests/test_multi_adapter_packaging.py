@@ -1,7 +1,6 @@
 """Tests for multi-adapter packaging (EKP-AI30A)."""
 
 import json
-import shutil
 import sys
 import tempfile
 import unittest
@@ -71,22 +70,19 @@ class EkpCoreProfileTests(unittest.TestCase):
         self.assertEqual(pilot["outputs"], ["cursor", "copilot", "antigravity"])
         self.assertEqual(pilot["adapter_priorities"], ["high"])
 
-    def test_assemble_ekp_core_fails_before_generation(self):
+    def test_assemble_ekp_core_succeeds_for_three_adapters(self):
         if verify_indexes(get_dist_path()):
             self.skipTest("dist indexes not available")
 
+        assemble(profile_name="ekp-core", clean=True, verify=True)
         bundle_dir = get_dist_path() / "ekp-core"
-        if bundle_dir.exists():
-            shutil.rmtree(bundle_dir)
-
-        with self.assertRaises(AssembleError) as context:
-            assemble(profile_name="ekp-core", clean=True, verify=False)
-        message = str(context.exception)
-        self.assertIn("copilot", message.lower())
-        self.assertIn("not implemented", message.lower())
-        self.assertFalse(
-            bundle_dir.exists(),
-            msg="unimplemented adapters must fail before generation",
+        self.assertTrue(bundle_dir.is_dir())
+        self.assertTrue((bundle_dir / "cursor" / "00-ekp-orchestrator.mdc").is_file())
+        self.assertTrue(
+            (bundle_dir / "copilot" / ".github" / "copilot-instructions.md").is_file()
+        )
+        self.assertTrue(
+            (bundle_dir / "antigravity" / ".agents" / "rules" / "00-orchestrator.md").is_file()
         )
 
 
@@ -220,9 +216,8 @@ class MultiAdapterIsolationTests(unittest.TestCase):
 
 
 class UnimplementedAdapterAssembleTests(unittest.TestCase):
-    def test_default_registry_still_rejects_future_adapters(self):
+    def test_default_registry_still_rejects_claude(self):
         registry = build_default_registry()
-        for name in ("copilot", "antigravity", "claude"):
-            self.assertFalse(registry.is_implemented(name))
-            with self.assertRaises(AdapterNotImplementedError):
-                registry.get(name)
+        self.assertFalse(registry.is_implemented("claude"))
+        with self.assertRaises(AdapterNotImplementedError):
+            registry.get("claude")
