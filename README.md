@@ -78,10 +78,21 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.3.5` (on `master`)
+- **Latest published release:** `v0.4.0` (on `master`)
+- **v0.4.0:** Copilot + Antigravity adapter pilots via `ekp-core`; six operational profiles remain Cursor-only; assembled Cursor output unchanged vs `v0.3.5`
 - **v0.3.5:** Multi-adapter packaging — deterministic `assemble-manifest.json`, fail-fast unimplemented adapters, `ekp-core` packaging pilot; assembled Cursor output unchanged vs `v0.3.4`
-- **v0.3.4:** Adapter dispatch architecture (ADR-0009) — registry, canonical `outputs`, Cursor isolation; assembled Cursor output unchanged vs `v0.3.3`
 - See [CHANGELOG.md](CHANGELOG.md) for full release history
+
+### Adapter status
+
+| Adapter | Status |
+|---------|--------|
+| cursor | implemented |
+| copilot | implemented (`ekp-core` pilot) |
+| antigravity | implemented (`ekp-core` pilot) |
+| claude | not implemented |
+
+Copilot and Antigravity are demonstrated through the `ekp-core` pilot profile. The six operational `cursor-*` profiles remain Cursor-only.
 
 ## Status
 
@@ -93,7 +104,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, v0.2.0 release |
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); multi-adapter packaging (v0.3.5); Flutter deferred |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); packaging (v0.3.5); Copilot/Antigravity pilots (v0.4.0); Flutter deferred |
 
 ### Repository metrics
 

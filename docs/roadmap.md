@@ -12,8 +12,8 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); multi-adapter packaging (v0.3.5); Flutter deferred |
-| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; dispatch (v0.3.4); multi-adapter packaging (v0.3.5); Copilot, Antigravity, and Claude pending |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); packaging (v0.3.5); Copilot/Antigravity pilots (v0.4.0); Flutter deferred |
+| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity pilots in `v0.4.0`; Claude pending |
 
 ---
 
@@ -161,11 +161,11 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 ## Phase 4: Technology knowledge
 
-**Status:** In progress (Waves 1–3 published on `master`; profile composition `includes` released in `v0.3.3`; adapter dispatch released in `v0.3.4`; multi-adapter packaging released in `v0.3.5`)
+**Status:** In progress (Waves 1–3 published on `master`; profile composition `includes` released in `v0.3.3`; adapter dispatch released in `v0.3.4`; multi-adapter packaging released in `v0.3.5`; Copilot/Antigravity pilots released in `v0.4.0`)
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging) published on `master`.
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots) published on `master`.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
@@ -204,24 +204,30 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 **v0.3.5:** Multi-adapter packaging — deterministic `assemble-manifest.json`, fail-fast unimplemented adapters, `ekp-core` packaging pilot; Copilot/Antigravity/Claude still not implemented; Cursor output unchanged.
 
+**v0.4.0:** Copilot + Antigravity adapter pilots via `ekp-core` (`outputs: [cursor, copilot, antigravity]`); six operational profiles remain Cursor-only; Cursor output unchanged; Claude remains the next adapter milestone.
+
 ---
 
 ## Phase 5: Additional AI adapters
 
-**Status:** Partial (Cursor complete; dispatch architecture in `v0.3.4`; multi-adapter packaging in `v0.3.5`)
+**Status:** Partial (Cursor complete; Copilot + Antigravity pilots in `v0.4.0`; Claude pending)
 
 Extend the adapter layer to additional AI assistant platforms.
 
 **Deliverables:**
 
 - [x] Adapter: knowledge → Cursor Rules (`.mdc`)
-- [ ] Adapter: knowledge → GitHub Copilot instructions
+- [x] Adapter: knowledge → GitHub Copilot instructions (`ekp-core` pilot)
+- [x] Adapter: knowledge → Antigravity workspace rules (`ekp-core` pilot)
 - [ ] Adapter: knowledge → Claude Skills format
 - [x] Profile assembly script (knowledge + adapter → deployable bundle)
 - [x] Validation CLI (`scripts/validate`) for structure, metadata, and broken links
 - [ ] Documentation for deploying profiles to consumer projects
+- [ ] Expand operational profiles beyond Cursor (deferred)
 
 **Exit criteria:** A team can select a profile, run a script, and deploy engineering context to their AI assistant of choice. Changes to knowledge automatically propagate to rules.
+
+**v0.4.0 note:** Antigravity generation is structurally validated; runtime activation in a live Antigravity workspace is not empirically validated in the current maintainer environment.
 
 ---
 

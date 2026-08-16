@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-08-16
+
 ### Added
 
 - Copilot adapter (`scripts/adapters/copilot/`) generating `.github/copilot-instructions.md` plus a small set of path-specific `*.instructions.md` files
@@ -19,8 +21,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Compatibility
 
-- Six operational Cursor profiles unchanged: 65 / 74 / 83 / 74 / 83 / 74
-- Copilot skills, Antigravity skills/workflows, and Claude are out of scope
+- Six operational Cursor profiles unchanged and Cursor-only: 65 / 74 / 83 / 74 / 83 / 74
+- Cursor output paths, filenames, and `.mdc` content byte-identical to `v0.3.5`
+- Multi-adapter manifests remain isolated (`bundle-manifest.json`, per-adapter `adapter-manifest.json`, deterministic `assemble-manifest.json`)
+- Copilot and Antigravity are demonstrated through the `ekp-core` pilot, not the six operational profiles
+- Copilot skills, Antigravity skills/workflows, and Claude remain out of scope
+- Antigravity runtime activation is structurally validated but not empirically validated in a live Antigravity workspace
+- No new knowledge guides, concepts, namespaces, or graph exceptions
 
 ## [0.3.5] - 2026-08-15
 
