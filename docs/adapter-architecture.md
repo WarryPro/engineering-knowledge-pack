@@ -63,7 +63,7 @@ Adapters consume these JSON files instead of parsing markdown at runtime.
 | `profile_resolve.py` | Profile `includes` resolution |
 | `profile_loader.py` | Profile loading; canonical `outputs` resolution |
 | `selection.py` | Shared adapter-manifest concept selection |
-| `registry.py` | Adapter dispatch registry (Cursor operational; others deferred) |
+| `registry.py` | Adapter dispatch registry (Cursor, Copilot, Antigravity; Claude deferred) |
 
 ### 5. Cursor adapter
 
@@ -80,7 +80,84 @@ Adapters consume these JSON files instead of parsing markdown at runtime.
 
 The adapter reads profile knowledge paths and `adapter.include.adapter_priority` filters to select which concepts become rules.
 
-**Only Cursor is implemented.** Copilot, Antigravity, and Claude are registered as future adapters (ADR-0009).
+### 5b. Copilot adapter (AI30B pilot)
+
+`scripts/adapters/copilot/` writes GitHub Copilot custom instructions from the same extract + selection pipeline. Mapping lives in the Copilot writer — `GeneratedRule` is not extended with globs or Copilot metadata.
+
+| Module | Purpose |
+|--------|---------|
+| `generate.py` | Orchestrates extract → selection → grouping → writer |
+| `grouping.py` | Always-on vs path-specific file policy |
+| `writer.py` | Renders instruction markdown and `applyTo` frontmatter |
+| `manifest.py` | `adapter-manifest.json` |
+| `verify.py` | Tree, naming, frontmatter, sources, determinism |
+
+**Output (under `dist/<profile>/copilot/`):**
+
+```
+.github/copilot-instructions.md
+.github/instructions/*.instructions.md   # only when profile knowledge justifies it
+adapter-manifest.json                    # written by assemble
+```
+
+v1 grouping:
+
+- One compact always-on `copilot-instructions.md` (orchestrator, foundation, and unscoped domains).
+- Path-specific `*.instructions.md` files only for knowledge prefixes with a clear consumer path (`testing`, `php`, `symfony`, `typescript`, `frontend`, `devops`). `ekp-core` therefore emits testing instructions, not a 1:1 Cursor `.mdc` dump.
+- Copilot skills are **not** generated.
+
+### 5c. Antigravity adapter (AI30B pilot)
+
+`scripts/adapters/antigravity/` writes workspace rules as **plain Markdown** under `.agents/rules/`.
+
+| Module | Purpose |
+|--------|---------|
+| `generate.py` | Orchestrates extract → selection → per-document grouping → writer |
+| `grouping.py` | One file per knowledge document; 12,000-character split policy |
+| `writer.py` | Plain Markdown (no YAML activation frontmatter) |
+| `manifest.py` | `adapter-manifest.json` |
+| `verify.py` | Tree, 12k limit, sources, no Cursor frontmatter |
+
+**Output (under `dist/<profile>/antigravity/`):**
+
+```
+.agents/rules/00-orchestrator.md
+.agents/rules/01-foundation.md
+.agents/rules/10-<document-stem>.md
+adapter-manifest.json
+```
+
+Official Antigravity research did **not** establish a file-based YAML contract for Always On / Manual / Model Decision / Glob. This adapter therefore does **not** invent Cursor-style frontmatter (`alwaysApply` or otherwise). Skills and workflows are out of scope.
+
+**Validation status (non-blocking):**
+
+Technically verified by generation, adapter verify, `ekp-core` assemble, automated tests, and CI:
+
+- files are written under `.agents/rules/`
+- content is plain Markdown
+- each file is under the 12,000-character limit
+- output is deterministic
+- `adapter-manifest.json` matches the generated tree
+- source references are preserved
+
+Not verified, and not claimed:
+
+- runtime activation inside a real Antigravity workspace
+- whether generated files are automatically Always On
+- whether Manual / Model Decision / Glob activation can be persisted purely through generated files
+- any undocumented frontmatter or activation semantics
+
+Runtime activation status: structurally and deterministically validated, but not empirically validated in a live Antigravity workspace because the EKP maintainer does not currently use Antigravity. The adapter therefore makes no claim about runtime activation semantics beyond what is supported by official documentation.
+
+A future contributor who actively uses Antigravity may perform a runtime validation and update the adapter only if official/documented behavior supports it. Until then, this limitation is environmental, not an implementation failure.
+
+**Optional future runtime check (Antigravity user):**
+
+1. Copy `dist/ekp-core/antigravity/.agents/rules/` into a workspace `.agents/rules/`.
+2. Run a task that should exercise orchestrator and foundation guidance.
+3. Observe whether the agent follows or cites those files.
+4. Record which files appear Always On vs ignored.
+5. Update this adapter only when the observation matches official documentation.
 
 ### 6. Assemble pipeline
 
@@ -104,11 +181,17 @@ Output structure:
 dist/<profile>/
 ├── assemble-manifest.json  # profile-level adapter list (deterministic)
 ├── bundle-manifest.json    # Cursor contract when cursor is assembled
-└── cursor/
-    └── *.mdc               # Generated Cursor rules
+├── cursor/
+│   └── *.mdc
+├── copilot/                # when requested and implemented
+│   ├── .github/
+│   └── adapter-manifest.json
+└── antigravity/            # when requested and implemented
+    ├── .agents/rules/
+    └── adapter-manifest.json
 ```
 
-Additional adapters, once implemented, write under `dist/<profile>/<adapter>/` with `adapter-manifest.json`. Copilot, Antigravity, and Claude remain unimplemented; requesting them fails explicitly with no Cursor fallback.
+The `ekp-core` pilot assembles Cursor + Copilot + Antigravity. Operational `cursor-*` profiles remain Cursor-only. Claude remains unimplemented; requesting it fails explicitly with no Cursor fallback.
 
 Cursor `bundle-manifest.json` stays at the profile root and is never overwritten by another adapter.
 
@@ -122,7 +205,7 @@ Cursor `bundle-manifest.json` stays at the profile root and is never overwritten
 
 `dist/<profile>/assemble-manifest.json` records the full assembly (profile, adapter list, per-adapter directories and manifest paths). It is deterministic and has no timestamp.
 
-Non-Cursor adapters use `dist/<profile>/<adapter>/adapter-manifest.json`. Copilot and Antigravity are not implemented; they do not produce these files yet.
+Non-Cursor adapters use `dist/<profile>/<adapter>/adapter-manifest.json`. Copilot and Antigravity pilots write these files; Claude does not.
 
 ### 8. Profiles
 
@@ -137,13 +220,15 @@ adapter:
       - high
 ```
 
-See `profiles/cursor-core.yaml` for the first operational profile.
+See `profiles/cursor-core.yaml` for the first operational Cursor profile and `profiles/ekp-core.yaml` for the multi-adapter pilot.
 
 ## Output locations
 
 | Path | Role |
 |------|------|
 | `dist/<profile>/cursor/*.mdc` | **Deployable artifact** — copy to consumer `.cursor/rules/` |
+| `dist/<profile>/copilot/.github/` | Copilot instructions (pilot; copy into a consumer repo root) |
+| `dist/<profile>/antigravity/.agents/rules/` | Antigravity rules (pilot; copy into a consumer workspace) |
 | `dist/<profile>/bundle-manifest.json` | Cursor bundle contract (profile root) |
 | `dist/<profile>/assemble-manifest.json` | Profile-level assembly inventory |
 | `dist/*.json` | Generated indexes for adapter consumption |

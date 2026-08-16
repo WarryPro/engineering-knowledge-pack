@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Copilot adapter (`scripts/adapters/copilot/`) generating `.github/copilot-instructions.md` plus a small set of path-specific `*.instructions.md` files
+- Antigravity adapter (`scripts/adapters/antigravity/`) generating plain Markdown rules under `.agents/rules/` (12,000-character limit; no invented activation frontmatter)
+- `ekp-core` pilot assemble/verify CI gate for Cursor + Copilot + Antigravity
+
+### Changed
+
+- Default adapter registry implements Cursor, Copilot, and Antigravity; Claude remains unimplemented
+
+### Compatibility
+
+- Six operational Cursor profiles unchanged: 65 / 74 / 83 / 74 / 83 / 74
+- Copilot skills, Antigravity skills/workflows, and Claude are out of scope
+
 ## [0.3.5] - 2026-08-15
 
 ### Added
