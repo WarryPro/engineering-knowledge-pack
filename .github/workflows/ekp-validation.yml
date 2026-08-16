@@ -54,3 +54,6 @@ jobs:
 
       - name: Assemble cursor-devops bundle
         run: python scripts/assemble/assemble.py --profile cursor-devops --clean --verify
+
+      - name: Assemble ekp-core pilot bundle
+        run: python scripts/assemble/assemble.py --profile ekp-core --clean --verify
