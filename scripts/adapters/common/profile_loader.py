@@ -7,7 +7,7 @@ from common.paths import get_repo_root
 
 # Canonical adapter identifiers (registry must stay in sync).
 KNOWN_ADAPTERS = ("cursor", "copilot", "antigravity", "claude")
-IMPLEMENTED_ADAPTERS = ("cursor", "copilot", "antigravity")
+IMPLEMENTED_ADAPTERS = ("cursor", "copilot", "antigravity", "claude")
 
 
 def resolve_profile_outputs(profile_data):

@@ -181,12 +181,15 @@ dist/
 │   ├── bundle-manifest.json
 │   └── cursor/
 │       └── *.mdc
-└── ekp-core/                   # Multi-adapter pilot (Cursor + Copilot + Antigravity)
+└── ekp-core/                   # Multi-adapter pilot (Cursor + Copilot + Antigravity + Claude)
     ├── assemble-manifest.json
     ├── bundle-manifest.json
     ├── cursor/
     ├── copilot/.github/
-    └── antigravity/.agents/rules/
+    ├── antigravity/.agents/rules/
+    └── claude/
+        ├── CLAUDE.md
+        └── .claude/skills/
 ```
 
 Regenerate locally: `py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify`

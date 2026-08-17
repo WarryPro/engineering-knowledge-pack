@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Claude adapter (`scripts/adapters/claude/`) generating compact `CLAUDE.md` plus document-grouped `.claude/skills/<skill-id>/SKILL.md`
+- `ekp-core` pilot now includes Claude alongside Cursor, Copilot, and Antigravity
+
+### Changed
+
+- Default adapter registry implements Cursor, Copilot, Antigravity, and Claude
+- Claude packaging intentionally avoids pathless `.claude/rules/*.md` and 1:1 Cursor concept dumps
+
+### Compatibility
+
+- Six operational Cursor profiles remain Cursor-only and unchanged
+- Cursor freeze vs `v0.4.0` required before release
+- Claude runtime skill invocation is not empirically verified
+- No new knowledge guides, concepts, namespaces, or graph exceptions
+
 ## [0.4.0] - 2026-08-16
 
 ### Added

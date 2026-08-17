@@ -7,6 +7,7 @@ Profile composition and deployable bundle generation.
 ```bash
 py -3 scripts/assemble/assemble.py --profile cursor-core
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
+py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
 ```
 
 ## Pipeline
@@ -19,7 +20,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 6. Write non-Cursor `dist/<profile>/<adapter>/adapter-manifest.json` when those adapters are requested
 7. Write `dist/<profile>/assemble-manifest.json`
 
-Claude remains unimplemented and fails explicitly if requested. Copilot skills and Antigravity skills/workflows are out of scope.
+Implemented adapters: Cursor, Copilot, Antigravity, Claude. Unknown adapters fail explicitly. Copilot skills and Antigravity skills/workflows remain out of scope. Claude v1 does not emit pathless `.claude/rules/`.
 
 If indexes are missing, run:
 

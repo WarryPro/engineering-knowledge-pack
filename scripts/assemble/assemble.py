@@ -24,6 +24,7 @@ from common.paths import get_dist_path, get_repo_root
 from common.profile_loader import load_profile_by_name
 from common.registry import AdapterNotImplementedError, build_default_registry
 from antigravity.verify import AntigravityVerifyError
+from claude.verify import ClaudeVerifyError
 from copilot.verify import CopilotVerifyError
 from cursor.manifest import build_bundle_manifest
 from cursor.verify import CursorVerifyError, verify_cursor_bundle
@@ -205,6 +206,7 @@ def assemble(profile_name, clean=False, verify=False, repo_root=None, registry=N
                 CursorVerifyError,
                 CopilotVerifyError,
                 AntigravityVerifyError,
+                ClaudeVerifyError,
             ) as exc:
                 raise AssembleError(str(exc))
             except AssembleError:

@@ -63,6 +63,9 @@ def build_default_registry():
     from antigravity.generate import generate as antigravity_generate
     from antigravity.manifest import build_adapter_manifest as antigravity_build_manifest
     from antigravity.verify import verify_antigravity_bundle
+    from claude.generate import generate as claude_generate
+    from claude.manifest import build_adapter_manifest as claude_build_manifest
+    from claude.verify import verify_claude_bundle
     from copilot.generate import generate as copilot_generate
     from copilot.manifest import build_adapter_manifest as copilot_build_manifest
     from copilot.verify import verify_copilot_bundle
@@ -88,5 +91,11 @@ def build_default_registry():
         generate_fn=antigravity_generate,
         verify_fn=verify_antigravity_bundle,
         build_manifest_fn=antigravity_build_manifest,
+    )
+    registry.register(
+        "claude",
+        generate_fn=claude_generate,
+        verify_fn=verify_claude_bundle,
+        build_manifest_fn=claude_build_manifest,
     )
     return registry

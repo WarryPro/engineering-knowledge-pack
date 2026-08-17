@@ -90,9 +90,9 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 | cursor | implemented |
 | copilot | implemented (`ekp-core` pilot) |
 | antigravity | implemented (`ekp-core` pilot) |
-| claude | not implemented |
+| claude | implemented (`ekp-core` pilot) |
 
-Copilot and Antigravity are demonstrated through the `ekp-core` pilot profile. The six operational `cursor-*` profiles remain Cursor-only.
+Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot profile. The six operational `cursor-*` profiles remain Cursor-only.
 
 ## Status
 

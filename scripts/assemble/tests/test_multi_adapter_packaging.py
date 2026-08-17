@@ -67,10 +67,10 @@ class EkpCoreProfileTests(unittest.TestCase):
         core = load_profile_by_name("cursor-core", repo_root=REPO_ROOT)
         pilot = load_profile_by_name("ekp-core", repo_root=REPO_ROOT)
         self.assertEqual(pilot["knowledge"], core["knowledge"])
-        self.assertEqual(pilot["outputs"], ["cursor", "copilot", "antigravity"])
+        self.assertEqual(pilot["outputs"], ["cursor", "copilot", "antigravity", "claude"])
         self.assertEqual(pilot["adapter_priorities"], ["high"])
 
-    def test_assemble_ekp_core_succeeds_for_three_adapters(self):
+    def test_assemble_ekp_core_succeeds_for_four_adapters(self):
         if verify_indexes(get_dist_path()):
             self.skipTest("dist indexes not available")
 
@@ -83,6 +83,10 @@ class EkpCoreProfileTests(unittest.TestCase):
         )
         self.assertTrue(
             (bundle_dir / "antigravity" / ".agents" / "rules" / "00-orchestrator.md").is_file()
+        )
+        self.assertTrue((bundle_dir / "claude" / "CLAUDE.md").is_file())
+        self.assertTrue(
+            (bundle_dir / "claude" / ".claude" / "skills" / "ekp-testing" / "SKILL.md").is_file()
         )
 
 
@@ -138,7 +142,7 @@ class MultiAdapterIsolationTests(unittest.TestCase):
             )
 
     def test_cursor_manifest_not_overwritten_by_dummy_adapters(self):
-        registry = _registry_with_dummies("copilot", "antigravity")
+        registry = _registry_with_dummies("copilot", "antigravity", "claude")
         returned = assemble(
             profile_name="ekp-core",
             clean=True,
@@ -165,15 +169,21 @@ class MultiAdapterIsolationTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        claude_manifest = json.loads(
+            (bundle_dir / "claude" / "adapter-manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
         self.assertEqual(copilot_manifest["adapter"], "copilot")
         self.assertEqual(antigravity_manifest["adapter"], "antigravity")
+        self.assertEqual(claude_manifest["adapter"], "claude")
 
         assemble_payload = json.loads(
             (bundle_dir / ASSEMBLE_MANIFEST_NAME).read_text(encoding="utf-8")
         )
         self.assertEqual(
             assemble_payload["adapters"],
-            ["cursor", "copilot", "antigravity"],
+            ["cursor", "copilot", "antigravity", "claude"],
         )
         self.assertEqual(
             [entry["manifest"] for entry in assemble_payload["outputs"]],
@@ -181,15 +191,17 @@ class MultiAdapterIsolationTests(unittest.TestCase):
                 "bundle-manifest.json",
                 "copilot/adapter-manifest.json",
                 "antigravity/adapter-manifest.json",
+                "claude/adapter-manifest.json",
             ],
         )
 
         self.assertTrue((bundle_dir / "copilot" / "placeholder.txt").is_file())
         self.assertTrue((bundle_dir / "antigravity" / "placeholder.txt").is_file())
+        self.assertTrue((bundle_dir / "claude" / "placeholder.txt").is_file())
         self.assertTrue((bundle_dir / "cursor" / "00-ekp-orchestrator.mdc").is_file())
 
     def test_assemble_manifest_stable_across_runs(self):
-        registry = _registry_with_dummies("copilot", "antigravity")
+        registry = _registry_with_dummies("copilot", "antigravity", "claude")
         assemble(
             profile_name="ekp-core",
             clean=True,
@@ -216,8 +228,8 @@ class MultiAdapterIsolationTests(unittest.TestCase):
 
 
 class UnimplementedAdapterAssembleTests(unittest.TestCase):
-    def test_default_registry_still_rejects_claude(self):
+    def test_default_registry_rejects_unknown_adapter(self):
         registry = build_default_registry()
-        self.assertFalse(registry.is_implemented("claude"))
+        self.assertTrue(registry.is_implemented("claude"))
         with self.assertRaises(AdapterNotImplementedError):
-            registry.get("claude")
+            registry.get("not-a-real-adapter")

@@ -1,4 +1,4 @@
-"""Integration tests for ekp-core Copilot + Antigravity pilots."""
+"""Integration tests for ekp-core multi-adapter pilots (Cursor, Copilot, Antigravity, Claude)."""
 
 import json
 import sys
@@ -37,12 +37,12 @@ class EkpCorePilotAssembleTests(unittest.TestCase):
         assemble(profile_name="ekp-core", clean=True, verify=True)
         cls.bundle_dir = get_dist_path() / "ekp-core"
 
-    def test_three_adapters_assembled(self):
+    def test_four_adapters_assembled(self):
         payload = json.loads(
             (self.bundle_dir / ASSEMBLE_MANIFEST_NAME).read_text(encoding="utf-8")
         )
         self.assertEqual(
-            payload["adapters"], ["cursor", "copilot", "antigravity"]
+            payload["adapters"], ["cursor", "copilot", "antigravity", "claude"]
         )
         self.assertEqual(
             [entry["manifest"] for entry in payload["outputs"]],
@@ -50,6 +50,7 @@ class EkpCorePilotAssembleTests(unittest.TestCase):
                 "bundle-manifest.json",
                 "copilot/adapter-manifest.json",
                 "antigravity/adapter-manifest.json",
+                "claude/adapter-manifest.json",
             ],
         )
 
@@ -75,15 +76,32 @@ class EkpCorePilotAssembleTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        claude = json.loads(
+            (self.bundle_dir / "claude" / "adapter-manifest.json").read_text(
+                encoding="utf-8"
+            )
+        )
         self.assertEqual(copilot["adapter"], "copilot")
         self.assertEqual(antigravity["adapter"], "antigravity")
+        self.assertEqual(claude["adapter"], "claude")
         self.assertNotEqual(copilot, antigravity)
+        self.assertNotEqual(copilot, claude)
+        self.assertNotEqual(antigravity, claude)
 
-    def test_claude_still_fails_explicitly(self):
-        registry = build_default_registry()
-        with self.assertRaises(AdapterNotImplementedError) as context:
-            registry.get("claude")
-        self.assertIn("not implemented", str(context.exception).lower())
+    def test_claude_packaging_tree(self):
+        claude_dir = self.bundle_dir / "claude"
+        self.assertTrue((claude_dir / "CLAUDE.md").is_file())
+        self.assertTrue((claude_dir / "adapter-manifest.json").is_file())
+        skills = claude_dir / ".claude" / "skills"
+        self.assertTrue(skills.is_dir())
+        for skill_id in (
+            "ekp-refactoring",
+            "ekp-testing",
+            "ekp-error-handling",
+            "ekp-layering",
+        ):
+            self.assertTrue((skills / skill_id / "SKILL.md").is_file(), msg=skill_id)
+        self.assertFalse((claude_dir / ".claude" / "rules").exists())
 
     def test_unknown_adapter_still_fails_explicitly(self):
         registry = build_default_registry()
@@ -107,7 +125,11 @@ class EkpCorePilotAssembleTests(unittest.TestCase):
             )
         message = str(context.exception).lower()
         self.assertIn("not implemented", message)
-        self.assertTrue("copilot" in message or "antigravity" in message)
+        self.assertTrue(
+            "copilot" in message
+            or "antigravity" in message
+            or "claude" in message
+        )
 
 
 if __name__ == "__main__":
