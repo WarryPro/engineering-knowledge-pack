@@ -12,8 +12,8 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); packaging (v0.3.5); Copilot/Antigravity pilots (v0.4.0); Flutter deferred |
-| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity pilots in `v0.4.0`; Claude pending |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); packaging (v0.3.5); Copilot/Antigravity (v0.4.0); Claude (v0.5.0); Flutter deferred |
+| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0` |
 
 ---
 
@@ -161,11 +161,11 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 ## Phase 4: Technology knowledge
 
-**Status:** In progress (Waves 1–3 published on `master`; profile composition `includes` released in `v0.3.3`; adapter dispatch released in `v0.3.4`; multi-adapter packaging released in `v0.3.5`; Copilot/Antigravity pilots released in `v0.4.0`)
+**Status:** In progress (Waves 1–3 published on `master`; profile composition `includes` released in `v0.3.3`; adapter dispatch released in `v0.3.4`; multi-adapter packaging released in `v0.3.5`; Copilot/Antigravity pilots released in `v0.4.0`; Claude adapter released in `v0.5.0`)
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots) published on `master`.
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots), `v0.5.0` (Claude adapter) published on `master`.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
@@ -194,7 +194,7 @@ Add stack-specific guidance for the technologies this project targets, without c
 - [x] Profile `includes` (ADR-0008; `cursor-core` frozen; no `extends`)
 - [ ] Flutter (deferred)
 - [ ] `technology` validator role (deferred)
-- [ ] Copilot / Claude adapters (Phase 5)
+- [x] Copilot / Antigravity / Claude adapters (Phase 5; `v0.4.0` / `v0.5.0`)
 
 **Exit criteria:** A developer on a supported stack can find actionable guidance without wading through unrelated stacks; tech guides cite L0 concepts instead of duplicating them.
 
@@ -206,13 +206,13 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 **v0.4.0:** Copilot + Antigravity adapter pilots via `ekp-core` (`outputs: [cursor, copilot, antigravity]`); six operational profiles remain Cursor-only; Cursor output unchanged; Claude remains the next adapter milestone.
 
-**Unreleased (AI30D → target v0.5.0):** Claude adapter pilot via `ekp-core` (`CLAUDE.md` + document-grouped Skills); six operational profiles remain Cursor-only; Cursor freeze vs `v0.4.0` required.
+**v0.5.0:** Claude adapter pilot via `ekp-core` (`CLAUDE.md` + document-grouped Skills); six operational profiles remain Cursor-only; Cursor output unchanged vs `v0.4.0`.
 
 ---
 
 ## Phase 5: Additional AI adapters
 
-**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter implemented on the AI30D branch, pending `v0.5.0` release)
+**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`)
 
 Extend the adapter layer to additional AI assistant platforms.
 
@@ -221,7 +221,7 @@ Extend the adapter layer to additional AI assistant platforms.
 - [x] Adapter: knowledge → Cursor Rules (`.mdc`)
 - [x] Adapter: knowledge → GitHub Copilot instructions (`ekp-core` pilot)
 - [x] Adapter: knowledge → Antigravity workspace rules (`ekp-core` pilot)
-- [x] Adapter: knowledge → Claude Code `CLAUDE.md` + Skills (`ekp-core` pilot; release pending)
+- [x] Adapter: knowledge → Claude Code `CLAUDE.md` + Skills (`ekp-core` pilot)
 - [x] Profile assembly script (knowledge + adapter → deployable bundle)
 - [x] Validation CLI (`scripts/validate`) for structure, metadata, and broken links
 - [ ] Documentation for deploying profiles to consumer projects
@@ -231,7 +231,7 @@ Extend the adapter layer to additional AI assistant platforms.
 
 **v0.4.0 note:** Antigravity generation is structurally validated; runtime activation in a live Antigravity workspace is not empirically validated in the current maintainer environment.
 
-**AI30D note:** Claude generation is structurally validated (`CLAUDE.md` + Skills, no pathless rules). Runtime Claude Code skill invocation is not empirically verified.
+**v0.5.0 note:** Claude generation is structurally validated (`CLAUDE.md` + Skills, no pathless rules). Runtime Claude Code skill invocation is not empirically verified.
 
 ---
 
