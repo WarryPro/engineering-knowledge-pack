@@ -13,7 +13,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); packaging (v0.3.5); Copilot/Antigravity (v0.4.0); Claude (v0.5.0); Flutter deferred |
-| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0` |
+| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `docs/deployment.md`; operational profile expansion deferred |
 
 ---
 
@@ -212,7 +212,7 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 ## Phase 5: Additional AI adapters
 
-**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`)
+**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`; consumer deployment documented; operational profile expansion deferred)
 
 Extend the adapter layer to additional AI assistant platforms.
 
@@ -224,7 +224,7 @@ Extend the adapter layer to additional AI assistant platforms.
 - [x] Adapter: knowledge → Claude Code `CLAUDE.md` + Skills (`ekp-core` pilot)
 - [x] Profile assembly script (knowledge + adapter → deployable bundle)
 - [x] Validation CLI (`scripts/validate`) for structure, metadata, and broken links
-- [ ] Documentation for deploying profiles to consumer projects
+- [x] Documentation for deploying profiles to consumer projects (`docs/deployment.md`)
 - [ ] Expand operational profiles beyond Cursor (deferred)
 
 **Exit criteria:** A team can select a profile, run a script, and deploy engineering context to their AI assistant of choice. Changes to knowledge automatically propagate to rules.

@@ -14,6 +14,9 @@ This document describes the purpose of each top-level directory and how content 
 ├── docs/                      # Project meta-documentation
 │   ├── vision.md
 │   ├── architecture.md
+│   ├── adapter-architecture.md
+│   ├── deployment.md
+│   ├── governance.md
 │   ├── roadmap.md
 │   ├── folder-structure.md    # This file
 │   ├── style-guide.md
@@ -209,14 +212,15 @@ Author writes knowledge document
    generate-index  →  dist/*.json (concept-index, knowledge-graph, adapter-manifest)
         │
         ▼
-  adapter generation  →  dist/<profile>/<tool>/*.mdc
+  adapter generation  →  dist/<profile>/<adapter>/
         │
         ▼
      assemble  →  dist/<profile>/bundle-manifest.json
                   dist/<profile>/assemble-manifest.json
+                  dist/<profile>/<adapter>/adapter-manifest.json (non-Cursor)
         │
         ▼
-  Deployed to consumer project (.cursor/rules/)
+  Deployed to consumer project (see docs/deployment.md)
 ```
 
 **Note:** `rules/` is a scaffold directory. The authoritative generated output lives in `dist/`, which remains gitignored.

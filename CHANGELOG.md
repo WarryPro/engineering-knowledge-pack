@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Consumer deployment guide (`docs/deployment.md`) covering profile selection, assemble CLI, per-adapter copy paths, manifests, regeneration, and automated vs runtime verification
+
+### Changed
+
+- Stale adapter status in architecture, scaffold READMEs, `ekp-core` comments, and `DEVELOPMENT.md` aligned with v0.5.0 (four implemented adapters; Copilot/Antigravity/Claude remain `ekp-core` pilots)
+
 ## [0.5.0] - 2026-08-17
 
 ### Added

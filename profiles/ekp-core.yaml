@@ -1,6 +1,6 @@
 # EKP multi-adapter pilot profile.
 # Composes cursor-core knowledge without modifying cursor-core.yaml.
-# Copilot, Antigravity, and Claude are AI30D pilots.
+# Copilot and Antigravity shipped in AI30B (v0.4.0). Claude shipped in AI30D (v0.5.0).
 
 name: ekp-core
 description: Pilot profile for multi-adapter assembly (Cursor, Copilot, Antigravity, and Claude).

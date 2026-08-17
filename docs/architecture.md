@@ -10,7 +10,7 @@ knowledge/
     ↓ generate-index  →  dist/*.json
     ↓ adapter         →  dist/<profile>/<tool>/
     ↓ assemble        →  bundle-manifest.json
-    ↓ deploy          →  consumer project (e.g. .cursor/rules/)
+    ↓ deploy          →  consumer project (see deployment.md)
 ```
 
 ```
@@ -36,7 +36,7 @@ knowledge/
     └──────────┘
 ```
 
-See [`adapter-architecture.md`](adapter-architecture.md) for pipeline details.
+See [`adapter-architecture.md`](adapter-architecture.md) for pipeline details and [`deployment.md`](deployment.md) for copying artifacts into a consumer project.
 
 ## Repository layers
 
@@ -123,13 +123,13 @@ Scripts are idempotent, testable, and documented. See [`DEVELOPMENT.md`](../DEVE
 ### `dist/` — Generated artifacts (gitignored)
 
 - `dist/concept-index.json`, `knowledge-graph.json`, `adapter-manifest.json` — from `validate --generate-index`
-- `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json` — from `assemble`
+- `dist/<profile>/` — from `assemble` (Cursor `.mdc`, optional Copilot/Antigravity/Claude trees, manifests)
 
 Never commit `dist/`. Regenerate locally or in CI.
 
 ### `docs/` — Project meta-documentation
 
-Vision, architecture, roadmap, contribution process—not engineering knowledge.
+Vision, architecture, roadmap, contribution process, deployment—not engineering knowledge.
 
 ## Knowledge vs. rules vs. profiles
 
@@ -147,9 +147,9 @@ Vision, architecture, roadmap, contribution process—not engineering knowledge.
 1. Validate   — Frontmatter, graph, concepts, links
 2. Index      — dist/*.json for adapter consumption
 3. Extract    — scripts/adapters/common/ parses knowledge
-4. Transform  — scripts/adapters/cursor/ → .mdc rules
-5. Assemble   — Profile bundle + bundle-manifest.json + --verify
-6. Deploy     — Copy dist/<profile>/cursor/ to consumer .cursor/rules/
+4. Transform  — registered adapters (cursor, copilot, antigravity, claude)
+5. Assemble   — Profile bundle + manifests + --verify
+6. Deploy     — Copy dist/<profile>/<adapter>/ artifacts (see deployment.md)
 ```
 
 ### Design constraints
@@ -167,17 +167,18 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Operational today:**
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
-- Cursor adapter; profiles `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`
-- Assemble pipeline with `--verify` (CI verifies all six Cursor profiles)
+- Adapters: Cursor (operational `cursor-*` profiles), Copilot / Antigravity / Claude (`ekp-core` pilot)
+- Assemble pipeline with `--verify` (CI verifies all six Cursor profiles and `ekp-core`)
 
-**Planned (Phase 4 / Phase 5):**
+**Planned / deferred:**
 
 - Flutter technology guide and profile (deferred)
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
-- Copilot / Claude adapters (Phase 5)
+- Expand operational profiles beyond Cursor (deferred)
 
 ## Related
 
 - [`adapter-architecture.md`](adapter-architecture.md) — pipeline stages
+- [`deployment.md`](deployment.md) — consumer copy paths per adapter
 - [`folder-structure.md`](folder-structure.md) — directory layout
 - [`DEVELOPMENT.md`](../DEVELOPMENT.md) — local validation and CI

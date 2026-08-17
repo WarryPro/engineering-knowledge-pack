@@ -63,7 +63,7 @@ Adapters consume these JSON files instead of parsing markdown at runtime.
 | `profile_resolve.py` | Profile `includes` resolution |
 | `profile_loader.py` | Profile loading; canonical `outputs` resolution |
 | `selection.py` | Shared adapter-manifest concept selection |
-| `registry.py` | Adapter dispatch registry (Cursor, Copilot, Antigravity; Claude deferred) |
+| `registry.py` | Adapter dispatch registry (Cursor, Copilot, Antigravity, Claude) |
 
 ### 5. Cursor adapter
 
@@ -293,6 +293,7 @@ See `profiles/cursor-core.yaml` for the first operational Cursor profile and `pr
 ## Related documents
 
 - `scripts/validate/README.md` — validator usage and tiers
+- `docs/deployment.md` — copy generated artifacts into a consumer project
 - `docs/folder-structure.md` — directory layout and content flow
 - `schema/concept-namespaces.json` — namespace ownership registry
 - `schema/vocabularies.json` — controlled vocabulary (not enforced yet)
