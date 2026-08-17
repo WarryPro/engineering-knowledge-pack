@@ -101,7 +101,7 @@ Options:
 
 EKP does not write into consumer tool directories during assembly — bundles are produced under `dist/` only.
 
-Antigravity and Claude generation are structurally validated; runtime activation in a live consumer tool is not claimed. See `docs/adapter-architecture.md`.
+Copy paths, profile/adapter matrix, and runtime-validation limits: [`docs/deployment.md`](../../docs/deployment.md).
 
 ## Package layout
 
