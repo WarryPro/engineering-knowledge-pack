@@ -80,7 +80,7 @@ Compose existing knowledge into a context-specific bundle. Profiles do not intro
 
 ### Rules
 
-Only after the corresponding knowledge document exists. Tool-specific rules are **generated** by adapters into `dist/<profile>/`—do not treat `rules/` as the deployable source. See [`adapter-architecture.md`](adapter-architecture.md).
+Only after the corresponding knowledge document exists. Tool-specific rules are **generated** by adapters into `dist/<profile>/`—do not treat `rules/` as the deployable source. See [`adapter-architecture.md`](adapter-architecture.md) and [`deployment.md`](deployment.md).
 
 ### Scripts and adapters
 

@@ -19,7 +19,7 @@ On Linux/macOS CI uses `python`; on Windows use `py -3` if configured.
 | Path | Role |
 |------|------|
 | `knowledge/` | Source of truth — validated on every change |
-| `profiles/` | Bundle composition (`cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`) |
+| `profiles/` | Bundle composition (six operational `cursor-*` profiles + `ekp-core` pilot) |
 | `scripts/validate/` | Validator CLI |
 | `scripts/adapters/` | Knowledge → tool format transformers |
 | `scripts/assemble/` | Profile → deployable bundle |
@@ -68,6 +68,8 @@ py -3 -m unittest discover -s scripts/assemble/tests -v
 
 ### 5. Assemble and verify bundles
 
+Operational Cursor profiles:
+
 ```bash
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-php --clean --verify
@@ -77,26 +79,19 @@ py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 ```
 
-Output: `dist/<profile>/cursor/*.mdc` + `bundle-manifest.json`.
+Multi-adapter pilot (Cursor + Copilot + Antigravity + Claude):
+
+```bash
+py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
+```
+
+Cursor output: `dist/<profile>/cursor/*.mdc` + profile-root `bundle-manifest.json`.
 
 **Expected:** 65 rules for `cursor-core` (frozen — do not change without explicit approval). Stack profiles include `cursor-core` via `includes` and add stack-specific guides (~74 for single-stack, ~83 for combined-stack). Rule counts must remain stable across composition refactors.
 
 **Profile composition:** `includes` resolves knowledge paths depth-first before assembly. Included profiles contribute paths only; root profile owns `adapter`, `filters`, and `outputs`. See ADR-0008.
 
-### Deploy to a consumer project
-
-Copy generated rules:
-
-```
-dist/cursor-core/cursor/        →  <project>/.cursor/rules/
-dist/cursor-php/cursor/         →  <project>/.cursor/rules/
-dist/cursor-symfony/cursor/     →  <project>/.cursor/rules/
-dist/cursor-typescript/cursor/  →  <project>/.cursor/rules/
-dist/cursor-frontend/cursor/    →  <project>/.cursor/rules/
-dist/cursor-devops/cursor/      →  <project>/.cursor/rules/
-```
-
-Regenerate after any knowledge or profile change.
+Copying generated files into a consumer project is documented in [`docs/deployment.md`](docs/deployment.md).
 
 ## `dist/` policy
 
@@ -111,7 +106,7 @@ Workflow: [`.github/workflows/ekp-validation.yml`](.github/workflows/ekp-validat
 
 Triggers: `push` and `pull_request` to `master` and `staging`.
 
-Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all six Cursor profiles.
+Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all six Cursor profiles → `assemble --verify` for `ekp-core` (cursor, copilot, antigravity, claude).
 
 ## Before opening a PR
 
@@ -123,4 +118,5 @@ Steps mirror local validation: validate → generate-index → adapter tests →
 
 - [scripts/validate/README.md](scripts/validate/README.md) — validator tiers and rules
 - [docs/adapter-architecture.md](docs/adapter-architecture.md) — pipeline design
+- [docs/deployment.md](docs/deployment.md) — copy generated artifacts into a consumer project
 - [CONTRIBUTING.md](CONTRIBUTING.md) — contribution workflow

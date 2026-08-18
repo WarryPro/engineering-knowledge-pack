@@ -28,4 +28,4 @@ If indexes are missing, run:
 py -3 scripts/validate/validate.py --generate-index
 ```
 
-See `scripts/adapters/README.md` for the full validate → generate-index → assemble → deploy workflow.
+See `scripts/adapters/README.md` for the validate → generate-index → assemble workflow and [`docs/deployment.md`](../../docs/deployment.md) for copying artifacts into a consumer project.

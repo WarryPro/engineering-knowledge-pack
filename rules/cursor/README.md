@@ -18,4 +18,4 @@ Rules are derived from knowledge documents via `scripts/adapters/cursor/`. Do no
 
 Format reference: `templates/cursor-rule-template.md`.
 
-See [`docs/adapter-architecture.md`](../../docs/adapter-architecture.md) and [`DEVELOPMENT.md`](../../DEVELOPMENT.md).
+See [`docs/adapter-architecture.md`](../../docs/adapter-architecture.md), [`docs/deployment.md`](../../docs/deployment.md), and [`DEVELOPMENT.md`](../../DEVELOPMENT.md).
