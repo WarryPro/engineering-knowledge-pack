@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-08-18
+
 ### Added
 
 - Consumer deployment guide (`docs/deployment.md`) covering profile selection, assemble CLI, per-adapter copy paths, manifests, regeneration, and automated vs runtime verification
@@ -14,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Stale adapter status in architecture, scaffold READMEs, `ekp-core` comments, and `DEVELOPMENT.md` aligned with v0.5.0 (four implemented adapters; Copilot/Antigravity/Claude remain `ekp-core` pilots)
+
+### Compatibility
+
+- Documentation-only PATCH; no adapter implementation, profile, knowledge, IR, or CI workflow changes
+- Six operational Cursor profiles unchanged and Cursor-only: 65 / 74 / 83 / 74 / 83 / 74
+- Cursor output paths, filenames, and `.mdc` content byte-identical to `v0.5.0`
+- Copilot, Antigravity, and Claude remain `ekp-core` pilots
+- Antigravity runtime activation is structurally validated but not empirically validated in a live Antigravity workspace
+- Claude runtime skill invocation is structurally validated but not empirically validated in a live Claude Code session
 
 ## [0.5.0] - 2026-08-17
 
