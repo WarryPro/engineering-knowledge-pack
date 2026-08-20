@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-08-21
+
 ### Added
 
 - Profile `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`) — first stack-specific multi-adapter profile parallel to `cursor-php`
@@ -16,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Compatibility
 
 - Six operational Cursor profiles unchanged and Cursor-only: 65 / 74 / 83 / 74 / 83 / 74
+- Cursor output paths, filenames, and `.mdc` content byte-identical to `v0.5.1`
 - `ekp-php` Cursor `.mdc` content byte-identical to `cursor-php`
 - Antigravity and Claude remain outside `ekp-php` (still demonstrated via `ekp-core` pilot only)
 - `ekp-core` remains a four-adapter packaging pilot

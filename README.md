@@ -79,7 +79,8 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.5.1` (on `master`)
+- **Latest published release:** `v0.6.0` (on `master`)
+- **v0.6.0:** First stack-specific multi-adapter profile `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`); six operational Cursor profiles unchanged; assembled Cursor output unchanged vs `v0.5.1`
 - **v0.5.1:** Consumer deployment documentation (`docs/deployment.md`) and adapter-status reconciliation; documentation-only PATCH; assembled Cursor output unchanged vs `v0.5.0`
 - **v0.5.0:** Claude adapter pilot via `ekp-core` (`CLAUDE.md` + document-grouped Skills); six operational profiles remain Cursor-only; assembled Cursor output unchanged vs `v0.4.0`
 - **v0.4.0:** Copilot + Antigravity adapter pilots via `ekp-core`; six operational profiles remain Cursor-only; assembled Cursor output unchanged vs `v0.3.5`
@@ -91,7 +92,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 | Adapter | Status |
 |---------|--------|
 | cursor | implemented |
-| copilot | implemented (`ekp-core` pilot) |
+| copilot | implemented (`ekp-php`; `ekp-core` pilot) |
 | antigravity | implemented (`ekp-core` pilot) |
 | claude | implemented (`ekp-core` pilot) |
 
