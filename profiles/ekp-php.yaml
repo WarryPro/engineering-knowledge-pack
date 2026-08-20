@@ -1,0 +1,24 @@
+# EKP PHP multi-adapter profile (Cursor + Copilot).
+# Parallel to cursor-php: includes contribute knowledge paths only.
+# Does not modify cursor-php.yaml or cursor-core.yaml.
+# Antigravity and Claude remain outside this MVP (still ekp-core pilot only).
+
+name: ekp-php
+description: EKP PHP bundle for Cursor Rules and GitHub Copilot instructions (parallel to cursor-php).
+
+includes:
+  - cursor-php
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor
+  - copilot
