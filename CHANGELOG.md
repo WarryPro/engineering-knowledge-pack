@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Profile `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`) — first stack-specific multi-adapter profile parallel to `cursor-php`
+- CI assemble `--verify` gate for `ekp-php`
+- Assemble tests for `ekp-php` knowledge resolution, Cursor `.mdc` identity vs `cursor-php`, and Copilot PHP instructions
+
+### Compatibility
+
+- Six operational Cursor profiles unchanged and Cursor-only: 65 / 74 / 83 / 74 / 83 / 74
+- `ekp-php` Cursor `.mdc` content byte-identical to `cursor-php`
+- Antigravity and Claude remain outside `ekp-php` (still demonstrated via `ekp-core` pilot only)
+- `ekp-core` remains a four-adapter packaging pilot
+- Remaining stack multi-adapter profiles (`ekp-symfony`, …) deferred
+- No adapter generator, knowledge, IR, or `cursor-core.yaml` changes
+- Copilot output for `ekp-php` is structurally generated and verified; empirical Copilot runtime session behavior is not claimed
+- Antigravity runtime activation and Claude skill invocation remain not empirically validated
+
 ## [0.5.1] - 2026-08-18
 
 ### Added

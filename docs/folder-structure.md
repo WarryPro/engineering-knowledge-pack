@@ -184,6 +184,11 @@ dist/
 │   ├── bundle-manifest.json
 │   └── cursor/
 │       └── *.mdc
+├── ekp-php/                    # Stack multi-adapter (Cursor + Copilot; includes cursor-php)
+│   ├── assemble-manifest.json
+│   ├── bundle-manifest.json
+│   ├── cursor/
+│   └── copilot/.github/
 └── ekp-core/                   # Multi-adapter pilot (Cursor + Copilot + Antigravity + Claude)
     ├── assemble-manifest.json
     ├── bundle-manifest.json

@@ -238,7 +238,7 @@ dist/<profile>/
     └── adapter-manifest.json
 ```
 
-The `ekp-core` pilot assembles Cursor + Copilot + Antigravity + Claude. Operational `cursor-*` profiles remain Cursor-only. Unknown adapters fail explicitly with no Cursor fallback.
+The `ekp-core` pilot assembles Cursor + Copilot + Antigravity + Claude. `ekp-php` assembles Cursor + Copilot for PHP stack knowledge (`includes: [cursor-php]`). Operational `cursor-*` profiles remain Cursor-only. Unknown adapters fail explicitly with no Cursor fallback.
 
 Cursor `bundle-manifest.json` stays at the profile root and is never overwritten by another adapter.
 
@@ -267,7 +267,7 @@ adapter:
       - high
 ```
 
-See `profiles/cursor-core.yaml` for the first operational Cursor profile and `profiles/ekp-core.yaml` for the multi-adapter pilot.
+See `profiles/cursor-core.yaml` for the first operational Cursor profile, `profiles/ekp-php.yaml` for the first stack multi-adapter profile (Cursor + Copilot), and `profiles/ekp-core.yaml` for the four-adapter pilot.
 
 ## Output locations
 

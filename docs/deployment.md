@@ -22,16 +22,18 @@ Profiles live under `profiles/` and declare **knowledge paths** plus **`outputs`
 | `cursor-typescript` | TypeScript (`includes: [cursor-core]`) | yes | no | no | no |
 | `cursor-frontend` | Frontend (`includes: [cursor-core]`) | yes | no | no | no |
 | `cursor-devops` | DevOps (`includes: [cursor-core]`) | yes | no | no | no |
+| `ekp-php` | PHP multi-adapter (`includes: [cursor-php]`) | yes | yes | no | no |
 | `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`) | yes | yes | yes | yes |
 
-The six `cursor-*` profiles are the operational Cursor products. Copilot, Antigravity, and Claude are assembled **only** through `ekp-core`. Expanding those adapters onto operational profiles is deferred.
+The six `cursor-*` profiles are the operational Cursor products. `ekp-php` is the first stack-specific multi-adapter profile (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. Other stack multi-adapter profiles remain deferred.
 
 Pick:
 
 - A `cursor-*` profile if you only need Cursor Rules.
-- `ekp-core` if you need Copilot, Antigravity, and/or Claude artifacts **in addition to** the same Cursor knowledge as `cursor-core`.
+- `ekp-php` if you need Cursor Rules and/or Copilot instructions for PHP (same knowledge as `cursor-php`).
+- `ekp-core` if you need Copilot, Antigravity, and/or Claude artifacts **in addition to** the same Cursor knowledge as `cursor-core` (foundation only; no PHP stack knowledge).
 
-`ekp-core` does not add extra knowledge beyond `cursor-core`; it only requests more adapters.
+`ekp-core` does not add extra knowledge beyond `cursor-core`; it only requests more adapters. `ekp-php` does not modify `cursor-php`; included profiles contribute knowledge paths only.
 
 ## 2. Assemble
 
@@ -48,6 +50,7 @@ Assemble a profile (CLI requires `--profile`):
 ```bash
 py -3 scripts/assemble/assemble.py --profile cursor-core
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
+py -3 scripts/assemble/assemble.py --profile ekp-php --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
 ```
 
@@ -95,7 +98,7 @@ Adapters do not overwrite each other's manifests. Do **not** copy EKP manifests 
 
 ## 3. Cursor deployment
 
-**Source profile:** any `cursor-*` profile, or `ekp-core` (same Cursor knowledge as `cursor-core`).
+**Source profile:** any `cursor-*` profile, `ekp-php` (same Cursor knowledge as `cursor-php`), or `ekp-core` (same Cursor knowledge as `cursor-core`).
 
 **Generated:** `dist/<profile>/cursor/*.mdc`
 
@@ -110,6 +113,7 @@ Examples:
 ```
 dist/cursor-core/cursor/        →  <project>/.cursor/rules/
 dist/cursor-php/cursor/         →  <project>/.cursor/rules/
+dist/ekp-php/cursor/            →  <project>/.cursor/rules/
 dist/ekp-core/cursor/           →  <project>/.cursor/rules/
 ```
 
@@ -121,27 +125,34 @@ Cursor generation, verify, and CI assemble gates cover packaging. This guide doe
 
 ## 4. Copilot deployment
 
-**Source profile:** `ekp-core` only (v0.5.0).
+**Source profiles:** `ekp-core` (foundation knowledge) or `ekp-php` (PHP stack knowledge via `includes: [cursor-php]`).
 
-**Generated under** `dist/ekp-core/copilot/`:
+**Generated under** `dist/<profile>/copilot/`:
 
 ```
 .github/copilot-instructions.md
-.github/instructions/testing.instructions.md
+.github/instructions/*.instructions.md   # domain files when knowledge justifies them
 adapter-manifest.json
 ```
 
-Always-on instructions have **no** `applyTo`. Path-specific `*.instructions.md` files are emitted only when the profile knowledge includes a mapped domain prefix. `ekp-core` includes `knowledge/testing/`, so it emits `testing.instructions.md` with GitHub Copilot `applyTo` frontmatter. Copilot **skills** are not generated.
+Always-on instructions have **no** `applyTo`. Path-specific `*.instructions.md` files are emitted only when the profile knowledge includes a mapped domain prefix. Examples:
+
+- `ekp-core` includes `knowledge/testing/` → `testing.instructions.md`
+- `ekp-php` also includes `knowledge/php/` → `testing.instructions.md` and `php.instructions.md` (`applyTo: "**/*.php"`)
+
+Copilot **skills** are not generated.
 
 **Copy:**
 
 ```
+dist/ekp-php/copilot/.github/   →  <consumer-repo>/.github/
 dist/ekp-core/copilot/.github/  →  <consumer-repo>/.github/
 ```
 
 That places `copilot-instructions.md` and `instructions/*.instructions.md` at the consumer repository root's `.github/` tree. Do not copy `adapter-manifest.json` into `.github/`.
 
-Do not claim Copilot chat/agent activation beyond what GitHub documents for custom instructions. EKP verifies file tree, `applyTo` shape where present, sources, and determinism.
+EKP structurally generates and verifies the Copilot file tree, `applyTo` shape where present, sources, and determinism. Empirical Copilot runtime session behavior is not claimed.
+
 
 ## 5. Antigravity deployment
 
