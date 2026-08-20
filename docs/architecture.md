@@ -87,6 +87,8 @@ Operational profiles:
 | `cursor-typescript` | `includes: [cursor-core]` + `typescript-fundamentals` |
 | `cursor-frontend` | `includes: [cursor-core]` + TypeScript + `frontend-architecture` |
 | `cursor-devops` | `includes: [cursor-core]` + `devops-fundamentals` |
+| `ekp-php` | `includes: [cursor-php]`; `outputs: [cursor, copilot]` — first stack multi-adapter profile |
+| `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`; Cursor + Copilot + Antigravity + Claude) |
 
 Profiles compose knowledge via **`includes`** (ADR-0008). Included profiles contribute knowledge paths only; the root profile owns `adapter`, `filters`, and `outputs`. **`extends` is not supported.**
 
@@ -167,14 +169,15 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Operational today:**
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
-- Adapters: Cursor (operational `cursor-*` profiles), Copilot / Antigravity / Claude (`ekp-core` pilot)
-- Assemble pipeline with `--verify` (CI verifies all six Cursor profiles and `ekp-core`)
+- Adapters: Cursor (operational `cursor-*` profiles), Copilot on `ekp-php` and `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
+- Assemble pipeline with `--verify` (CI verifies all six Cursor profiles, `ekp-php`, and `ekp-core`)
 
 **Planned / deferred:**
 
 - Flutter technology guide and profile (deferred)
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
-- Expand operational profiles beyond Cursor (deferred)
+- Expand remaining stack multi-adapter profiles beyond `ekp-php` (deferred)
+- Antigravity / Claude on stack profiles (deferred; remain `ekp-core` pilot)
 
 ## Related
 

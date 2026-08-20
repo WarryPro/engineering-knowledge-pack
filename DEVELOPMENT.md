@@ -19,7 +19,7 @@ On Linux/macOS CI uses `python`; on Windows use `py -3` if configured.
 | Path | Role |
 |------|------|
 | `knowledge/` | Source of truth — validated on every change |
-| `profiles/` | Bundle composition (six operational `cursor-*` profiles + `ekp-core` pilot) |
+| `profiles/` | Bundle composition (six operational `cursor-*` profiles + `ekp-php` + `ekp-core` pilot) |
 | `scripts/validate/` | Validator CLI |
 | `scripts/adapters/` | Knowledge → tool format transformers |
 | `scripts/assemble/` | Profile → deployable bundle |
@@ -79,11 +79,15 @@ py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 ```
 
-Multi-adapter pilot (Cursor + Copilot + Antigravity + Claude):
+Multi-adapter profiles:
 
 ```bash
+py -3 scripts/assemble/assemble.py --profile ekp-php --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
 ```
+
+- `ekp-php` — Cursor + Copilot for PHP (`includes: [cursor-php]`); first stack-specific multi-adapter profile
+- `ekp-core` — Cursor + Copilot + Antigravity + Claude foundation pilot (`includes: [cursor-core]`)
 
 Cursor output: `dist/<profile>/cursor/*.mdc` + profile-root `bundle-manifest.json`.
 
@@ -106,7 +110,7 @@ Workflow: [`.github/workflows/ekp-validation.yml`](.github/workflows/ekp-validat
 
 Triggers: `push` and `pull_request` to `master` and `staging`.
 
-Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all six Cursor profiles → `assemble --verify` for `ekp-core` (cursor, copilot, antigravity, claude).
+Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all six Cursor profiles → `assemble --verify` for `ekp-php` (cursor, copilot) → `assemble --verify` for `ekp-core` (cursor, copilot, antigravity, claude).
 
 ## Before opening a PR
 
