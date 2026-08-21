@@ -13,4 +13,5 @@ Flutter and Dart mobile and cross-platform UI development.
 
 - Generic TypeScript patterns → see `typescript/`
 - Web frontend architecture → see `frontend/`
+- NativeScript native mobile (TypeScript) → see `nativescript/`
 - General UI accessibility principles → see `frontend/`

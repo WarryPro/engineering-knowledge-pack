@@ -12,8 +12,8 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B — Architecture knowledge expansion | **Complete** | 5 architecture guides + database-design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); packaging (v0.3.5); Copilot/Antigravity (v0.4.0); Claude (v0.5.0); Flutter deferred |
-| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `v0.5.1`; `ekp-php` in `v0.6.0` (Cursor + Copilot); remaining stacks deferred |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); Flutter deferred |
+| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `v0.5.1`; `ekp-php` in `v0.6.0`; remaining multi-adapter stacks deferred |
 
 ---
 
@@ -176,7 +176,8 @@ Add stack-specific guidance for the technologies this project targets, without c
 - `knowledge/typescript/` (L1) — **Wave 2** — complete
 - `knowledge/frontend/` (L2) — **Wave 2** — complete
 - `knowledge/devops/` (L3) — **Wave 3** — complete
-- `knowledge/flutter/` (L2) — **Deferred** (post–Wave 3)
+- `knowledge/nativescript/` (L2) — **complete** (Cursor-only profile)
+- `knowledge/flutter/` (L2) — **Deferred**
 
 **Deliverables:**
 
@@ -192,6 +193,7 @@ Add stack-specific guidance for the technologies this project targets, without c
 - [x] Profile `cursor-devops`
 - [x] CI assemble `--verify` for six Cursor profiles
 - [x] Profile `includes` (ADR-0008; `cursor-core` frozen; no `extends`)
+- [x] NativeScript: `nativescript-architecture.md` (EKP-NS), profile `cursor-nativescript` (`includes: [cursor-typescript]`)
 - [ ] Flutter (deferred)
 - [ ] `technology` validator role (deferred)
 - [x] Copilot / Antigravity / Claude adapters (Phase 5; `v0.4.0` / `v0.5.0`)
@@ -209,6 +211,10 @@ Add stack-specific guidance for the technologies this project targets, without c
 **v0.5.0:** Claude adapter pilot via `ekp-core` (`CLAUDE.md` + document-grouped Skills); six operational profiles remain Cursor-only; Cursor output unchanged vs `v0.4.0`.
 
 **v0.5.1:** Consumer deployment documentation (`docs/deployment.md`) and adapter-status reconciliation; documentation-only PATCH; Cursor output unchanged vs `v0.5.0`.
+
+**v0.6.0:** `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`) is the first stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-php` and remains byte-identical to `v0.5.1` for all six operational Cursor profiles. Remaining stacks, Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
+
+**Unreleased:** `cursor-nativescript` — NativeScript L2 vertical (`includes: [cursor-typescript]`, `outputs: [cursor]`); Flutter and `ekp-nativescript` remain deferred.
 
 ---
 

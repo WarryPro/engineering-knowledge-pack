@@ -14,6 +14,7 @@ Frontend architecture, UI patterns, and user-facing concerns.
 
 - TypeScript language features → see `typescript/`
 - Flutter mobile UI → see `flutter/`
+- NativeScript native mobile UI → see `nativescript/`
 - API design and backend concerns → see `architecture/`
 
 ## Boundary with `typescript/`

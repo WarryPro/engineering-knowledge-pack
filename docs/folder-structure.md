@@ -36,6 +36,7 @@ This document describes the purpose of each top-level directory and how content 
 │   ├── flutter/
 │   ├── typescript/
 │   ├── frontend/
+│   ├── nativescript/
 │   ├── database/
 │   ├── security/
 │   ├── testing/
@@ -96,6 +97,7 @@ The canonical source of engineering knowledge. Each domain has a `README.md` def
 | `flutter/` | Flutter/Dart mobile and UI development |
 | `typescript/` | TypeScript language patterns and type system usage |
 | `frontend/` | Frontend architecture, state management, accessibility |
+| `nativescript/` | NativeScript native mobile architecture on TypeScript |
 | `database/` | Schema design, migrations, queries, transactions |
 | `security/` | Security principles and practices |
 | `testing/` | Testing strategies, patterns, and tooling |
@@ -103,15 +105,18 @@ The canonical source of engineering knowledge. Each domain has a `README.md` def
 | `devops/` | CI/CD, infrastructure, deployment, observability |
 | `ai/` | Using AI assistants responsibly in engineering workflows |
 
-#### Domain boundary: `typescript/` vs `frontend/`
+#### Domain boundary: `typescript/` vs `frontend/` vs `nativescript/`
 
 | Topic | Domain |
 |-------|--------|
 | Type narrowing, generics, `strict` config | `typescript/` |
-| React/Vue component architecture, state management | `frontend/` |
-| Shared types between API and UI | `typescript/` (type design) + link to `frontend/` |
+| React/Vue web component architecture, DOM/SSR | `frontend/` |
+| NativeScript native UI, navigation, plugins, platforms | `nativescript/` |
+| Shared types between API and UI | `typescript/` (type design) + link to UI domain |
 
-When a document spans both, place it in the domain of the primary concern and link to the other.
+When a document spans domains, place it in the domain of the primary concern and link to the other.
+
+NativeScript-Vue (and similar UI frameworks under NativeScript) stays inside `nativescript/` — not a separate top-level domain.
 
 #### Document types and locations
 
