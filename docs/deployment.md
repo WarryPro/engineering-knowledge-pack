@@ -22,10 +22,11 @@ Profiles live under `profiles/` and declare **knowledge paths** plus **`outputs`
 | `cursor-typescript` | TypeScript (`includes: [cursor-core]`) | yes | no | no | no |
 | `cursor-frontend` | Frontend (`includes: [cursor-core]`) | yes | no | no | no |
 | `cursor-devops` | DevOps (`includes: [cursor-core]`) | yes | no | no | no |
+| `cursor-nativescript` | NativeScript (`includes: [cursor-typescript]`) | yes | no | no | no |
 | `ekp-php` | PHP multi-adapter (`includes: [cursor-php]`) | yes | yes | no | no |
 | `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`) | yes | yes | yes | yes |
 
-The six `cursor-*` profiles are the operational Cursor products. `ekp-php` is the first stack-specific multi-adapter profile (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. Other stack multi-adapter profiles remain deferred.
+Operational Cursor products include the six original `cursor-*` profiles plus `cursor-nativescript`. `ekp-php` is the first stack-specific multi-adapter profile (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. Other stack multi-adapter profiles (including a future `ekp-nativescript`) remain deferred.
 
 Pick:
 
@@ -119,7 +120,7 @@ dist/ekp-core/cursor/           →  <project>/.cursor/rules/
 
 Copy the `.mdc` files only (or the whole `cursor/` directory). Leave `bundle-manifest.json` at `dist/<profile>/`; it is an EKP inventory file, not a Cursor rule.
 
-Expected `cursor-core` count: **65** `.mdc` files (frozen). Stack profiles add technology guides (~74 single-stack, ~83 combined-stack).
+Expected `cursor-core` count: **65** `.mdc` files (frozen). Stack profiles add technology guides (~74 single-stack, ~83 combined-stack). `cursor-nativescript` is a combined TypeScript + NativeScript Cursor product.
 
 Cursor generation, verify, and CI assemble gates cover packaging. This guide does not claim how Cursor loads `.mdc` files in a given IDE version.
 

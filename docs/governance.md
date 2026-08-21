@@ -100,8 +100,10 @@ Non-breaking: typos, clarifications, new concepts, new guides, new profiles.
 | EKP-SY | symfony | |
 | EKP-TY | typescript | |
 | EKP-FE | frontend | |
+| EKP-DV | devops | |
+| EKP-NS | nativescript | |
 
-Future namespaces (DevOps, Flutter, etc.) are requested at implementation time — not bulk-reserved in advance.
+Future namespaces (Flutter, etc.) are requested at implementation time — not bulk-reserved in advance.
 
 ---
 

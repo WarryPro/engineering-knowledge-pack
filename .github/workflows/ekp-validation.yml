@@ -55,6 +55,9 @@ jobs:
       - name: Assemble cursor-devops bundle
         run: python scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 
+      - name: Assemble cursor-nativescript bundle
+        run: python scripts/assemble/assemble.py --profile cursor-nativescript --clean --verify
+
       - name: Assemble ekp-php bundle (cursor, copilot)
         run: python scripts/assemble/assemble.py --profile ekp-php --clean --verify
 

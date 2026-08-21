@@ -9,7 +9,7 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 | Area | Purpose |
 |------|---------|
 | [`knowledge/`](knowledge/) | Tool-agnostic engineering knowledge (patterns, practices, guidelines) |
-| [`profiles/`](profiles/) | Composed sets of knowledge (`cursor-*` operational; `ekp-php` Cursor+Copilot; `ekp-core` multi-adapter pilot) |
+| [`profiles/`](profiles/) | Composed sets of knowledge (`cursor-*` operational including `cursor-nativescript`; `ekp-php` Cursor+Copilot; `ekp-core` multi-adapter pilot) |
 | [`scripts/`](scripts/) | Validation, adapters, and assembly pipeline |
 | [`dist/`](dist/) | Generated deployable bundles (gitignored; produced by `assemble`) |
 | [`rules/`](rules/) | Scaffold for tool-specific rule layouts; **not** the primary bundle source |
@@ -75,11 +75,13 @@ py -3 scripts/assemble/assemble.py --profile cursor-symfony --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-typescript --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-frontend --clean --verify
 py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-nativescript --clean --verify
 ```
 
 ## Release status
 
 - **Latest published release:** `v0.6.0` (on `master`)
+- **Unreleased:** NativeScript L2 vertical — `cursor-nativescript` (`includes: [cursor-typescript]`, `outputs: [cursor]`); Flutter and `ekp-nativescript` deferred
 - **v0.6.0:** First stack-specific multi-adapter profile `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`); six operational Cursor profiles unchanged; assembled Cursor output unchanged vs `v0.5.1`
 - **v0.5.1:** Consumer deployment documentation (`docs/deployment.md`) and adapter-status reconciliation; documentation-only PATCH; assembled Cursor output unchanged vs `v0.5.0`
 - **v0.5.0:** Claude adapter pilot via `ekp-core` (`CLAUDE.md` + document-grouped Skills); six operational profiles remain Cursor-only; assembled Cursor output unchanged vs `v0.4.0`
@@ -96,7 +98,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-devops --clean --verify
 | antigravity | implemented (`ekp-core` pilot) |
 | claude | implemented (`ekp-core` pilot) |
 
-Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot profile. `ekp-php` additionally exposes Copilot for PHP stack knowledge. The six operational `cursor-*` profiles remain Cursor-only.
+Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot profile. `ekp-php` additionally exposes Copilot for PHP stack knowledge. Operational `cursor-*` profiles (including `cursor-nativescript`) remain Cursor-only.
 
 ## Status
 
@@ -108,20 +110,20 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, v0.2.0 release |
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; profile `includes` (v0.3.3); adapter dispatch (v0.3.4); packaging (v0.3.5); Copilot/Antigravity (v0.4.0); Claude (v0.5.0); Flutter deferred |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; `cursor-nativescript`; Flutter deferred |
 
 ### Repository metrics
 
 | Metric | Value |
 |--------|-------|
-| Knowledge guides | 21 |
-| Concepts | 195 |
-| Namespaces | 22 |
-| Profiles | 6 operational Cursor (`cursor-core` + 5 stack via `includes`) + `ekp-php` (Cursor + Copilot) + `ekp-core` packaging pilot |
+| Knowledge guides | 22 |
+| Concepts | 204 |
+| Namespaces | 23 |
+| Profiles | 7 operational Cursor (`cursor-core` + 6 stack) + `ekp-php` (Cursor + Copilot) + `ekp-core` packaging pilot |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (frozen) |
-| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops` (each `includes: [cursor-core]`); `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`) |
+| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops` (each `includes: [cursor-core]`); `cursor-nativescript` (`includes: [cursor-typescript]`); `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`) |
 
 See [`docs/roadmap.md`](docs/roadmap.md) for the full development plan.
 

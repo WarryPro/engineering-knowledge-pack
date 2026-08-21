@@ -44,6 +44,9 @@ exceptions:
   # Phase 4 Wave 2: frontend architecture may depend on TypeScript language practice.
   - source: knowledge/frontend/frontend-architecture.md
     allowed_dependency: knowledge/typescript/typescript-fundamentals.md
+  # NativeScript L2 architecture may depend on TypeScript language practice.
+  - source: knowledge/nativescript/nativescript-architecture.md
+    allowed_dependency: knowledge/typescript/typescript-fundamentals.md
 
 depth:
   warn_at: 3

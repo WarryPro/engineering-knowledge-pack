@@ -57,7 +57,7 @@ REQUIRED_FIELDS = {"title", "domain", "tags", "severity", "applies_to"}
 VALID_SEVERITIES = {"required", "recommended", "advisory"}
 VALID_DOMAINS = {
     "engineering", "architecture", "php", "symfony", "flutter",
-    "typescript", "frontend", "database", "security", "testing",
+    "typescript", "frontend", "nativescript", "database", "security", "testing",
     "performance", "devops", "ai",
 }
 

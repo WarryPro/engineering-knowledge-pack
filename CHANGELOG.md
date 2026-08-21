@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Profile `cursor-nativescript` (`includes: [cursor-typescript]`, `outputs: [cursor]`) — NativeScript L2 technology vertical on TypeScript
+- Guide `knowledge/nativescript/nativescript-architecture.md` (EKP-NS01–NS09) covering native runtime model, UI/navigation/lifecycle, platform and plugin boundaries, NativeScript-Vue integration (bounded), and build/device/performance discipline
+- Namespace `EKP-NS`; graph-rules exception NativeScript → TypeScript
+- CI assemble `--verify` gate and assemble tests for `cursor-nativescript`
+- Assembled `cursor-nativescript` Cursor rule count: **84** (TypeScript 74 + NativeScript concepts)
+
+### Compatibility
+
+- Existing six Cursor profiles unchanged and Cursor-only: 65 / 74 / 83 / 74 / 83 / 74
+- Cursor `.mdc` content for those six profiles remains byte-identical to `v0.6.0`
+- `cursor-nativescript` does not include `cursor-frontend` or frontend knowledge
+- Flutter remains deferred; `ekp-nativescript` (multi-adapter packaging) not created
+- No adapter generator, IR, or `cursor-core.yaml` changes
+- Antigravity and Claude remain `ekp-core` pilot only; Copilot not added to NativeScript
+
 ## [0.6.0] - 2026-08-21
 
 ### Added

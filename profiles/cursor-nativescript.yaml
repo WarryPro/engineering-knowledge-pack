@@ -1,0 +1,27 @@
+# EKP cursor-nativescript profile
+# NativeScript architecture composed on cursor-typescript via includes.
+# Does not modify cursor-typescript.yaml, cursor-core.yaml, or cursor-frontend.yaml.
+
+name: cursor-nativescript
+description: EKP Cursor bundle for NativeScript (TypeScript + NativeScript architecture + core routing).
+
+includes:
+  - cursor-typescript
+
+knowledge:
+  - knowledge/nativescript/nativescript-architecture.md
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  target:
+    - cursor
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor

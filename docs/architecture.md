@@ -45,17 +45,17 @@ See [`adapter-architecture.md`](adapter-architecture.md) for pipeline details an
 Contains engineering knowledge as markdown documents organized by domain:
 
 - **Cross-cutting domains** — `engineering/`, `architecture/`, `security/`, `testing/`, `performance/`, `devops/`, `ai/`, `database/`
-- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1), `frontend/` (L2), `devops/` (L3), `flutter/` (L2 stub)
+- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1), `frontend/` (L2), `nativescript/` (L2), `devops/` (L3), `flutter/` (L2 stub)
 
 Technology knowledge **applies** foundation concepts; it must not redefine them. Layering:
 
 ```
-L0 Foundation → L1 Language (php, typescript) → L2 Framework (symfony, frontend, flutter) → L3 Ops (devops)
+L0 Foundation → L1 Language (php, typescript) → L2 Framework (symfony, frontend, nativescript, flutter) → L3 Ops (devops)
 ```
 
-Dependency direction is downward only. Graph policy for Phase 4 is **V2**: reuse existing roles (`practice`, `architecture`, …); add explicit `graph-rules.yaml` exceptions when an L2 guide must `depends_on` an L1 guide (e.g. Symfony → PHP, Frontend → TypeScript). Do not introduce a `technology` role until exceptions become costly.
+Dependency direction is downward only. Graph policy for Phase 4 is **V2**: reuse existing roles (`practice`, `architecture`, …); add explicit `graph-rules.yaml` exceptions when an L2 guide must `depends_on` an L1 guide (e.g. Symfony → PHP, Frontend → TypeScript, NativeScript → TypeScript). Do not introduce a `technology` role until exceptions become costly.
 
-**Technology namespaces:** `EKP-PH`, `EKP-SY`, `EKP-TY`, `EKP-FE`. Do not reuse `EKP-TS` (Testing) or `EKP-SF` (Security).
+**Technology namespaces:** `EKP-PH`, `EKP-SY`, `EKP-TY`, `EKP-FE`, `EKP-NS`. Do not reuse `EKP-TS` (Testing) or `EKP-SF` (Security).
 
 Each document follows the [knowledge document template](../templates/knowledge-document-template.md) or, for stack guides, the [technology knowledge template](../templates/technology-knowledge-document-template.md), and adheres to the [style guide](style-guide.md).
 
@@ -65,7 +65,7 @@ Knowledge documents must be:
 - Free of tool-specific syntax (no Cursor frontmatter, no Copilot directives)
 - Self-contained enough to be useful alone, with links to related documents
 
-**Current scale:** 20 published guides; 187 concepts; 21 namespaces.
+**Current scale:** 22 published guides; 204 concepts; 23 namespaces.
 
 ### `rules/` — Scaffold (not primary output)
 
@@ -87,6 +87,7 @@ Operational profiles:
 | `cursor-typescript` | `includes: [cursor-core]` + `typescript-fundamentals` |
 | `cursor-frontend` | `includes: [cursor-core]` + TypeScript + `frontend-architecture` |
 | `cursor-devops` | `includes: [cursor-core]` + `devops-fundamentals` |
+| `cursor-nativescript` | `includes: [cursor-typescript]` + `nativescript-architecture` (Cursor-only) |
 | `ekp-php` | `includes: [cursor-php]`; `outputs: [cursor, copilot]` — first stack multi-adapter profile |
 | `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`; Cursor + Copilot + Antigravity + Claude) |
 
@@ -170,13 +171,13 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
 - Adapters: Cursor (operational `cursor-*` profiles), Copilot on `ekp-php` and `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
-- Assemble pipeline with `--verify` (CI verifies all six Cursor profiles, `ekp-php`, and `ekp-core`)
+- Assemble pipeline with `--verify` (CI verifies Cursor profiles including `cursor-nativescript`, `ekp-php`, and `ekp-core`)
 
 **Planned / deferred:**
 
 - Flutter technology guide and profile (deferred)
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
-- Expand remaining stack multi-adapter profiles beyond `ekp-php` (deferred)
+- Expand remaining stack multi-adapter profiles beyond `ekp-php` (deferred; future `ekp-nativescript` not created)
 - Antigravity / Claude on stack profiles (deferred; remain `ekp-core` pilot)
 
 ## Related
