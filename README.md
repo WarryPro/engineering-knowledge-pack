@@ -80,7 +80,8 @@ py -3 scripts/assemble/assemble.py --profile cursor-nativescript --clean --verif
 
 ## Release status
 
-- **Latest published release:** `v0.7.0` (on `staging`)
+- **Latest published release:** `v0.8.0` (on `staging`)
+- **v0.8.0:** Second stack-specific multi-adapter profile `ekp-typescript` (`includes: [cursor-typescript]`, `outputs: [cursor, copilot]`); seven operational Cursor profiles unchanged; assembled Cursor output for those profiles unchanged vs `v0.7.0`; remaining stacks and `ekp-nativescript` deferred
 - **v0.7.0:** NativeScript L2 vertical — `cursor-nativescript` (`includes: [cursor-typescript]`, `outputs: [cursor]`); six operational Cursor profiles unchanged; assembled Cursor output for those six profiles unchanged vs `v0.6.0`; Flutter and `ekp-nativescript` deferred
 - **v0.6.0:** First stack-specific multi-adapter profile `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`); six operational Cursor profiles unchanged; assembled Cursor output unchanged vs `v0.5.1`
 - **v0.5.1:** Consumer deployment documentation (`docs/deployment.md`) and adapter-status reconciliation; documentation-only PATCH; assembled Cursor output unchanged vs `v0.5.0`
