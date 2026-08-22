@@ -24,17 +24,19 @@ Profiles live under `profiles/` and declare **knowledge paths** plus **`outputs`
 | `cursor-devops` | DevOps (`includes: [cursor-core]`) | yes | no | no | no |
 | `cursor-nativescript` | NativeScript (`includes: [cursor-typescript]`) | yes | no | no | no |
 | `ekp-php` | PHP multi-adapter (`includes: [cursor-php]`) | yes | yes | no | no |
+| `ekp-typescript` | TypeScript multi-adapter (`includes: [cursor-typescript]`) | yes | yes | no | no |
 | `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`) | yes | yes | yes | yes |
 
-Operational Cursor products include the six original `cursor-*` profiles plus `cursor-nativescript`. `ekp-php` is the first stack-specific multi-adapter profile (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. Other stack multi-adapter profiles (including a future `ekp-nativescript`) remain deferred.
+Operational Cursor products include the six original `cursor-*` profiles plus `cursor-nativescript`. `ekp-php` and `ekp-typescript` are stack-specific multi-adapter profiles (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. Other stack multi-adapter profiles (including a future `ekp-nativescript`) remain deferred.
 
 Pick:
 
 - A `cursor-*` profile if you only need Cursor Rules.
 - `ekp-php` if you need Cursor Rules and/or Copilot instructions for PHP (same knowledge as `cursor-php`).
-- `ekp-core` if you need Copilot, Antigravity, and/or Claude artifacts **in addition to** the same Cursor knowledge as `cursor-core` (foundation only; no PHP stack knowledge).
+- `ekp-typescript` if you need Cursor Rules and/or Copilot instructions for TypeScript (same knowledge as `cursor-typescript`).
+- `ekp-core` if you need Copilot, Antigravity, and/or Claude artifacts **in addition to** the same Cursor knowledge as `cursor-core` (foundation only; no stack knowledge).
 
-`ekp-core` does not add extra knowledge beyond `cursor-core`; it only requests more adapters. `ekp-php` does not modify `cursor-php`; included profiles contribute knowledge paths only.
+`ekp-core` does not add extra knowledge beyond `cursor-core`; it only requests more adapters. `ekp-php` and `ekp-typescript` do not modify their included Cursor profiles; included profiles contribute knowledge paths only.
 
 ## 2. Assemble
 
@@ -52,6 +54,7 @@ Assemble a profile (CLI requires `--profile`):
 py -3 scripts/assemble/assemble.py --profile cursor-core
 py -3 scripts/assemble/assemble.py --profile cursor-core --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-php --clean --verify
+py -3 scripts/assemble/assemble.py --profile ekp-typescript --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
 ```
 
@@ -99,7 +102,7 @@ Adapters do not overwrite each other's manifests. Do **not** copy EKP manifests 
 
 ## 3. Cursor deployment
 
-**Source profile:** any `cursor-*` profile, `ekp-php` (same Cursor knowledge as `cursor-php`), or `ekp-core` (same Cursor knowledge as `cursor-core`).
+**Source profile:** any `cursor-*` profile, `ekp-php` (same Cursor knowledge as `cursor-php`), `ekp-typescript` (same Cursor knowledge as `cursor-typescript`), or `ekp-core` (same Cursor knowledge as `cursor-core`).
 
 **Generated:** `dist/<profile>/cursor/*.mdc`
 
@@ -115,6 +118,7 @@ Examples:
 dist/cursor-core/cursor/        →  <project>/.cursor/rules/
 dist/cursor-php/cursor/         →  <project>/.cursor/rules/
 dist/ekp-php/cursor/            →  <project>/.cursor/rules/
+dist/ekp-typescript/cursor/     →  <project>/.cursor/rules/
 dist/ekp-core/cursor/           →  <project>/.cursor/rules/
 ```
 
@@ -126,7 +130,7 @@ Cursor generation, verify, and CI assemble gates cover packaging. This guide doe
 
 ## 4. Copilot deployment
 
-**Source profiles:** `ekp-core` (foundation knowledge) or `ekp-php` (PHP stack knowledge via `includes: [cursor-php]`).
+**Source profiles:** `ekp-core` (foundation knowledge), `ekp-php` (PHP stack knowledge via `includes: [cursor-php]`), or `ekp-typescript` (TypeScript stack knowledge via `includes: [cursor-typescript]`).
 
 **Generated under** `dist/<profile>/copilot/`:
 
@@ -140,14 +144,16 @@ Always-on instructions have **no** `applyTo`. Path-specific `*.instructions.md` 
 
 - `ekp-core` includes `knowledge/testing/` → `testing.instructions.md`
 - `ekp-php` also includes `knowledge/php/` → `testing.instructions.md` and `php.instructions.md` (`applyTo: "**/*.php"`)
+- `ekp-typescript` also includes `knowledge/typescript/` → `testing.instructions.md` and `typescript.instructions.md` (`applyTo: "**/*.ts,**/*.tsx"`)
 
 Copilot **skills** are not generated.
 
 **Copy:**
 
 ```
-dist/ekp-php/copilot/.github/   →  <consumer-repo>/.github/
-dist/ekp-core/copilot/.github/  →  <consumer-repo>/.github/
+dist/ekp-php/copilot/.github/        →  <consumer-repo>/.github/
+dist/ekp-typescript/copilot/.github/ →  <consumer-repo>/.github/
+dist/ekp-core/copilot/.github/       →  <consumer-repo>/.github/
 ```
 
 That places `copilot-instructions.md` and `instructions/*.instructions.md` at the consumer repository root's `.github/` tree. Do not copy `adapter-manifest.json` into `.github/`.
@@ -238,7 +244,9 @@ Runtime Claude Code skill invocation (including `/skill-name` or description-bas
 - adapter unit tests
 - assemble tests
 - `assemble --verify` per requested adapter (tree, sources, manifests, leakage checks where implemented)
-- six operational Cursor profile assemble gates
+- seven operational Cursor profile assemble gates
+- `ekp-php` assemble gate (cursor + copilot)
+- `ekp-typescript` assemble gate (cursor + copilot)
 - `ekp-core` assemble gate (cursor + copilot + antigravity + claude)
 - deterministic generated **content** (manifest `generated_at` may change)
 - Cursor `.mdc` byte-identity vs the frozen Cursor baseline, when that comparison is run

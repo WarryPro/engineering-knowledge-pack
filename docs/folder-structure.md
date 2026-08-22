@@ -194,6 +194,11 @@ dist/
 │   ├── bundle-manifest.json
 │   ├── cursor/
 │   └── copilot/.github/
+├── ekp-typescript/             # Stack multi-adapter (Cursor + Copilot; includes cursor-typescript)
+│   ├── assemble-manifest.json
+│   ├── bundle-manifest.json
+│   ├── cursor/
+│   └── copilot/.github/
 └── ekp-core/                   # Multi-adapter pilot (Cursor + Copilot + Antigravity + Claude)
     ├── assemble-manifest.json
     ├── bundle-manifest.json

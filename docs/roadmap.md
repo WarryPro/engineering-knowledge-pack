@@ -13,7 +13,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); Flutter deferred |
-| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `v0.5.1`; `ekp-php` in `v0.6.0`; remaining multi-adapter stacks deferred |
+| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `v0.5.1`; `ekp-php` in `v0.6.0`; `ekp-typescript` in `v0.8.0`; remaining multi-adapter stacks deferred |
 
 ---
 
@@ -216,11 +216,13 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 **v0.7.0:** `cursor-nativescript` (`includes: [cursor-typescript]`, `outputs: [cursor]`) is the NativeScript L2 technology vertical. Cursor `.mdc` content for the six operational Cursor profiles remains byte-identical to `v0.6.0`. Flutter and `ekp-nativescript` remain deferred.
 
+**v0.8.0:** `ekp-typescript` (`includes: [cursor-typescript]`, `outputs: [cursor, copilot]`) is the second stack-specific multi-adapter profile. Cursor `.mdc` content for all operational Cursor profiles remains byte-identical to `v0.7.0`. Remaining stacks (`ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`), Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
+
 ---
 
 ## Phase 5: Additional AI adapters
 
-**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`; consumer deployment documented in `v0.5.1`; `ekp-php` Cursor + Copilot in `v0.6.0`; remaining stack multi-adapter profiles deferred)
+**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`; consumer deployment documented in `v0.5.1`; `ekp-php` Cursor + Copilot in `v0.6.0`; `ekp-typescript` Cursor + Copilot in `v0.8.0`; remaining stack multi-adapter profiles deferred)
 
 Extend the adapter layer to additional AI assistant platforms.
 
@@ -233,7 +235,7 @@ Extend the adapter layer to additional AI assistant platforms.
 - [x] Profile assembly script (knowledge + adapter → deployable bundle)
 - [x] Validation CLI (`scripts/validate`) for structure, metadata, and broken links
 - [x] Documentation for deploying profiles to consumer projects (`docs/deployment.md`)
-- [~] Expand operational profiles beyond Cursor (**partial**: `ekp-php` Cursor + Copilot; other stacks deferred; Antigravity/Claude remain `ekp-core` pilot only)
+- [~] Expand operational profiles beyond Cursor (**partial**: `ekp-php` and `ekp-typescript` Cursor + Copilot; other stacks deferred; Antigravity/Claude remain `ekp-core` pilot only)
 
 **Exit criteria:** A team can select a profile, run a script, and deploy engineering context to their AI assistant of choice. Changes to knowledge automatically propagate to rules.
 
@@ -244,6 +246,8 @@ Extend the adapter layer to additional AI assistant platforms.
 **v0.5.1 note:** Documentation-only PATCH. Antigravity runtime activation and Claude Code skill invocation remain not empirically validated.
 
 **v0.6.0:** `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`) is the first stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-php` and remains byte-identical to `v0.5.1` for all six operational Cursor profiles. Remaining stacks, Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
+
+**v0.8.0:** `ekp-typescript` (`includes: [cursor-typescript]`, `outputs: [cursor, copilot]`) is the second stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-typescript` and remains byte-identical to `v0.7.0` for all operational Cursor profiles. Remaining stacks, Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
 
 ---
 

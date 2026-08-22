@@ -1,0 +1,24 @@
+# EKP TypeScript multi-adapter profile (Cursor + Copilot).
+# Parallel to cursor-typescript: includes contribute knowledge paths only.
+# Does not modify cursor-typescript.yaml or cursor-core.yaml.
+# Antigravity and Claude remain outside this MVP (still ekp-core pilot only).
+
+name: ekp-typescript
+description: EKP TypeScript bundle for Cursor Rules and GitHub Copilot instructions (parallel to cursor-typescript).
+
+includes:
+  - cursor-typescript
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor
+  - copilot

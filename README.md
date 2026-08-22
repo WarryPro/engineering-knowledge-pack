@@ -9,7 +9,7 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 | Area | Purpose |
 |------|---------|
 | [`knowledge/`](knowledge/) | Tool-agnostic engineering knowledge (patterns, practices, guidelines) |
-| [`profiles/`](profiles/) | Composed sets of knowledge (`cursor-*` operational including `cursor-nativescript`; `ekp-php` Cursor+Copilot; `ekp-core` multi-adapter pilot) |
+| [`profiles/`](profiles/) | Composed sets of knowledge (`cursor-*` operational including `cursor-nativescript`; `ekp-php` and `ekp-typescript` Cursor+Copilot; `ekp-core` multi-adapter pilot) |
 | [`scripts/`](scripts/) | Validation, adapters, and assembly pipeline |
 | [`dist/`](dist/) | Generated deployable bundles (gitignored; produced by `assemble`) |
 | [`rules/`](rules/) | Scaffold for tool-specific rule layouts; **not** the primary bundle source |
@@ -94,11 +94,11 @@ py -3 scripts/assemble/assemble.py --profile cursor-nativescript --clean --verif
 | Adapter | Status |
 |---------|--------|
 | cursor | implemented |
-| copilot | implemented (`ekp-php`; `ekp-core` pilot) |
+| copilot | implemented (`ekp-php`, `ekp-typescript`; `ekp-core` pilot) |
 | antigravity | implemented (`ekp-core` pilot) |
 | claude | implemented (`ekp-core` pilot) |
 
-Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot profile. `ekp-php` additionally exposes Copilot for PHP stack knowledge. Operational `cursor-*` profiles (including `cursor-nativescript`) remain Cursor-only.
+Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot profile. `ekp-php` and `ekp-typescript` additionally expose Copilot for PHP and TypeScript stack knowledge respectively. Operational `cursor-*` profiles (including `cursor-nativescript`) remain Cursor-only.
 
 ## Status
 
@@ -119,11 +119,11 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Knowledge guides | 22 |
 | Concepts | 204 |
 | Namespaces | 23 |
-| Profiles | 7 operational Cursor (`cursor-core` + 6 stack) + `ekp-php` (Cursor + Copilot) + `ekp-core` packaging pilot |
+| Profiles | 7 operational Cursor (`cursor-core` + 6 stack) + `ekp-php` + `ekp-typescript` (Cursor + Copilot) + `ekp-core` packaging pilot |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (frozen) |
-| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops` (each `includes: [cursor-core]`); `cursor-nativescript` (`includes: [cursor-typescript]`); `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`) |
+| Tech profiles | `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops` (each `includes: [cursor-core]`); `cursor-nativescript` (`includes: [cursor-typescript]`); `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`); `ekp-typescript` (`includes: [cursor-typescript]`, `outputs: [cursor, copilot]`) |
 
 See [`docs/roadmap.md`](docs/roadmap.md) for the full development plan.
 

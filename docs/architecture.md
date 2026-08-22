@@ -89,6 +89,7 @@ Operational profiles:
 | `cursor-devops` | `includes: [cursor-core]` + `devops-fundamentals` |
 | `cursor-nativescript` | `includes: [cursor-typescript]` + `nativescript-architecture` (Cursor-only) |
 | `ekp-php` | `includes: [cursor-php]`; `outputs: [cursor, copilot]` — first stack multi-adapter profile |
+| `ekp-typescript` | `includes: [cursor-typescript]`; `outputs: [cursor, copilot]` — second stack multi-adapter profile |
 | `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`; Cursor + Copilot + Antigravity + Claude) |
 
 Profiles compose knowledge via **`includes`** (ADR-0008). Included profiles contribute knowledge paths only; the root profile owns `adapter`, `filters`, and `outputs`. **`extends` is not supported.**
@@ -170,14 +171,14 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Operational today:**
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
-- Adapters: Cursor (operational `cursor-*` profiles), Copilot on `ekp-php` and `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
-- Assemble pipeline with `--verify` (CI verifies Cursor profiles including `cursor-nativescript`, `ekp-php`, and `ekp-core`)
+- Adapters: Cursor (operational `cursor-*` profiles), Copilot on `ekp-php`, `ekp-typescript`, and `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
+- Assemble pipeline with `--verify` (CI verifies Cursor profiles including `cursor-nativescript`, `ekp-php`, `ekp-typescript`, and `ekp-core`)
 
 **Planned / deferred:**
 
 - Flutter technology guide and profile (deferred)
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
-- Expand remaining stack multi-adapter profiles beyond `ekp-php` (deferred; future `ekp-nativescript` not created)
+- Expand remaining stack multi-adapter profiles beyond `ekp-php` and `ekp-typescript` (deferred: `ekp-symfony`, `ekp-frontend`, `ekp-devops`; future `ekp-nativescript` not created)
 - Antigravity / Claude on stack profiles (deferred; remain `ekp-core` pilot)
 
 ## Related
