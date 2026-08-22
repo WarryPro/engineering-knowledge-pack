@@ -1,0 +1,24 @@
+# EKP Symfony multi-adapter profile (Cursor + Copilot).
+# Parallel to cursor-symfony: includes contribute knowledge paths only.
+# Does not modify cursor-symfony.yaml or cursor-core.yaml.
+# Antigravity and Claude remain outside this MVP (still ekp-core pilot only).
+
+name: ekp-symfony
+description: EKP Symfony bundle for Cursor Rules and GitHub Copilot instructions (parallel to cursor-symfony).
+
+includes:
+  - cursor-symfony
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor
+  - copilot
