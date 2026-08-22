@@ -61,5 +61,8 @@ jobs:
       - name: Assemble ekp-php bundle (cursor, copilot)
         run: python scripts/assemble/assemble.py --profile ekp-php --clean --verify
 
+      - name: Assemble ekp-typescript bundle (cursor, copilot)
+        run: python scripts/assemble/assemble.py --profile ekp-typescript --clean --verify
+
       - name: Assemble ekp-core pilot bundle (cursor, copilot, antigravity, claude)
         run: python scripts/assemble/assemble.py --profile ekp-core --clean --verify
