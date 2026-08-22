@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-08-22
+
 ### Added
 
 - Profile `ekp-symfony` (`includes: [cursor-symfony]`, `outputs: [cursor, copilot]`) — third stack-specific multi-adapter profile parallel to `cursor-symfony`

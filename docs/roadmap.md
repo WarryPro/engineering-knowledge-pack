@@ -165,7 +165,7 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots), `v0.5.0` (Claude adapter), `v0.5.1` (consumer deployment docs), `v0.6.0` (`ekp-php` Cursor + Copilot), `v0.7.0` (`cursor-nativescript` NativeScript L2), `v0.8.0` (`ekp-typescript` Cursor + Copilot) published on `staging`.
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots), `v0.5.0` (Claude adapter), `v0.5.1` (consumer deployment docs), `v0.6.0` (`ekp-php` Cursor + Copilot), `v0.7.0` (`cursor-nativescript` NativeScript L2), `v0.8.0` (`ekp-typescript` Cursor + Copilot), `v0.9.0` (`ekp-symfony` Cursor + Copilot) published on `staging`.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
