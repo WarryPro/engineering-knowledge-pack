@@ -165,7 +165,7 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots), `v0.5.0` (Claude adapter), `v0.5.1` (consumer deployment docs), `v0.6.0` (`ekp-php` Cursor + Copilot) published on `master`.
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots), `v0.5.0` (Claude adapter), `v0.5.1` (consumer deployment docs), `v0.6.0` (`ekp-php` Cursor + Copilot), `v0.7.0` (`cursor-nativescript` NativeScript L2) published on `staging`.
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
@@ -214,7 +214,7 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 **v0.6.0:** `ekp-php` (`includes: [cursor-php]`, `outputs: [cursor, copilot]`) is the first stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-php` and remains byte-identical to `v0.5.1` for all six operational Cursor profiles. Remaining stacks, Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
 
-**Unreleased:** `cursor-nativescript` — NativeScript L2 vertical (`includes: [cursor-typescript]`, `outputs: [cursor]`); Flutter and `ekp-nativescript` remain deferred.
+**v0.7.0:** `cursor-nativescript` (`includes: [cursor-typescript]`, `outputs: [cursor]`) is the NativeScript L2 technology vertical. Cursor `.mdc` content for the six operational Cursor profiles remains byte-identical to `v0.6.0`. Flutter and `ekp-nativescript` remain deferred.
 
 ---
 
