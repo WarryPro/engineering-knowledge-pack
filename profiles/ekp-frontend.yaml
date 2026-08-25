@@ -1,0 +1,24 @@
+# EKP Frontend multi-adapter profile (Cursor + Copilot).
+# Parallel to cursor-frontend: includes contribute knowledge paths only.
+# Does not modify cursor-frontend.yaml or cursor-core.yaml.
+# Antigravity and Claude remain outside this MVP (still ekp-core pilot only).
+
+name: ekp-frontend
+description: EKP Frontend bundle for Cursor Rules and GitHub Copilot instructions (parallel to cursor-frontend).
+
+includes:
+  - cursor-frontend
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor
+  - copilot

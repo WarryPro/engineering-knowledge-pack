@@ -238,7 +238,7 @@ dist/<profile>/
     └── adapter-manifest.json
 ```
 
-The `ekp-core` pilot assembles Cursor + Copilot + Antigravity + Claude. `ekp-php` assembles Cursor + Copilot for PHP stack knowledge (`includes: [cursor-php]`). `ekp-typescript` assembles Cursor + Copilot for TypeScript stack knowledge (`includes: [cursor-typescript]`). `ekp-symfony` assembles Cursor + Copilot for Symfony stack knowledge (`includes: [cursor-symfony]`). Operational `cursor-*` profiles remain Cursor-only. Unknown adapters fail explicitly with no Cursor fallback.
+The `ekp-core` pilot assembles Cursor + Copilot + Antigravity + Claude. `ekp-php` assembles Cursor + Copilot for PHP stack knowledge (`includes: [cursor-php]`). `ekp-typescript` assembles Cursor + Copilot for TypeScript stack knowledge (`includes: [cursor-typescript]`). `ekp-symfony` assembles Cursor + Copilot for Symfony stack knowledge (`includes: [cursor-symfony]`). `ekp-frontend` assembles Cursor + Copilot for frontend architecture knowledge (`includes: [cursor-frontend]`). Operational `cursor-*` profiles remain Cursor-only. Unknown adapters fail explicitly with no Cursor fallback.
 
 Cursor `bundle-manifest.json` stays at the profile root and is never overwritten by another adapter.
 
@@ -267,7 +267,7 @@ adapter:
       - high
 ```
 
-See `profiles/cursor-core.yaml` for the first operational Cursor profile, `profiles/ekp-php.yaml` for the first stack multi-adapter profile (Cursor + Copilot), `profiles/ekp-typescript.yaml` for the second stack multi-adapter profile (Cursor + Copilot), `profiles/ekp-symfony.yaml` for the third stack multi-adapter profile (Cursor + Copilot), and `profiles/ekp-core.yaml` for the four-adapter pilot.
+See `profiles/cursor-core.yaml` for the first operational Cursor profile, `profiles/ekp-php.yaml` for the first stack multi-adapter profile (Cursor + Copilot), `profiles/ekp-typescript.yaml` for the second stack multi-adapter profile (Cursor + Copilot), `profiles/ekp-symfony.yaml` for the third stack multi-adapter profile (Cursor + Copilot), `profiles/ekp-frontend.yaml` for the fourth stack multi-adapter profile (Cursor + Copilot), and `profiles/ekp-core.yaml` for the four-adapter pilot.
 
 ## Output locations
 

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Profile `ekp-frontend` (`includes: [cursor-frontend]`, `outputs: [cursor, copilot]`) — fourth stack-specific multi-adapter profile parallel to `cursor-frontend`
+- CI assemble `--verify` gate for `ekp-frontend`
+- Assemble tests for `ekp-frontend` knowledge resolution, Cursor `.mdc` identity vs `cursor-frontend`, and Copilot TypeScript/Frontend instructions
+
+### Compatibility
+
+- Existing seven operational Cursor profiles unchanged and Cursor-only: 65 / 74 / 83 / 74 / 83 / 74 / 84
+- `ekp-frontend` Cursor `.mdc` content byte-identical to `cursor-frontend`
+- Antigravity and Claude remain outside `ekp-frontend` (still demonstrated via `ekp-core` pilot only)
+- `ekp-core` remains a four-adapter packaging pilot
+- Remaining stack multi-adapter profiles (`ekp-devops`, `ekp-nativescript`) deferred
+- Frontend CSS/HTML/layout/design-system/styling knowledge expansion remains a separate deferred initiative — not part of this packaging work
+- Copilot output for `ekp-frontend` is structurally generated and verified; empirical Copilot runtime session behavior is not claimed
+
 ## [0.9.0] - 2026-08-22
 
 ### Added

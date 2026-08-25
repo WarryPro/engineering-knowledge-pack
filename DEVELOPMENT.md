@@ -19,7 +19,7 @@ On Linux/macOS CI uses `python`; on Windows use `py -3` if configured.
 | Path | Role |
 |------|------|
 | `knowledge/` | Source of truth — validated on every change |
-| `profiles/` | Bundle composition (seven operational `cursor-*` profiles + `ekp-php` + `ekp-typescript` + `ekp-symfony` + `ekp-core` pilot) |
+| `profiles/` | Bundle composition (seven operational `cursor-*` profiles + `ekp-php` + `ekp-typescript` + `ekp-symfony` + `ekp-frontend` + `ekp-core` pilot) |
 | `scripts/validate/` | Validator CLI |
 | `scripts/adapters/` | Knowledge → tool format transformers |
 | `scripts/assemble/` | Profile → deployable bundle |
@@ -85,12 +85,14 @@ Multi-adapter profiles:
 py -3 scripts/assemble/assemble.py --profile ekp-php --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-typescript --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-symfony --clean --verify
+py -3 scripts/assemble/assemble.py --profile ekp-frontend --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
 ```
 
 - `ekp-php` — Cursor + Copilot for PHP (`includes: [cursor-php]`); first stack-specific multi-adapter profile
 - `ekp-typescript` — Cursor + Copilot for TypeScript (`includes: [cursor-typescript]`); second stack-specific multi-adapter profile
 - `ekp-symfony` — Cursor + Copilot for Symfony (`includes: [cursor-symfony]`); third stack-specific multi-adapter profile
+- `ekp-frontend` — Cursor + Copilot for frontend architecture (`includes: [cursor-frontend]`); fourth stack-specific multi-adapter profile (current EKP-FE knowledge; CSS/HTML/styling expansion deferred)
 - `ekp-core` — Cursor + Copilot + Antigravity + Claude foundation pilot (`includes: [cursor-core]`)
 
 Cursor output: `dist/<profile>/cursor/*.mdc` + profile-root `bundle-manifest.json`.
@@ -114,7 +116,7 @@ Workflow: [`.github/workflows/ekp-validation.yml`](.github/workflows/ekp-validat
 
 Triggers: `push` and `pull_request` to `master` and `staging`.
 
-Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all seven Cursor profiles → `assemble --verify` for `ekp-php` (cursor, copilot) → `assemble --verify` for `ekp-typescript` (cursor, copilot) → `assemble --verify` for `ekp-symfony` (cursor, copilot) → `assemble --verify` for `ekp-core` (cursor, copilot, antigravity, claude).
+Steps mirror local validation: validate → generate-index → adapter tests → assemble tests → `assemble --verify` for all seven Cursor profiles → `assemble --verify` for `ekp-php` (cursor, copilot) → `assemble --verify` for `ekp-typescript` (cursor, copilot) → `assemble --verify` for `ekp-symfony` (cursor, copilot) → `assemble --verify` for `ekp-frontend` (cursor, copilot) → `assemble --verify` for `ekp-core` (cursor, copilot, antigravity, claude).
 
 ## Before opening a PR
 

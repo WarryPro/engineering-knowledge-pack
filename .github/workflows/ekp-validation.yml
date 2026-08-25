@@ -67,5 +67,8 @@ jobs:
       - name: Assemble ekp-symfony bundle (cursor, copilot)
         run: python scripts/assemble/assemble.py --profile ekp-symfony --clean --verify
 
+      - name: Assemble ekp-frontend bundle (cursor, copilot)
+        run: python scripts/assemble/assemble.py --profile ekp-frontend --clean --verify
+
       - name: Assemble ekp-core pilot bundle (cursor, copilot, antigravity, claude)
         run: python scripts/assemble/assemble.py --profile ekp-core --clean --verify
