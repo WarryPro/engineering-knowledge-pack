@@ -13,7 +13,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); Flutter deferred |
-| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `v0.5.1`; `ekp-php` in `v0.6.0`; `ekp-typescript` in `v0.8.0`; `ekp-symfony` in `v0.9.0`; remaining multi-adapter stacks deferred |
+| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `v0.5.1`; `ekp-php` in `v0.6.0`; `ekp-typescript` in `v0.8.0`; `ekp-symfony` in `v0.9.0`; `ekp-frontend` in progress; remaining multi-adapter stacks deferred |
 
 ---
 
@@ -224,7 +224,7 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 ## Phase 5: Additional AI adapters
 
-**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`; consumer deployment documented in `v0.5.1`; `ekp-php` Cursor + Copilot in `v0.6.0`; `ekp-typescript` Cursor + Copilot in `v0.8.0`; `ekp-symfony` Cursor + Copilot in `v0.9.0`; remaining stack multi-adapter profiles deferred)
+**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`; consumer deployment documented in `v0.5.1`; `ekp-php` Cursor + Copilot in `v0.6.0`; `ekp-typescript` Cursor + Copilot in `v0.8.0`; `ekp-symfony` Cursor + Copilot in `v0.9.0`; `ekp-frontend` Cursor + Copilot in progress; remaining stack multi-adapter profiles deferred)
 
 Extend the adapter layer to additional AI assistant platforms.
 
@@ -237,7 +237,7 @@ Extend the adapter layer to additional AI assistant platforms.
 - [x] Profile assembly script (knowledge + adapter → deployable bundle)
 - [x] Validation CLI (`scripts/validate`) for structure, metadata, and broken links
 - [x] Documentation for deploying profiles to consumer projects (`docs/deployment.md`)
-- [~] Expand operational profiles beyond Cursor (**partial**: `ekp-php`, `ekp-typescript`, and `ekp-symfony` Cursor + Copilot; other stacks deferred; Antigravity/Claude remain `ekp-core` pilot only)
+- [~] Expand operational profiles beyond Cursor (**partial**: `ekp-php`, `ekp-typescript`, `ekp-symfony`, and `ekp-frontend` Cursor + Copilot; other stacks deferred; Antigravity/Claude remain `ekp-core` pilot only)
 
 **Exit criteria:** A team can select a profile, run a script, and deploy engineering context to their AI assistant of choice. Changes to knowledge automatically propagate to rules.
 
@@ -252,6 +252,8 @@ Extend the adapter layer to additional AI assistant platforms.
 **v0.8.0:** `ekp-typescript` (`includes: [cursor-typescript]`, `outputs: [cursor, copilot]`) is the second stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-typescript` and remains byte-identical to `v0.7.0` for all operational Cursor profiles. Remaining stacks, Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
 
 **v0.9.0:** `ekp-symfony` (`includes: [cursor-symfony]`, `outputs: [cursor, copilot]`) is the third stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-symfony` and remains byte-identical to `v0.8.0` for all operational Cursor profiles. Remaining stacks, Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
+
+**Unreleased / v0.10.0 target:** `ekp-frontend` (`includes: [cursor-frontend]`, `outputs: [cursor, copilot]`) — fourth stack-specific multi-adapter profile; packages current frontend architecture knowledge (EKP-FE) only. CSS/HTML/layout/design-system/styling knowledge expansion remains a separate deferred initiative.
 
 ---
 
