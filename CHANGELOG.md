@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-08-26
+
 ### Added
 
 - Profile `ekp-frontend` (`includes: [cursor-frontend]`, `outputs: [cursor, copilot]`) — fourth stack-specific multi-adapter profile parallel to `cursor-frontend`
