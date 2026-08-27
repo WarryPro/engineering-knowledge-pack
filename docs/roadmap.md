@@ -13,7 +13,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, DEVELOPMENT.md, v0.2.0 released |
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); Flutter deferred |
-| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `v0.5.1`; `ekp-php` in `v0.6.0`; `ekp-typescript` in `v0.8.0`; `ekp-symfony` in `v0.9.0`; `ekp-frontend` prepared for `v0.10.0`; remaining multi-adapter stacks deferred |
+| Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude in `v0.5.0`; consumer deploy docs in `v0.5.1`; `ekp-php` in `v0.6.0`; `ekp-typescript` in `v0.8.0`; `ekp-symfony` in `v0.9.0`; `ekp-frontend` in `v0.10.0`; frontend knowledge enhancement prepared for `v0.11.0`; remaining multi-adapter stacks deferred |
 
 ---
 
@@ -165,7 +165,7 @@ Establish lightweight governance so EKP scales beyond 20 guides without semantic
 
 Add stack-specific guidance for the technologies this project targets, without contaminating foundation knowledge.
 
-**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots), `v0.5.0` (Claude adapter), `v0.5.1` (consumer deployment docs), `v0.6.0` (`ekp-php` Cursor + Copilot), `v0.7.0` (`cursor-nativescript` NativeScript L2), `v0.8.0` (`ekp-typescript` Cursor + Copilot), `v0.9.0` (`ekp-symfony` Cursor + Copilot) published; `v0.10.0` (`ekp-frontend` Cursor + Copilot) prepared on `staging` (not yet published).
+**Releases:** `v0.3.0` (PHP/Symfony), `v0.3.1` (TypeScript/Frontend + governance), `v0.3.2` (DevOps), `v0.3.3` (profile `includes`), `v0.3.4` (adapter dispatch), `v0.3.5` (multi-adapter packaging), `v0.4.0` (Copilot + Antigravity pilots), `v0.5.0` (Claude adapter), `v0.5.1` (consumer deployment docs), `v0.6.0` (`ekp-php` Cursor + Copilot), `v0.7.0` (`cursor-nativescript` NativeScript L2), `v0.8.0` (`ekp-typescript` Cursor + Copilot), `v0.9.0` (`ekp-symfony` Cursor + Copilot), `v0.10.0` (`ekp-frontend` Cursor + Copilot) published; `v0.11.0` (frontend styling/markup knowledge EKP-FE09–FE16) prepared on `staging` (not yet published).
 
 **Layer model:** L0 foundation → L1 language → L2 framework → L3 ops (downward `depends_on` only).
 
@@ -174,7 +174,7 @@ Add stack-specific guidance for the technologies this project targets, without c
 - `knowledge/php/` (L1) — **Wave 1**
 - `knowledge/symfony/` (L2) — **Wave 1**
 - `knowledge/typescript/` (L1) — **Wave 2** — complete
-- `knowledge/frontend/` (L2) — **Wave 2** — complete
+- `knowledge/frontend/` (L2) — **Wave 2** — complete; styling/markup guide (EKP-FE09–FE16) prepared for `v0.11.0`
 - `knowledge/devops/` (L3) — **Wave 3** — complete
 - `knowledge/nativescript/` (L2) — **complete** (Cursor-only profile)
 - `knowledge/flutter/` (L2) — **Deferred**
@@ -224,7 +224,7 @@ Add stack-specific guidance for the technologies this project targets, without c
 
 ## Phase 5: Additional AI adapters
 
-**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`; consumer deployment documented in `v0.5.1`; `ekp-php` Cursor + Copilot in `v0.6.0`; `ekp-typescript` Cursor + Copilot in `v0.8.0`; `ekp-symfony` Cursor + Copilot in `v0.9.0`; `ekp-frontend` Cursor + Copilot prepared for `v0.10.0`; remaining stack multi-adapter profiles deferred)
+**Status:** Partial (Cursor complete; Copilot + Antigravity in `v0.4.0`; Claude adapter in `v0.5.0`; consumer deployment documented in `v0.5.1`; `ekp-php` Cursor + Copilot in `v0.6.0`; `ekp-typescript` Cursor + Copilot in `v0.8.0`; `ekp-symfony` Cursor + Copilot in `v0.9.0`; `ekp-frontend` Cursor + Copilot in `v0.10.0`; frontend knowledge enhancement prepared for `v0.11.0`; remaining stack multi-adapter profiles deferred)
 
 Extend the adapter layer to additional AI assistant platforms.
 
@@ -253,7 +253,9 @@ Extend the adapter layer to additional AI assistant platforms.
 
 **v0.9.0:** `ekp-symfony` (`includes: [cursor-symfony]`, `outputs: [cursor, copilot]`) is the third stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-symfony` and remains byte-identical to `v0.8.0` for all operational Cursor profiles. Remaining stacks, Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
 
-**v0.10.0 (prepared):** `ekp-frontend` (`includes: [cursor-frontend]`, `outputs: [cursor, copilot]`) is the fourth stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-frontend` and remains byte-identical to `v0.9.0` for all operational Cursor profiles. Packages current frontend architecture knowledge (EKP-FE) only; CSS/HTML/layout/design-system/styling knowledge expansion remains a separate deferred initiative. Remaining stacks (`ekp-devops`, `ekp-nativescript`), Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
+**v0.10.0:** `ekp-frontend` (`includes: [cursor-frontend]`, `outputs: [cursor, copilot]`) is the fourth stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-frontend` and remains byte-identical to `v0.9.0` for all operational Cursor profiles. Packages frontend architecture knowledge (EKP-FE01–FE08) only. Remaining stacks (`ekp-devops`, `ekp-nativescript`), Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
+
+**v0.11.0 (prepared):** Frontend Knowledge Enhancement — `frontend-styling-and-markup.md` (EKP-FE09–FE16); `cursor-frontend` **83 → 92** rules; `ekp-frontend` inherits via `includes: [cursor-frontend]`; FE01–FE08 preserved byte-identical to `v0.10.0`; EKP-FE `additional_owners` for two-document frontend structure; framework-neutral engineering principles only. Remaining stacks (`ekp-devops`, `ekp-nativescript`), Antigravity/Claude on stack profiles, and promoting `ekp-core` from pilot remain deferred.
 
 ---
 

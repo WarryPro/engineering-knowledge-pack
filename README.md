@@ -80,8 +80,9 @@ py -3 scripts/assemble/assemble.py --profile cursor-nativescript --clean --verif
 
 ## Release status
 
-- **Latest published release:** `v0.9.0`
-- **v0.10.0 (prepared on `staging`, not yet published):** Fourth stack-specific multi-adapter profile `ekp-frontend` (`includes: [cursor-frontend]`, `outputs: [cursor, copilot]`); packaging-only Phase 5 continuation; seven operational Cursor profiles unchanged; assembled Cursor output for those profiles unchanged vs `v0.9.0`; CSS/HTML/styling knowledge expansion deferred; remaining stacks (`ekp-devops`, `ekp-nativescript`) deferred
+- **Latest published release:** `v0.10.0`
+- **v0.11.0 (prepared on `staging`, not yet published):** Frontend Knowledge Enhancement — EKP-FE09–FE16 styling/markup guide; `cursor-frontend` **83 → 92** rules; `ekp-frontend` inherits via `includes: [cursor-frontend]`; FE01–FE08 preserved; framework-neutral engineering principles only (no React/Vue/Angular/Bootstrap/Tailwind tutorials)
+- **v0.10.0:** Fourth stack-specific multi-adapter profile `ekp-frontend` (`includes: [cursor-frontend]`, `outputs: [cursor, copilot]`); packaging-only Phase 5 continuation; seven operational Cursor profiles unchanged; assembled Cursor output for those profiles unchanged vs `v0.9.0`; remaining stacks (`ekp-devops`, `ekp-nativescript`) deferred
 - **v0.9.0:** Third stack-specific multi-adapter profile `ekp-symfony` (`includes: [cursor-symfony]`, `outputs: [cursor, copilot]`); seven operational Cursor profiles unchanged; assembled Cursor output for those profiles unchanged vs `v0.8.0`; remaining stacks (`ekp-frontend`, `ekp-devops`, `ekp-nativescript`) deferred
 - **v0.8.0:** Second stack-specific multi-adapter profile `ekp-typescript` (`includes: [cursor-typescript]`, `outputs: [cursor, copilot]`); seven operational Cursor profiles unchanged; assembled Cursor output for those profiles unchanged vs `v0.7.0`; remaining stacks and `ekp-nativescript` deferred
 - **v0.7.0:** NativeScript L2 vertical — `cursor-nativescript` (`includes: [cursor-typescript]`, `outputs: [cursor]`); six operational Cursor profiles unchanged; assembled Cursor output for those six profiles unchanged vs `v0.6.0`; Flutter and `ekp-nativescript` deferred
@@ -101,7 +102,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-nativescript --clean --verif
 | antigravity | implemented (`ekp-core` pilot) |
 | claude | implemented (`ekp-core` pilot) |
 
-Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot profile. `ekp-php`, `ekp-typescript`, `ekp-symfony`, and `ekp-frontend` additionally expose Copilot for PHP, TypeScript, Symfony, and frontend architecture stack knowledge respectively. Operational `cursor-*` profiles (including `cursor-nativescript`) remain Cursor-only. `cursor-frontend` / `ekp-frontend` package the current frontend architecture knowledge (EKP-FE); CSS/HTML/layout/design-system expansion remains a separate deferred knowledge initiative.
+Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot profile. `ekp-php`, `ekp-typescript`, `ekp-symfony`, and `ekp-frontend` additionally expose Copilot for PHP, TypeScript, Symfony, and frontend stack knowledge respectively. Operational `cursor-*` profiles (including `cursor-nativescript`) remain Cursor-only. `cursor-frontend` / `ekp-frontend` package frontend architecture (EKP-FE01–FE08) and, from `v0.11.0` onward, styling/markup engineering knowledge (EKP-FE09–FE16).
 
 ## Status
 

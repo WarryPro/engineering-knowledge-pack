@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-08-27
+
+### Added
+
+- Guide `knowledge/frontend/frontend-styling-and-markup.md` (EKP-FE09–FE16): semantic HTML and native capabilities, styling architecture, simplest-fit styling mechanism, cascade/specificity ownership, design tokens, layout and responsive strategy, operational accessibility for interactive surfaces, and UI verification by user-visible outcomes
+- Profile `cursor-frontend` includes the styling/markup guide; assembled Cursor rule count **83 → 92**
+- `ekp-frontend` inherits the expanded frontend knowledge via `includes: [cursor-frontend]` (92 rules); `ekp-frontend.yaml` unchanged
+- EKP-FE namespace `additional_owners` for the two-document frontend structure (`frontend-architecture.md` + `frontend-styling-and-markup.md`); single-owner behavior unchanged for all other namespaces
+- Frontend Copilot routing includes styling/markup knowledge through the existing `frontend.instructions.md` group (no new Copilot groups)
+
+### Compatibility
+
+- FE01–FE08 concept content and generated `.mdc` files remain byte-identical to `v0.10.0`
+- Existing non-frontend profiles unchanged and Cursor-only: 65 / 74 / 83 / 74 / 74 / 84
+- `cursor-frontend` ↔ `ekp-frontend` Cursor `.mdc` content byte-identical
+- Antigravity and Claude remain outside `ekp-frontend` (still demonstrated via `ekp-core` pilot only)
+- `ekp-core` remains a four-adapter packaging pilot
+- Remaining stack multi-adapter profiles (`ekp-devops`, `ekp-nativescript`) deferred
+- Does **not** include React/Vue/Angular tutorials, Bootstrap/Tailwind encyclopedias, SCSS/CSS-in-JS tutorials, component-library catalogs, Flutter/Dart knowledge, WCAG encyclopedia, browser compatibility matrices, performance profile changes, `ekp-devops`/`ekp-nativescript` changes, or new adapters
+- Copilot output for `ekp-frontend` is structurally generated and verified; empirical Copilot runtime session behavior is not claimed
+
 ## [0.10.0] - 2026-08-26
 
 ### Added
