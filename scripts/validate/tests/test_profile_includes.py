@@ -152,7 +152,7 @@ class ProfileIncludesRegressionTests(unittest.TestCase):
         "cursor-php": 74,
         "cursor-symfony": 83,
         "cursor-typescript": 74,
-        "cursor-frontend": 83,
+        "cursor-frontend": 92,
         "cursor-devops": 74,
     }
 

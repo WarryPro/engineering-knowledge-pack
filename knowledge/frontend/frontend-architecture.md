@@ -55,7 +55,7 @@ Frontend failures are often boundary failures: business rules in view components
 | PHP/Symfony/backend stacks | `php/`, `symfony/` | **Out of scope** — no cross-stack deps |
 | Framework tutorials (React/Vue/Angular) | Vendor docs | Out of scope |
 
-**Out of scope:** Component library catalogs, CSS framework encyclopedias, design tool workflows, mobile Flutter (`flutter/`).
+**Out of scope:** Component library catalogs, CSS framework encyclopedias, design tool workflows, mobile Flutter (`flutter/`). Markup, styling architecture decisions, layout/responsive principles, and operational a11y beyond this guide’s FE06 baseline belong in [`frontend-styling-and-markup.md`](frontend-styling-and-markup.md) (EKP-FE09–FE16).
 
 ## EKP layer positioning
 
@@ -313,4 +313,5 @@ For frontend architecture changes. Run after `ai-assisted-development.md` steps 
 - [Security Fundamentals](../security/security-fundamentals.md) — EKP-SF
 - [Testing](../testing/testing.md) — EKP-TS
 - [ADR Practices](../architecture/adr-practices.md) — EKP-AD
+- [Frontend Styling and Markup](frontend-styling-and-markup.md) — EKP-FE09–FE16
 - [Frontend domain index](README.md)

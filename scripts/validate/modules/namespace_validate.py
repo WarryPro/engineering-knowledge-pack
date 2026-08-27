@@ -65,7 +65,13 @@ def validate_namespaces(nodes, registry=None):
                 )
             seen_in_doc.add(concept_id)
 
-            if ns_entry["owner"] != node.path:
+            allowed_owners = {ns_entry["owner"]}
+            additional = ns_entry.get("additional_owners") or []
+            if isinstance(additional, list):
+                allowed_owners.update(
+                    item for item in additional if isinstance(item, str)
+                )
+            if node.path not in allowed_owners:
                 errors.append(
                     "[NAMESPACE] {}: may not own '{}' (namespace {} owned by {})".format(
                         node.path, concept_id, ns_key, ns_entry["owner"]
@@ -93,6 +99,14 @@ def validate_namespaces(nodes, registry=None):
                     )
 
     ns_holders = {}  # type: dict
+    ns_allowed = {}  # type: dict
+    for ns_key, entry in registry.items():
+        allowed = {entry["owner"]}
+        additional = entry.get("additional_owners") or []
+        if isinstance(additional, list):
+            allowed.update(item for item in additional if isinstance(item, str))
+        ns_allowed[ns_key] = allowed
+
     for node in nodes:
         for concept_id in node.concept_ids:
             ns_key = namespace_key_for_concept(concept_id)
@@ -102,13 +116,14 @@ def validate_namespaces(nodes, registry=None):
     for ns_key, entry in registry.items():
         holders = ns_holders.get(ns_key, set())
         owner = entry["owner"]
+        allowed = ns_allowed.get(ns_key, {owner})
         if holders and owner not in holders:
             warnings.append(
                 "[NAMESPACE] {} owner mismatch: concepts found in {}".format(
                     ns_key, ", ".join(sorted(holders))
                 )
             )
-        elif len(holders) > 1:
+        elif holders - allowed:
             warnings.append(
                 "[NAMESPACE] {} owner mismatch: concepts spread across {}".format(
                     ns_key, ", ".join(sorted(holders))

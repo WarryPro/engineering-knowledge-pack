@@ -67,15 +67,15 @@ class EkpFrontendProfileTests(unittest.TestCase):
         frontend_paths = resolve_profile_knowledge(REPO_ROOT, "cursor-frontend")
         self.assertEqual(ekp_paths, frontend_paths)
 
-    def test_cursor_rule_count_is_83(self):
+    def test_cursor_rule_count_is_92(self):
         mdc_files = sorted((self.ekp_dir / "cursor").glob("*.mdc"))
-        self.assertEqual(len(mdc_files), 83)
+        self.assertEqual(len(mdc_files), 92)
         manifest = json.loads(
             (self.ekp_dir / "bundle-manifest.json").read_text(encoding="utf-8")
         )
         self.assertEqual(manifest["adapter"], "cursor")
         self.assertEqual(manifest["profile"], "ekp-frontend")
-        self.assertEqual(manifest["rules_count"], 83)
+        self.assertEqual(manifest["rules_count"], 92)
 
     def test_cursor_mdc_byte_identical_to_cursor_frontend(self):
         ekp_cursor = self.ekp_dir / "cursor"
