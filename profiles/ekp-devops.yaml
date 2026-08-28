@@ -1,0 +1,24 @@
+# EKP DevOps multi-adapter profile (Cursor + Copilot).
+# Parallel to cursor-devops: includes contribute knowledge paths only.
+# Does not modify cursor-devops.yaml or cursor-core.yaml.
+# Antigravity and Claude remain outside this MVP (still ekp-core pilot only).
+
+name: ekp-devops
+description: EKP DevOps bundle for Cursor Rules and GitHub Copilot instructions (parallel to cursor-devops).
+
+includes:
+  - cursor-devops
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor
+  - copilot
