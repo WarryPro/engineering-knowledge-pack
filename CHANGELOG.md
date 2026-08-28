@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-08-28
+
+### Added
+
+- Profile `ekp-devops` (`includes: [cursor-devops]`, `outputs: [cursor, copilot]`) — fifth stack-specific multi-adapter profile parallel to `cursor-devops`
+- CI assemble `--verify` gate for `ekp-devops`
+- Assemble tests for `ekp-devops` knowledge resolution, Cursor `.mdc` identity vs `cursor-devops`, and Copilot DevOps instructions
+
+### Compatibility
+
+- Existing twelve operational profiles unchanged: 65 / 74 / 83 / 74 / 92 / 74 / 84 / 74 / 74 / 83 / 92 / 65 (Cursor rule counts)
+- Cursor `.mdc` content for those profiles remains byte-identical to `v0.11.0`
+- `ekp-devops` Cursor `.mdc` content byte-identical to `cursor-devops` (74 rules)
+- Copilot output for `ekp-devops`: `copilot-instructions.md`, `devops.instructions.md`, `testing.instructions.md` only (reuses existing DevOps PATH_GROUP)
+- Antigravity and Claude remain outside `ekp-devops` (still demonstrated via `ekp-core` pilot only)
+- `ekp-core` remains a four-adapter packaging pilot
+- Remaining stack multi-adapter profile (`ekp-nativescript`) deferred
+- Packaging-only — no knowledge, schema, or adapter implementation changes
+- Copilot output for `ekp-devops` is structurally generated and verified; empirical Copilot runtime session behavior is not claimed
+
 ## [0.11.0] - 2026-08-27
 
 ### Added

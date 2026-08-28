@@ -75,7 +75,9 @@ Non-breaking: typos, clarifications, new concepts, new guides, new profiles.
 
 ## Namespace governance
 
-**Model:** one namespace prefix → one owner guide in `schema/concept-namespaces.json`.
+**Model:** one namespace prefix → one primary owner guide in `schema/concept-namespaces.json`.
+
+**Exception (v0.11.0):** `EKP-FE` declares `additional_owners` for the two-document frontend structure (`frontend-architecture.md` + `frontend-styling-and-markup.md`). Validation treats any listed owner guide as authoritative for concept IDs in that namespace; single-owner behavior is unchanged for all other namespaces.
 
 | Rule | Detail |
 |------|--------|
@@ -99,7 +101,7 @@ Non-breaking: typos, clarifications, new concepts, new guides, new profiles.
 | EKP-PH | php | |
 | EKP-SY | symfony | |
 | EKP-TY | typescript | |
-| EKP-FE | frontend | |
+| EKP-FE | frontend | `additional_owners` for styling/markup guide (v0.11.0) |
 | EKP-DV | devops | |
 | EKP-NS | nativescript | |
 
