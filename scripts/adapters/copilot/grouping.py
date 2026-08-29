@@ -49,6 +49,12 @@ PATH_GROUPS = (
         "apply_to": "**/*.{js,jsx,ts,tsx,css,scss,html,vue}",
     },
     {
+        "name": "nativescript",
+        "filename": "nativescript.instructions.md",
+        "prefixes": ("knowledge/nativescript/",),
+        "apply_to": "**/*.xml,**/App_Resources/**,**/nativescript.config.{ts,js}",
+    },
+    {
         "name": "devops",
         "filename": "devops.instructions.md",
         "prefixes": ("knowledge/devops/",),

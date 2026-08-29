@@ -73,5 +73,8 @@ jobs:
       - name: Assemble ekp-devops bundle (cursor, copilot)
         run: python scripts/assemble/assemble.py --profile ekp-devops --clean --verify
 
+      - name: Assemble ekp-nativescript bundle (cursor, copilot)
+        run: python scripts/assemble/assemble.py --profile ekp-nativescript --clean --verify
+
       - name: Assemble ekp-core pilot bundle (cursor, copilot, antigravity, claude)
         run: python scripts/assemble/assemble.py --profile ekp-core --clean --verify
