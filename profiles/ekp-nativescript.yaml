@@ -1,0 +1,24 @@
+# EKP NativeScript multi-adapter profile (Cursor + Copilot).
+# Parallel to cursor-nativescript: includes contribute knowledge paths only.
+# Does not modify cursor-nativescript.yaml, cursor-typescript.yaml, or cursor-core.yaml.
+# Antigravity and Claude remain outside this MVP (still ekp-core pilot only).
+
+name: ekp-nativescript
+description: EKP NativeScript bundle for Cursor Rules and GitHub Copilot instructions (parallel to cursor-nativescript).
+
+includes:
+  - cursor-nativescript
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor
+  - copilot
