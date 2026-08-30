@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-08-30
+
+### Added
+
+- Profile `ekp-nativescript` (`includes: [cursor-nativescript]`, `outputs: [cursor, copilot]`) — sixth and final stack-specific multi-adapter profile parallel to `cursor-nativescript`
+- Copilot `nativescript` PATH_GROUP in `scripts/adapters/copilot/grouping.py` — routes `knowledge/nativescript/` to `nativescript.instructions.md` (`applyTo: "**/*.xml,**/App_Resources/**,**/nativescript.config.{ts,js}"`)
+- CI assemble `--verify` gate for `ekp-nativescript` (14th profile gate)
+- Unit tests for Copilot PATH_GROUP routing and NativeScript `applyTo` constraints (`test_copilot_grouping.py`, 10 tests)
+- Assemble tests for `ekp-nativescript` knowledge resolution, Cursor `.mdc` identity vs `cursor-nativescript`, and Copilot NativeScript/TypeScript/Testing instructions (`test_ekp_nativescript_profile.py`, 12 tests)
+
+### Compatibility
+
+- Existing thirteen operational profiles unchanged: 65 / 74 / 83 / 74 / 92 / 74 / 84 / 74 / 74 / 83 / 92 / 65 / 74 (Cursor rule counts)
+- Cursor `.mdc` content for those profiles remains byte-identical to `v0.12.0`
+- `ekp-nativescript` Cursor `.mdc` content byte-identical to `cursor-nativescript` (84 rules)
+- Copilot output for `ekp-nativescript`: `copilot-instructions.md`, `nativescript.instructions.md`, `typescript.instructions.md`, `testing.instructions.md` only
+- NativeScript Copilot group intentionally excludes broad `**/*.ts`, `**/*.js`, and `**/*.vue` globs; TypeScript knowledge continues to route via the existing `typescript` PATH_GROUP
+- Antigravity and Claude remain outside `ekp-nativescript` (still demonstrated via `ekp-core` pilot only)
+- `ekp-core` remains a four-adapter packaging pilot
+- All six stack multi-adapter profiles (`ekp-php` through `ekp-nativescript`) are now available; Flutter, `ekp-core` promotion, and Antigravity/Claude on stack profiles remain deferred
+- No knowledge or schema changes
+- Copilot output for `ekp-nativescript` is structurally generated and verified; empirical Copilot runtime session behavior is not claimed
+
 ## [0.12.0] - 2026-08-28
 
 ### Added
@@ -23,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Copilot output for `ekp-devops`: `copilot-instructions.md`, `devops.instructions.md`, `testing.instructions.md` only (reuses existing DevOps PATH_GROUP)
 - Antigravity and Claude remain outside `ekp-devops` (still demonstrated via `ekp-core` pilot only)
 - `ekp-core` remains a four-adapter packaging pilot
-- Remaining stack multi-adapter profile (`ekp-nativescript`) deferred
+- Remaining stack multi-adapter profile (`ekp-nativescript`) deferred to `v0.13.0`
 - Packaging-only — no knowledge, schema, or adapter implementation changes
 - Copilot output for `ekp-devops` is structurally generated and verified; empirical Copilot runtime session behavior is not claimed
 

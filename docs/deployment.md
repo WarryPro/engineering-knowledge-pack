@@ -28,9 +28,10 @@ Profiles live under `profiles/` and declare **knowledge paths** plus **`outputs`
 | `ekp-symfony` | Symfony multi-adapter (`includes: [cursor-symfony]`) | yes | yes | no | no |
 | `ekp-frontend` | Frontend multi-adapter (`includes: [cursor-frontend]`) | yes | yes | no | no |
 | `ekp-devops` | DevOps multi-adapter (`includes: [cursor-devops]`) | yes | yes | no | no |
+| `ekp-nativescript` | NativeScript multi-adapter (`includes: [cursor-nativescript]`) | yes | yes | no | no |
 | `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`) | yes | yes | yes | yes |
 
-Operational Cursor products include the six original `cursor-*` profiles plus `cursor-nativescript`. `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, and `ekp-devops` are stack-specific multi-adapter profiles (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. `ekp-nativescript` remains deferred. `ekp-frontend` packages frontend architecture and styling/markup knowledge (`frontend-architecture.md` EKP-FE01–FE08 and `frontend-styling-and-markup.md` EKP-FE09–FE16). `ekp-devops` packages existing DevOps fundamentals (EKP-DV01–DV08) via `includes: [cursor-devops]`.
+Operational Cursor products include the six original `cursor-*` profiles plus `cursor-nativescript`. `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, and `ekp-nativescript` are stack-specific multi-adapter profiles (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. `ekp-frontend` packages frontend architecture and styling/markup knowledge (`frontend-architecture.md` EKP-FE01–FE08 and `frontend-styling-and-markup.md` EKP-FE09–FE16). `ekp-devops` packages existing DevOps fundamentals (EKP-DV01–DV08) via `includes: [cursor-devops]`. `ekp-nativescript` packages NativeScript architecture (EKP-NS01+) and inherited TypeScript fundamentals via `includes: [cursor-nativescript]`.
 
 Pick:
 
@@ -40,9 +41,10 @@ Pick:
 - `ekp-symfony` if you need Cursor Rules and/or Copilot instructions for Symfony (same knowledge as `cursor-symfony`).
 - `ekp-frontend` if you need Cursor Rules and/or Copilot instructions for frontend architecture and styling/markup (same knowledge as `cursor-frontend`; EKP-FE01–FE16).
 - `ekp-devops` if you need Cursor Rules and/or Copilot instructions for DevOps (same knowledge as `cursor-devops`; EKP-DV01–DV08).
+- `ekp-nativescript` if you need Cursor Rules and/or Copilot instructions for NativeScript (same knowledge as `cursor-nativescript`; EKP-NS01+ with inherited TypeScript fundamentals).
 - `ekp-core` if you need Copilot, Antigravity, and/or Claude artifacts **in addition to** the same Cursor knowledge as `cursor-core` (foundation only; no stack knowledge).
 
-`ekp-core` does not add extra knowledge beyond `cursor-core`; it only requests more adapters. `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, and `ekp-devops` do not modify their included Cursor profiles; included profiles contribute knowledge paths only.
+`ekp-core` does not add extra knowledge beyond `cursor-core`; it only requests more adapters. `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, and `ekp-nativescript` do not modify their included Cursor profiles; included profiles contribute knowledge paths only.
 
 ## 2. Assemble
 
@@ -64,6 +66,7 @@ py -3 scripts/assemble/assemble.py --profile ekp-typescript --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-symfony --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-frontend --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-devops --clean --verify
+py -3 scripts/assemble/assemble.py --profile ekp-nativescript --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
 ```
 
@@ -111,7 +114,7 @@ Adapters do not overwrite each other's manifests. Do **not** copy EKP manifests 
 
 ## 3. Cursor deployment
 
-**Source profile:** any `cursor-*` profile, `ekp-php` (same Cursor knowledge as `cursor-php`), `ekp-typescript` (same Cursor knowledge as `cursor-typescript`), `ekp-symfony` (same Cursor knowledge as `cursor-symfony`), `ekp-frontend` (same Cursor knowledge as `cursor-frontend`), `ekp-devops` (same Cursor knowledge as `cursor-devops`), or `ekp-core` (same Cursor knowledge as `cursor-core`).
+**Source profile:** any `cursor-*` profile, `ekp-php` (same Cursor knowledge as `cursor-php`), `ekp-typescript` (same Cursor knowledge as `cursor-typescript`), `ekp-symfony` (same Cursor knowledge as `cursor-symfony`), `ekp-frontend` (same Cursor knowledge as `cursor-frontend`), `ekp-devops` (same Cursor knowledge as `cursor-devops`), `ekp-nativescript` (same Cursor knowledge as `cursor-nativescript`), or `ekp-core` (same Cursor knowledge as `cursor-core`).
 
 **Generated:** `dist/<profile>/cursor/*.mdc`
 
@@ -131,18 +134,19 @@ dist/ekp-typescript/cursor/     →  <project>/.cursor/rules/
 dist/ekp-symfony/cursor/        →  <project>/.cursor/rules/
 dist/ekp-frontend/cursor/       →  <project>/.cursor/rules/
 dist/ekp-devops/cursor/         →  <project>/.cursor/rules/
+dist/ekp-nativescript/cursor/   →  <project>/.cursor/rules/
 dist/ekp-core/cursor/           →  <project>/.cursor/rules/
 ```
 
 Copy the `.mdc` files only (or the whole `cursor/` directory). Leave `bundle-manifest.json` at `dist/<profile>/`; it is an EKP inventory file, not a Cursor rule.
 
-Expected `cursor-core` count: **65** `.mdc` files (frozen). Stack profiles add technology guides (~74 single-stack, ~83 combined-stack). `cursor-nativescript` is a combined TypeScript + NativeScript Cursor product.
+Expected `cursor-core` count: **65** `.mdc` files (frozen). Stack profiles add technology guides (~74 single-stack, ~83 combined-stack, ~84 NativeScript). `cursor-nativescript` is a combined TypeScript + NativeScript Cursor product.
 
 Cursor generation, verify, and CI assemble gates cover packaging. This guide does not claim how Cursor loads `.mdc` files in a given IDE version.
 
 ## 4. Copilot deployment
 
-**Source profiles:** `ekp-core` (foundation knowledge), `ekp-php` (PHP stack knowledge via `includes: [cursor-php]`), `ekp-typescript` (TypeScript stack knowledge via `includes: [cursor-typescript]`), `ekp-symfony` (Symfony stack knowledge via `includes: [cursor-symfony]`), `ekp-frontend` (frontend architecture and styling/markup knowledge via `includes: [cursor-frontend]`), or `ekp-devops` (DevOps stack knowledge via `includes: [cursor-devops]`).
+**Source profiles:** `ekp-core` (foundation knowledge), `ekp-php` (PHP stack knowledge via `includes: [cursor-php]`), `ekp-typescript` (TypeScript stack knowledge via `includes: [cursor-typescript]`), `ekp-symfony` (Symfony stack knowledge via `includes: [cursor-symfony]`), `ekp-frontend` (frontend architecture and styling/markup knowledge via `includes: [cursor-frontend]`), `ekp-devops` (DevOps stack knowledge via `includes: [cursor-devops]`), or `ekp-nativescript` (NativeScript stack knowledge via `includes: [cursor-nativescript]`).
 
 **Generated under** `dist/<profile>/copilot/`:
 
@@ -160,6 +164,7 @@ Always-on instructions have **no** `applyTo`. Path-specific `*.instructions.md` 
 - `ekp-symfony` also includes `knowledge/php/` and `knowledge/symfony/` → `testing.instructions.md`, `php.instructions.md` (`applyTo: "**/*.php"`), and `symfony.instructions.md` (`applyTo: "**/*.php,**/*.twig,**/*.yaml,**/*.yml"`)
 - `ekp-frontend` also includes `knowledge/typescript/` and `knowledge/frontend/` → `testing.instructions.md`, `typescript.instructions.md` (`applyTo: "**/*.ts,**/*.tsx"`), and `frontend.instructions.md` (`applyTo: "**/*.{js,jsx,ts,tsx,css,scss,html,vue}"`) — covers EKP-FE01–FE16 (architecture + styling/markup)
 - `ekp-devops` also includes `knowledge/devops/` → `testing.instructions.md` and `devops.instructions.md` (`applyTo: "**/{Dockerfile,docker-compose*.yml,docker-compose*.yaml},**/.github/workflows/**,**/*.{yml,yaml}"`)
+- `ekp-nativescript` also includes `knowledge/nativescript/` and inherited `knowledge/typescript/` → `testing.instructions.md`, `typescript.instructions.md` (`applyTo: "**/*.ts,**/*.tsx"`), and `nativescript.instructions.md` (`applyTo: "**/*.xml,**/App_Resources/**,**/nativescript.config.{ts,js}"`) — broad `**/*.ts`, `**/*.js`, and `**/*.vue` globs are intentionally excluded from the NativeScript group
 
 Copilot **skills** are not generated.
 
@@ -171,6 +176,7 @@ dist/ekp-typescript/copilot/.github/ →  <consumer-repo>/.github/
 dist/ekp-symfony/copilot/.github/    →  <consumer-repo>/.github/
 dist/ekp-frontend/copilot/.github/   →  <consumer-repo>/.github/
 dist/ekp-devops/copilot/.github/     →  <consumer-repo>/.github/
+dist/ekp-nativescript/copilot/.github/ →  <consumer-repo>/.github/
 dist/ekp-core/copilot/.github/       →  <consumer-repo>/.github/
 ```
 
@@ -262,12 +268,13 @@ Runtime Claude Code skill invocation (including `/skill-name` or description-bas
 - adapter unit tests
 - assemble tests
 - `assemble --verify` per requested adapter (tree, sources, manifests, leakage checks where implemented)
-- thirteen operational profile assemble gates (seven `cursor-*` + five stack `ekp-*` + `ekp-core` pilot)
+- fourteen operational profile assemble gates (seven `cursor-*` + six stack `ekp-*` + `ekp-core` pilot)
 - `ekp-php` assemble gate (cursor + copilot)
 - `ekp-typescript` assemble gate (cursor + copilot)
 - `ekp-symfony` assemble gate (cursor + copilot)
 - `ekp-frontend` assemble gate (cursor + copilot)
 - `ekp-devops` assemble gate (cursor + copilot)
+- `ekp-nativescript` assemble gate (cursor + copilot)
 - `ekp-core` assemble gate (cursor + copilot + antigravity + claude)
 - deterministic generated **content** (manifest `generated_at` may change)
 - Cursor `.mdc` byte-identity vs the frozen Cursor baseline, when that comparison is run

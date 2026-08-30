@@ -163,6 +163,8 @@ Generated artifact (dist/<profile>/ — gitignored)
 
 **Prohibited in knowledge:** Cursor `alwaysApply`, Copilot directives, tool-specific globs. Those belong in adapters/generated output only.
 
+**Copilot PATH_GROUPS (v0.13.0):** The `nativescript` group routes `knowledge/nativescript/` to `nativescript.instructions.md` with `applyTo: "**/*.xml,**/App_Resources/**,**/nativescript.config.{ts,js}"`. Broad `**/*.ts`, `**/*.js`, or `**/*.vue` globs are intentionally excluded from the NativeScript group; TypeScript knowledge continues to route via the existing `typescript` PATH_GROUP. PATH_GROUPS order and filenames are part of the Copilot adapter contract (`scripts/adapters/copilot/grouping.py`).
+
 ---
 
 ## Graph governance
