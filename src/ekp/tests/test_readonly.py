@@ -1,4 +1,4 @@
-"""Read-only filesystem audit for ekp detect."""
+"""Read-only filesystem audit for ekp detect and install dry-run."""
 
 import os
 import tempfile
@@ -38,3 +38,20 @@ class ReadOnlyDetectTests(unittest.TestCase):
             self.assertEqual(before, after)
             self.assertFalse((root / ".ekp").exists())
             self.assertFalse((root / "dist").exists())
+
+
+class ReadOnlyInstallTests(unittest.TestCase):
+    def test_install_dry_run_does_not_modify_fixture_tree(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            before = list(root.rglob("*"))
+
+            code = main(
+                ["install", "--path", str(root), "--profile", "cursor-flutter", "--dry-run"]
+            )
+            self.assertEqual(code, 0)
+
+            after = list(root.rglob("*"))
+            self.assertEqual(before, after)
+            self.assertFalse((root / ".ekp").exists())
+            self.assertFalse((root / ".cursor").exists())
