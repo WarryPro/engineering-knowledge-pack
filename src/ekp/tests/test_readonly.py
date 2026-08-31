@@ -55,3 +55,33 @@ class ReadOnlyInstallTests(unittest.TestCase):
             self.assertEqual(before, after)
             self.assertFalse((root / ".ekp").exists())
             self.assertFalse((root / ".cursor").exists())
+
+
+class ReadOnlyStatusTests(unittest.TestCase):
+    def test_status_does_not_modify_empty_project(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            before = list(root.rglob("*"))
+            code = main(["status", "--path", str(root)])
+            self.assertEqual(code, 0)
+            after = list(root.rglob("*"))
+            self.assertEqual(before, after)
+
+    def test_status_json_does_not_modify_installed_project(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            symfony_fixture(root)
+            main(["install", "--path", str(root), "--yes"])
+            before = {
+                str(path.relative_to(root)): path.stat().st_mtime_ns
+                for path in root.rglob("*")
+                if path.is_file()
+            }
+            code = main(["status", "--path", str(root), "--json"])
+            self.assertEqual(code, 0)
+            after = {
+                str(path.relative_to(root)): path.stat().st_mtime_ns
+                for path in root.rglob("*")
+                if path.is_file()
+            }
+            self.assertEqual(before, after)

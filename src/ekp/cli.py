@@ -7,6 +7,9 @@ from ekp.detection.render import render_human, render_json
 from ekp.detection.service import DetectionService
 from ekp.install.service import InstallRequest, InstallService
 from ekp.paths import get_ekp_root
+from ekp.status.render import render_human as render_status_human
+from ekp.status.render import render_json as render_status_json
+from ekp.status.service import StatusRequest, StatusService
 from ekp.version import get_version
 
 
@@ -60,6 +63,21 @@ def main(argv=None):
         help="Show installation plan without writing files",
     )
 
+    status_parser = subparsers.add_parser(
+        "status",
+        help="Inspect EKP installation state in a consumer project",
+    )
+    status_parser.add_argument(
+        "--path",
+        default=".",
+        help="Project directory to inspect (default: current directory)",
+    )
+    status_parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Output machine-readable JSON",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "version":
@@ -103,6 +121,22 @@ def main(argv=None):
         if result.message:
             stream = sys.stderr if result.exit_code != 0 else sys.stdout
             print(result.message, file=stream)
+        return result.exit_code
+
+    if args.command == "status":
+        try:
+            result = StatusService().inspect(StatusRequest(path=args.path))
+        except (FileNotFoundError, NotADirectoryError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        except OSError as exc:
+            print("Status inspection failed: {}".format(exc), file=sys.stderr)
+            return 1
+
+        if args.json:
+            print(render_status_json(result), end="")
+        else:
+            print(render_status_human(result))
         return result.exit_code
 
     parser.print_help()
