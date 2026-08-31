@@ -16,6 +16,7 @@ NAVIGATION_READMES = [
     "knowledge/typescript/README.md",
     "knowledge/frontend/README.md",
     "knowledge/nativescript/README.md",
+    "knowledge/flutter/README.md",
     "knowledge/devops/README.md",
 ]
 

@@ -1,0 +1,27 @@
+# EKP cursor-flutter profile
+# Flutter architecture composed on cursor-core via includes.
+# Does not modify cursor-core.yaml or inherit cursor-typescript / cursor-frontend.
+
+name: cursor-flutter
+description: EKP Cursor bundle for Flutter engineering architecture.
+
+includes:
+  - cursor-core
+
+knowledge:
+  - knowledge/flutter/flutter-architecture.md
+
+filters:
+  severity:
+    - required
+    - recommended
+
+adapter:
+  target:
+    - cursor
+  include:
+    adapter_priority:
+      - high
+
+outputs:
+  - cursor
