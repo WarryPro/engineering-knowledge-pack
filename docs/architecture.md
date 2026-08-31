@@ -92,7 +92,11 @@ Operational profiles:
 | `ekp-typescript` | `includes: [cursor-typescript]`; `outputs: [cursor, copilot]` — second stack multi-adapter profile |
 | `ekp-symfony` | `includes: [cursor-symfony]`; `outputs: [cursor, copilot]` — third stack multi-adapter profile |
 | `ekp-frontend` | `includes: [cursor-frontend]`; `outputs: [cursor, copilot]` — fourth stack multi-adapter profile |
+| `ekp-devops` | `includes: [cursor-devops]`; `outputs: [cursor, copilot]` — fifth stack multi-adapter profile |
+| `ekp-nativescript` | `includes: [cursor-nativescript]`; `outputs: [cursor, copilot]` — sixth stack multi-adapter profile |
 | `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`; Cursor + Copilot + Antigravity + Claude) |
+
+Stack packaging follows a consistent pattern: **`cursor-*` technology profiles** define knowledge composition and Cursor output; matching **`ekp-*` stack profiles** inherit via `includes` and add Copilot (`outputs: [cursor, copilot]`). Operational `cursor-*` profiles remain Cursor-only.
 
 Profiles compose knowledge via **`includes`** (ADR-0008). Included profiles contribute knowledge paths only; the root profile owns `adapter`, `filters`, and `outputs`. **`extends` is not supported.**
 
@@ -173,15 +177,15 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Operational today:**
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
-- Adapters: Cursor (operational `cursor-*` profiles), Copilot on `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, and `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
-- Assemble pipeline with `--verify` (CI verifies Cursor profiles including `cursor-nativescript`, `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, and `ekp-core`)
+- Adapters: Cursor (all 14 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
+- Assemble pipeline with `--verify` (CI verifies all 14 profiles)
 
 **Planned / deferred:**
 
-- Flutter technology guide and profile (deferred)
+- Flutter technology guide and profile (deferred — next major Phase 4 vertical candidate)
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
-- Expand remaining stack multi-adapter profiles beyond `ekp-php`, `ekp-typescript`, `ekp-symfony`, and `ekp-frontend` (deferred: `ekp-devops`; future `ekp-nativescript` not created)
 - Antigravity / Claude on stack profiles (deferred; remain `ekp-core` pilot)
+- Promote `ekp-core` from four-adapter pilot (deferred)
 
 ## Related
 
