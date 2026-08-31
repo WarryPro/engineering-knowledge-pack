@@ -79,6 +79,13 @@ class InstallService:
             output_fn=self.output_fn,
         )
 
+        try:
+            self.deploy_service.validate_install_compatibility(
+                existing_manifest, profile, ekp_version
+            )
+        except InstallError as exc:
+            return InstallResult(exit_code=exc.exit_code, message=exc.message)
+
         assembly_result = self.assembly_service.assemble(
             AssemblyRequest(profile=profile, verify=True, clean=True)
         )

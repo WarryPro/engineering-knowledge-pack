@@ -62,6 +62,9 @@ def main():
         if "install" not in proc.stdout:
             print("Help missing install command", file=sys.stderr)
             return 1
+        if "status" not in proc.stdout:
+            print("Help missing status command", file=sys.stderr)
+            return 1
 
         smoke_script = tmp_path / "smoke_assemble.py"
         smoke_script.write_text(
@@ -289,6 +292,66 @@ with tempfile.TemporaryDirectory() as dry_dir:
     after = list(dry_root.rglob("*"))
     assert before == after, (before, after)
     print("installed_install_dry_run_ok")
+
+with tempfile.TemporaryDirectory() as status_dir:
+    status_root = Path(status_dir)
+    write_symfony(status_root)
+    proc = subprocess.run([ekp, "install", "--yes", "--path", str(status_root)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    proc = subprocess.run([ekp, "status", "--json", "--path", str(status_root)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    payload = json.loads(proc.stdout)
+    assert payload["installed"] is True, payload
+    assert payload["state"] == "healthy", payload
+    assert payload["profile"] == "cursor-symfony", payload
+    assert payload["managed_files"]["total"] == 83, payload
+    assert payload["managed_files"]["intact"] == 83, payload
+    print("installed_status_healthy_ok")
+
+    rule = next((status_root / ".cursor" / "rules").glob("*.mdc"))
+    rule.write_text("modified", encoding="utf-8")
+    proc = subprocess.run([ekp, "status", "--json", "--path", str(status_root)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    payload = json.loads(proc.stdout)
+    assert payload["state"] == "modified", payload
+    assert len(payload["managed_files"]["modified"]) == 1, payload
+    print("installed_status_modified_ok")
+
+    rule.unlink()
+    proc = subprocess.run([ekp, "status", "--json", "--path", str(status_root)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    payload = json.loads(proc.stdout)
+    assert payload["state"] == "incomplete", payload
+    assert len(payload["managed_files"]["missing"]) == 1, payload
+    print("installed_status_missing_ok")
+
+with tempfile.TemporaryDirectory() as no_install_dir:
+    proc = subprocess.run([ekp, "status", "--path", no_install_dir], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    assert "not installed" in proc.stdout.lower(), proc.stdout
+    print("installed_status_not_installed_ok")
+
+with tempfile.TemporaryDirectory() as invalid_dir:
+    invalid_root = Path(invalid_dir)
+    invalid_root.joinpath(".ekp").mkdir()
+    invalid_root.joinpath(".ekp/install.json").write_text("{bad", encoding="utf-8")
+    proc = subprocess.run([ekp, "status", "--path", str(invalid_root)], capture_output=True, text=True)
+    assert proc.returncode == 3, proc.stdout
+    print("installed_status_invalid_ok")
+
+with tempfile.TemporaryDirectory() as mismatch_dir:
+    mismatch_root = Path(mismatch_dir)
+    write_symfony(mismatch_root)
+    subprocess.run([ekp, "install", "--yes", "--path", str(mismatch_root)], check=True)
+    manifest = json.loads((mismatch_root / ".ekp" / "install.json").read_text(encoding="utf-8"))
+    manifest["ekp_version"] = "0.14.0"
+    (mismatch_root / ".ekp" / "install.json").write_text(json.dumps(manifest, indent=2) + "\\n", encoding="utf-8")
+    proc = subprocess.run([ekp, "status", "--json", "--path", str(mismatch_root)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    payload = json.loads(proc.stdout)
+    assert payload["state"] == "version_mismatch", payload
+    assert payload["installed_version"] == "0.14.0", payload
+    print("installed_status_version_mismatch_ok")
 """,
             encoding="utf-8",
         )
@@ -310,6 +373,12 @@ with tempfile.TemporaryDirectory() as dry_dir:
             "installed_install_empty_ok",
             "installed_install_collision_ok",
             "installed_install_dry_run_ok",
+            "installed_status_healthy_ok",
+            "installed_status_modified_ok",
+            "installed_status_missing_ok",
+            "installed_status_not_installed_ok",
+            "installed_status_invalid_ok",
+            "installed_status_version_mismatch_ok",
         ):
             if marker not in proc.stdout:
                 return 1

@@ -60,6 +60,15 @@ class CursorDeployService:
             items.append((relative_target, source, sha256_file(source)))
         return items
 
+    def validate_install_compatibility(
+        self,
+        existing_manifest: Optional[InstallManifest],
+        profile: str,
+        ekp_version: str,
+    ) -> None:
+        """Raise when an existing install cannot accept the requested profile/version."""
+        self._validate_existing_manifest(existing_manifest, profile, ekp_version)
+
     def build_plan(
         self,
         project_root: Path,
