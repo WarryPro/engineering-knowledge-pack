@@ -56,8 +56,8 @@ def main():
             return 1
 
         proc = subprocess.run([str(ekp), "--help"], capture_output=True, text=True, check=True)
-        if "version" not in proc.stdout:
-            print("Help missing version command", file=sys.stderr)
+        if "detect" not in proc.stdout:
+            print("Help missing detect command", file=sys.stderr)
             return 1
 
         smoke_script = tmp_path / "smoke_assemble.py"
@@ -107,6 +107,80 @@ with tempfile.TemporaryDirectory() as tmp:
         if "installed_assembly_ok" not in proc.stdout:
             print(proc.stderr, file=sys.stderr)
             return 1
+
+        detect_script = tmp_path / "smoke_detect.py"
+        detect_script.write_text(
+            """
+import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ekp = sys.argv[1]
+
+def write_symfony(root: Path):
+    root.joinpath("composer.json").write_text(
+        '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
+        encoding="utf-8",
+    )
+    root.joinpath("symfony.lock").write_text("{}", encoding="utf-8")
+    root.joinpath("config").mkdir(exist_ok=True)
+    root.joinpath("config/bundles.php").write_text("<?php", encoding="utf-8")
+
+def write_flutter(root: Path):
+    root.joinpath("lib").mkdir(exist_ok=True)
+    root.joinpath("lib/main.dart").write_text("void main() {}", encoding="utf-8")
+    root.joinpath("pubspec.yaml").write_text(
+        "name: demo\\nflutter:\\n  sdk: flutter\\n",
+        encoding="utf-8",
+    )
+
+with tempfile.TemporaryDirectory() as symfony_dir:
+    symfony_root = Path(symfony_dir)
+    write_symfony(symfony_root)
+    proc = subprocess.run([ekp, "detect", "--json", "--path", str(symfony_root)], capture_output=True, text=True, check=True)
+    payload = json.loads(proc.stdout)
+    assert payload["recommended_profile"] == "cursor-symfony", payload
+    assert any(item["technology"] == "symfony" for item in payload["technologies"]), payload
+    print("installed_detect_symfony_ok")
+
+with tempfile.TemporaryDirectory() as flutter_dir:
+    flutter_root = Path(flutter_dir)
+    write_flutter(flutter_root)
+    proc = subprocess.run([ekp, "detect", "--json", "--path", str(flutter_root)], capture_output=True, text=True, check=True)
+    payload = json.loads(proc.stdout)
+    assert payload["recommended_profile"] == "cursor-flutter", payload
+    print("installed_detect_flutter_ok")
+
+with tempfile.TemporaryDirectory() as empty_dir:
+    proc = subprocess.run([ekp, "detect", "--json", "--path", empty_dir], capture_output=True, text=True, check=True)
+    payload = json.loads(proc.stdout)
+    assert payload["recommended_profile"] is None, payload
+    assert payload["technologies"] == [], payload
+    print("installed_detect_empty_ok")
+""",
+            encoding="utf-8",
+        )
+
+        proc = subprocess.run(
+            [str(python), str(detect_script), str(ekp)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        for marker in (
+            "installed_detect_symfony_ok",
+            "installed_detect_flutter_ok",
+            "installed_detect_empty_ok",
+        ):
+            if marker not in proc.stdout:
+                return 1
 
     print("Packaging smoke test passed.")
     return 0
