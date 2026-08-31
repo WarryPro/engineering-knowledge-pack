@@ -93,7 +93,7 @@ def collect_selected_units(profile, repo_root):
     High-priority concepts follow shared adapter-manifest selection.
     Decision flows are included whenever present on a profile document.
     """
-    from common.paths import get_repo_root
+    from common.paths import get_dist_path, get_repo_root
 
     root = repo_root or get_repo_root()
     knowledge_paths = list(profile.get("knowledge") or [])
@@ -104,7 +104,7 @@ def collect_selected_units(profile, repo_root):
     if ORCHESTRATOR_PATH not in knowledge_set:
         raise ValueError("Profile must include orchestrator document.")
 
-    concept_index, manifest = load_generation_indexes(root / "dist")
+    concept_index, manifest = load_generation_indexes(get_dist_path())
     get_markdown = markdown_cache_for_profile(root, knowledge_paths)
     manifest_rules = select_manifest_rules(
         manifest,

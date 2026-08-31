@@ -44,7 +44,7 @@ def generate(profile_name="cursor-core", output_dir=None, profile=None, repo_roo
     if profile is None:
         profile = load_profile_by_name(profile_name, repo_root=root)
 
-    concept_index, manifest = load_generation_indexes(root / "dist")
+    concept_index, manifest = load_generation_indexes(get_dist_path())
 
     if output_dir is None:
         output_dir = get_dist_path() / profile_name / ADAPTER_NAME
