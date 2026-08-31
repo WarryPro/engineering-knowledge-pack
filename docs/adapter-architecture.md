@@ -103,8 +103,22 @@ adapter-manifest.json                    # written by assemble
 v1 grouping:
 
 - One compact always-on `copilot-instructions.md` (orchestrator, foundation, and unscoped domains).
-- Path-specific `*.instructions.md` files only for knowledge prefixes with a clear consumer path (`testing`, `php`, `symfony`, `typescript`, `frontend`, `devops`). `ekp-core` therefore emits testing instructions, not a 1:1 Cursor `.mdc` dump.
+- Path-specific `*.instructions.md` files only for knowledge prefixes with a clear consumer path (`testing`, `php`, `symfony`, `typescript`, `frontend`, `nativescript`, `devops`). `ekp-core` therefore emits testing instructions, not a 1:1 Cursor `.mdc` dump.
 - Copilot skills are **not** generated.
+
+**PATH_GROUPS** (defined in `scripts/adapters/copilot/grouping.py`; first matching prefix wins):
+
+| Group | Knowledge prefix | Output file | `applyTo` (representative) |
+|-------|------------------|-------------|----------------------------|
+| `php` | `knowledge/php/` | `php.instructions.md` | `**/*.php` |
+| `symfony` | `knowledge/symfony/` | `symfony.instructions.md` | `**/*.php,**/*.twig,**/*.yaml,**/*.yml` |
+| `typescript` | `knowledge/typescript/` | `typescript.instructions.md` | `**/*.ts,**/*.tsx` |
+| `frontend` | `knowledge/frontend/` | `frontend.instructions.md` | `**/*.{js,jsx,ts,tsx,css,scss,html,vue}` |
+| `nativescript` | `knowledge/nativescript/` | `nativescript.instructions.md` | `**/*.xml,**/App_Resources/**,**/nativescript.config.{ts,js}` |
+| `devops` | `knowledge/devops/` | `devops.instructions.md` | Docker/workflow/yaml globs |
+| `testing` | `knowledge/testing/` | `testing.instructions.md` | test directory / spec globs |
+
+The `nativescript` group (added in `v0.13.0`) intentionally excludes broad `**/*.ts`, `**/*.js`, and `**/*.vue` globs. TypeScript knowledge continues to route via the `typescript` group. Structural generation and verify are supported; empirical Copilot runtime session behavior is not claimed.
 
 ### 5c. Antigravity adapter (AI30B pilot)
 
@@ -238,7 +252,16 @@ dist/<profile>/
     └── adapter-manifest.json
 ```
 
-The `ekp-core` pilot assembles Cursor + Copilot + Antigravity + Claude. `ekp-php` assembles Cursor + Copilot for PHP stack knowledge (`includes: [cursor-php]`). `ekp-typescript` assembles Cursor + Copilot for TypeScript stack knowledge (`includes: [cursor-typescript]`). `ekp-symfony` assembles Cursor + Copilot for Symfony stack knowledge (`includes: [cursor-symfony]`). `ekp-frontend` assembles Cursor + Copilot for frontend architecture knowledge (`includes: [cursor-frontend]`). Operational `cursor-*` profiles remain Cursor-only. Unknown adapters fail explicitly with no Cursor fallback.
+The `ekp-core` pilot assembles Cursor + Copilot + Antigravity + Claude. Six stack `ekp-*` profiles assemble Cursor + Copilot for their included `cursor-*` knowledge:
+
+- `ekp-php` (`includes: [cursor-php]`)
+- `ekp-typescript` (`includes: [cursor-typescript]`)
+- `ekp-symfony` (`includes: [cursor-symfony]`)
+- `ekp-frontend` (`includes: [cursor-frontend]`)
+- `ekp-devops` (`includes: [cursor-devops]`)
+- `ekp-nativescript` (`includes: [cursor-nativescript]`)
+
+Operational `cursor-*` profiles remain Cursor-only. Antigravity and Claude remain available only through `ekp-core`. Unknown adapters fail explicitly with no Cursor fallback.
 
 Cursor `bundle-manifest.json` stays at the profile root and is never overwritten by another adapter.
 
@@ -267,7 +290,7 @@ adapter:
       - high
 ```
 
-See `profiles/cursor-core.yaml` for the first operational Cursor profile, `profiles/ekp-php.yaml` for the first stack multi-adapter profile (Cursor + Copilot), `profiles/ekp-typescript.yaml` for the second stack multi-adapter profile (Cursor + Copilot), `profiles/ekp-symfony.yaml` for the third stack multi-adapter profile (Cursor + Copilot), `profiles/ekp-frontend.yaml` for the fourth stack multi-adapter profile (Cursor + Copilot), and `profiles/ekp-core.yaml` for the four-adapter pilot.
+See `profiles/cursor-core.yaml` for the first operational Cursor profile, `profiles/ekp-php.yaml` through `profiles/ekp-nativescript.yaml` for the six stack multi-adapter profiles (Cursor + Copilot), and `profiles/ekp-core.yaml` for the four-adapter pilot.
 
 ## Output locations
 

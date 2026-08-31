@@ -80,8 +80,8 @@ py -3 scripts/assemble/assemble.py --profile cursor-nativescript --clean --verif
 
 ## Release status
 
-- **Latest published release:** `v0.12.0`
-- **v0.13.0 (prepared on `staging`, not yet published):** Sixth stack-specific multi-adapter profile `ekp-nativescript` (`includes: [cursor-nativescript]`, `outputs: [cursor, copilot]`); adds Copilot `nativescript` PATH_GROUP; Cursor output byte-identical to `cursor-nativescript` (84 rules); Copilot emits NativeScript, TypeScript, and testing instruction groups; completes Phase 5 stack multi-adapter profiles
+- **Latest published release:** `v0.13.0`
+- **v0.13.0:** Sixth stack-specific multi-adapter profile `ekp-nativescript` (`includes: [cursor-nativescript]`, `outputs: [cursor, copilot]`); adds Copilot `nativescript` PATH_GROUP; Cursor output byte-identical to `cursor-nativescript` (84 rules); Copilot emits NativeScript, TypeScript, and testing instruction groups; completes Phase 5 stack multi-adapter profiles
 - **v0.12.0:** Fifth stack-specific multi-adapter profile `ekp-devops` (`includes: [cursor-devops]`, `outputs: [cursor, copilot]`); packaging-only Phase 5 continuation; Cursor output byte-identical to `cursor-devops` (74 rules); Copilot uses existing DevOps + inherited testing routing
 - **v0.11.0:** Frontend Knowledge Enhancement — EKP-FE09–FE16 styling/markup guide; `cursor-frontend` **83 → 92** rules; `ekp-frontend` inherits via `includes: [cursor-frontend]`; FE01–FE08 preserved; framework-neutral engineering principles only (no React/Vue/Angular/Bootstrap/Tailwind tutorials)
 - **v0.10.0:** Fourth stack-specific multi-adapter profile `ekp-frontend` (`includes: [cursor-frontend]`, `outputs: [cursor, copilot]`); packaging-only Phase 5 continuation; seven operational Cursor profiles unchanged; assembled Cursor output for those profiles unchanged vs `v0.9.0`; remaining stacks (`ekp-devops`, `ekp-nativescript`) deferred
@@ -116,7 +116,8 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3B — Architecture knowledge expansion | **Complete** | ADR practices, API design, integration patterns, database design |
 | Phase 3B.1 — Repository consolidation | **Complete** | CI, examples, v0.2.0 release |
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
-| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; `cursor-nativescript`; Flutter deferred |
+| Phase 4 — Technology knowledge | **In progress** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); Flutter deferred (next major vertical candidate) |
+| Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; Antigravity/Claude on stack profiles and `ekp-core` promotion deferred |
 
 ### Repository metrics
 
@@ -125,7 +126,8 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Knowledge guides | 23 |
 | Concepts | 212 |
 | Namespaces | 23 |
-| Profiles | 7 operational Cursor (`cursor-core` + 6 stack) + `ekp-php` + `ekp-typescript` + `ekp-symfony` + `ekp-frontend` + `ekp-devops` + `ekp-nativescript` (Cursor + Copilot) + `ekp-core` packaging pilot |
+| Profiles | 14 total — 7 operational Cursor (`cursor-core` + 6 stack) + 6 stack `ekp-*` (Cursor + Copilot) + `ekp-core` packaging pilot |
+| CI `--verify` gates | 14 profiles |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (frozen) |
