@@ -23,6 +23,7 @@ Profiles live under `profiles/` and declare **knowledge paths** plus **`outputs`
 | `cursor-frontend` | Frontend (`includes: [cursor-core]`) | yes | no | no | no |
 | `cursor-devops` | DevOps (`includes: [cursor-core]`) | yes | no | no | no |
 | `cursor-nativescript` | NativeScript (`includes: [cursor-typescript]`) | yes | no | no | no |
+| `cursor-flutter` | Flutter (`includes: [cursor-core]`) | yes | no | no | no |
 | `ekp-php` | PHP multi-adapter (`includes: [cursor-php]`) | yes | yes | no | no |
 | `ekp-typescript` | TypeScript multi-adapter (`includes: [cursor-typescript]`) | yes | yes | no | no |
 | `ekp-symfony` | Symfony multi-adapter (`includes: [cursor-symfony]`) | yes | yes | no | no |
@@ -31,7 +32,7 @@ Profiles live under `profiles/` and declare **knowledge paths** plus **`outputs`
 | `ekp-nativescript` | NativeScript multi-adapter (`includes: [cursor-nativescript]`) | yes | yes | no | no |
 | `ekp-core` | Multi-adapter **pilot** (`includes: [cursor-core]`) | yes | yes | yes | yes |
 
-Operational Cursor products include the six original `cursor-*` profiles plus `cursor-nativescript`. `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, and `ekp-nativescript` are stack-specific multi-adapter profiles (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. `ekp-frontend` packages frontend architecture and styling/markup knowledge (`frontend-architecture.md` EKP-FE01–FE08 and `frontend-styling-and-markup.md` EKP-FE09–FE16). `ekp-devops` packages existing DevOps fundamentals (EKP-DV01–DV08) via `includes: [cursor-devops]`. `ekp-nativescript` packages NativeScript architecture (EKP-NS01+) and inherited TypeScript fundamentals via `includes: [cursor-nativescript]`.
+Operational Cursor products include the six original `cursor-*` stack profiles plus `cursor-nativescript` and `cursor-flutter`. `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, and `ekp-nativescript` are stack-specific multi-adapter profiles (Cursor + Copilot). Antigravity and Claude remain available only through the `ekp-core` pilot. `ekp-frontend` packages frontend architecture and styling/markup knowledge (`frontend-architecture.md` EKP-FE01–FE08 and `frontend-styling-and-markup.md` EKP-FE09–FE16). `ekp-devops` packages existing DevOps fundamentals (EKP-DV01–DV08) via `includes: [cursor-devops]`. `ekp-nativescript` packages NativeScript architecture (EKP-NS01+) and inherited TypeScript fundamentals via `includes: [cursor-nativescript]`. `cursor-flutter` packages Flutter architecture (EKP-FL01–FL09) via `includes: [cursor-core]` only — no Copilot output.
 
 Pick:
 
@@ -42,6 +43,7 @@ Pick:
 - `ekp-frontend` if you need Cursor Rules and/or Copilot instructions for frontend architecture and styling/markup (same knowledge as `cursor-frontend`; EKP-FE01–FE16).
 - `ekp-devops` if you need Cursor Rules and/or Copilot instructions for DevOps (same knowledge as `cursor-devops`; EKP-DV01–DV08).
 - `ekp-nativescript` if you need Cursor Rules and/or Copilot instructions for NativeScript (same knowledge as `cursor-nativescript`; EKP-NS01+ with inherited TypeScript fundamentals).
+- `cursor-flutter` if you only need Cursor Rules for Flutter engineering architecture (EKP-FL01–FL09; `includes: [cursor-core]` only).
 - `ekp-core` if you need Copilot, Antigravity, and/or Claude artifacts **in addition to** the same Cursor knowledge as `cursor-core` (foundation only; no stack knowledge).
 
 `ekp-core` does not add extra knowledge beyond `cursor-core`; it only requests more adapters. `ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, and `ekp-nativescript` do not modify their included Cursor profiles; included profiles contribute knowledge paths only.
@@ -67,6 +69,7 @@ py -3 scripts/assemble/assemble.py --profile ekp-symfony --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-frontend --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-devops --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-nativescript --clean --verify
+py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 py -3 scripts/assemble/assemble.py --profile ekp-core --clean --verify
 ```
 

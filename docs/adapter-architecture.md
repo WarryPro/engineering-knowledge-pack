@@ -290,7 +290,7 @@ adapter:
       - high
 ```
 
-See `profiles/cursor-core.yaml` for the first operational Cursor profile, `profiles/ekp-php.yaml` through `profiles/ekp-nativescript.yaml` for the six stack multi-adapter profiles (Cursor + Copilot), and `profiles/ekp-core.yaml` for the four-adapter pilot.
+See `profiles/cursor-core.yaml` for the first operational Cursor profile, `profiles/cursor-flutter.yaml` for the Flutter L2 Cursor profile (`includes: [cursor-core]` only; Cursor-only), `profiles/ekp-php.yaml` through `profiles/ekp-nativescript.yaml` for the six stack multi-adapter profiles (Cursor + Copilot), and `profiles/ekp-core.yaml` for the four-adapter pilot. Flutter has no Copilot PATH_GROUP in `v0.14.0`; `ekp-flutter` remains deferred.
 
 ## Output locations
 

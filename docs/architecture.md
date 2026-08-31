@@ -45,7 +45,7 @@ See [`adapter-architecture.md`](adapter-architecture.md) for pipeline details an
 Contains engineering knowledge as markdown documents organized by domain:
 
 - **Cross-cutting domains** — `engineering/`, `architecture/`, `security/`, `testing/`, `performance/`, `devops/`, `ai/`, `database/`
-- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1), `frontend/` (L2), `nativescript/` (L2), `devops/` (L3), `flutter/` (L2 stub)
+- **Technology domains** — `php/` (L1), `symfony/` (L2), `typescript/` (L1), `frontend/` (L2), `nativescript/` (L2), `flutter/` (L2), `devops/` (L3)
 
 Technology knowledge **applies** foundation concepts; it must not redefine them. Layering:
 
@@ -55,7 +55,7 @@ L0 Foundation → L1 Language (php, typescript) → L2 Framework (symfony, front
 
 Dependency direction is downward only. Graph policy for Phase 4 is **V2**: reuse existing roles (`practice`, `architecture`, …); add explicit `graph-rules.yaml` exceptions when an L2 guide must `depends_on` an L1 guide (e.g. Symfony → PHP, Frontend → TypeScript, NativeScript → TypeScript). Do not introduce a `technology` role until exceptions become costly.
 
-**Technology namespaces:** `EKP-PH`, `EKP-SY`, `EKP-TY`, `EKP-FE`, `EKP-NS`. Do not reuse `EKP-TS` (Testing) or `EKP-SF` (Security).
+**Technology namespaces:** `EKP-PH`, `EKP-SY`, `EKP-TY`, `EKP-FE`, `EKP-NS`, `EKP-FL`. Do not reuse `EKP-TS` (Testing) or `EKP-SF` (Security).
 
 Each document follows the [knowledge document template](../templates/knowledge-document-template.md) or, for stack guides, the [technology knowledge template](../templates/technology-knowledge-document-template.md), and adheres to the [style guide](style-guide.md).
 
@@ -65,7 +65,7 @@ Knowledge documents must be:
 - Free of tool-specific syntax (no Cursor frontmatter, no Copilot directives)
 - Self-contained enough to be useful alone, with links to related documents
 
-**Current scale:** 22 published guides; 204 concepts; 23 namespaces.
+**Current scale:** 24 published guides; 221 concepts; 24 namespaces.
 
 ### `rules/` — Scaffold (not primary output)
 
@@ -88,6 +88,7 @@ Operational profiles:
 | `cursor-frontend` | `includes: [cursor-core]` + TypeScript + `frontend-architecture` |
 | `cursor-devops` | `includes: [cursor-core]` + `devops-fundamentals` |
 | `cursor-nativescript` | `includes: [cursor-typescript]` + `nativescript-architecture` (Cursor-only) |
+| `cursor-flutter` | `includes: [cursor-core]` + `flutter-architecture` (Cursor-only; no TypeScript/frontend/NativeScript inheritance) |
 | `ekp-php` | `includes: [cursor-php]`; `outputs: [cursor, copilot]` — first stack multi-adapter profile |
 | `ekp-typescript` | `includes: [cursor-typescript]`; `outputs: [cursor, copilot]` — second stack multi-adapter profile |
 | `ekp-symfony` | `includes: [cursor-symfony]`; `outputs: [cursor, copilot]` — third stack multi-adapter profile |
@@ -177,12 +178,12 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 **Operational today:**
 
 - Validator v2.3 with graph rules, namespaces, index generation, reports
-- Adapters: Cursor (all 14 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
-- Assemble pipeline with `--verify` (CI verifies all 14 profiles)
+- Adapters: Cursor (all 15 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
+- Assemble pipeline with `--verify` (CI verifies all 15 profiles)
 
 **Planned / deferred:**
 
-- Flutter technology guide and profile (deferred — next major Phase 4 vertical candidate)
+- `ekp-flutter` + Copilot Flutter PATH_GROUP (deferred — planned separately after `v0.14.0` publication)
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
 - Antigravity / Claude on stack profiles (deferred; remain `ekp-core` pilot)
 - Promote `ekp-core` from four-adapter pilot (deferred)

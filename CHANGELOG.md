@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-08-31
+
+### Added
+
+- Flutter L2 technology vertical — `knowledge/flutter/flutter-architecture.md` (EKP-FL01–FL09): engineering-decision guidance for Flutter application architecture (widget runtime, boundaries, state ownership, navigation, async/data, platform integration, project structure, dependency evaluation); not Flutter API or tutorial documentation
+- Namespace `EKP-FL` registered in `schema/concept-namespaces.json` (owner: `flutter-architecture.md`)
+- Profile `cursor-flutter` (`includes: [cursor-core]`, `outputs: [cursor]`) — eighth operational Cursor profile; 75 rules (65 inherited core + 10 additive Flutter)
+- Flutter README navigation validation (`knowledge/flutter/README.md` in validator `NAVIGATION_READMES`)
+- Assemble integration tests for `cursor-flutter` (`test_cursor_flutter_profile.py`, 10 tests)
+- CI assemble `--verify` gate for `cursor-flutter` (15th profile gate)
+- Regression count coverage for `cursor-nativescript` (84) and `cursor-flutter` (75) in adapter/profile test matrices
+
+### Architecture
+
+- `cursor-flutter` includes **`cursor-core` only** — no inheritance from TypeScript, frontend, NativeScript, or DevOps
+- Flutter is an independent L2 runtime/framework vertical; Dart language patterns live inside the Flutter guide, not as a separate L1 profile
+- Resolved knowledge paths: 7 (6 L0 core + `flutter-architecture.md`)
+
+### Validation
+
+- EKP Validator: PASS
+- Tests: 238/238 PASS (65 adapter + 102 assemble + 71 validate)
+- Profiles: 15 operational; 15/15 `--verify` PASS
+- Existing fourteen profiles: content artifacts byte-identical to `v0.13.0`; `cursor-core` 65/65 `.mdc` SHA-256 identical
+- `cursor-flutter`: 75 rules (65 core + 10 Flutter); Cursor-only — no Copilot, Antigravity, or Claude output
+
+### Compatibility
+
+- Existing fourteen operational profiles unchanged: 65 / 74 / 83 / 74 / 92 / 74 / 84 / 74 / 74 / 83 / 92 / 65 / 74 / 84 (Cursor rule counts)
+- Cursor `.mdc` content for those profiles remains byte-identical to `v0.13.0`
+- Copilot, Antigravity, and Claude outputs for existing `ekp-*` profiles unchanged
+- **`ekp-flutter` not included** — Flutter Copilot PATH_GROUP and multi-adapter packaging remain deferred (planned separately)
+- Six stack `ekp-*` profiles (`ekp-php` through `ekp-nativescript`) unchanged
+- `ekp-core` remains a four-adapter packaging pilot
+- Antigravity/Claude on stack profiles and `ekp-core` promotion remain deferred
+
 ## [0.13.0] - 2026-08-30
 
 ### Added

@@ -245,6 +245,8 @@ Generated rule counts are documented in CHANGELOG — not independently versione
 
 **Release remains human-approved:** staging → gate → CHANGELOG cut → merge `master` → annotated tag → GitHub Release.
 
+**Current release status:** Latest **published** release: `v0.13.0`. Release candidate **`v0.14.0`** (Flutter L2 / `cursor-flutter`) is **prepared on `staging`**, not yet published. `master` remains at `v0.13.0` until Phase T publication.
+
 ---
 
 ## Contributor workflow
