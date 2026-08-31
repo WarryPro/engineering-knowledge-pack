@@ -154,6 +154,8 @@ class ProfileIncludesRegressionTests(unittest.TestCase):
         "cursor-typescript": 74,
         "cursor-frontend": 92,
         "cursor-devops": 74,
+        "cursor-nativescript": 84,
+        "cursor-flutter": 75,
     }
 
     @classmethod
