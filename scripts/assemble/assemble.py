@@ -140,8 +140,16 @@ def verify_bundle(bundle_dir):
         raise AssembleError(str(exc))
 
 
-def assemble(profile_name, clean=False, verify=False, repo_root=None, registry=None):
-    # type: (str, bool, bool, Path, object) -> dict
+def assemble(
+    profile_name,
+    clean=False,
+    verify=False,
+    repo_root=None,
+    dist_dir=None,
+    bundle_root=None,
+    registry=None,
+):
+    # type: (str, bool, bool, Path, Path, Path, object) -> dict
     """
     Assemble deployable adapter bundles for a profile.
 
@@ -160,8 +168,9 @@ def assemble(profile_name, clean=False, verify=False, repo_root=None, registry=N
     if not profile_path.is_file():
         raise AssembleError("Profile not found: {}".format(profile_path))
 
-    dist_dir = root / "dist"
-    missing = verify_indexes(dist_dir)
+    indexes_dir = dist_dir or (root / "dist")
+    bundles_dir = bundle_root or indexes_dir
+    missing = verify_indexes(indexes_dir)
     if missing:
         raise AssembleError(
             "Missing required indexes in dist/: {}\n{}".format(
@@ -172,7 +181,7 @@ def assemble(profile_name, clean=False, verify=False, repo_root=None, registry=N
     profile = load_profile_by_name(profile_name, repo_root=root)
     adapter_registry = registry or build_default_registry()
     requested = resolve_requested_adapters(profile, adapter_registry)
-    bundle_dir = dist_dir / profile_name
+    bundle_dir = bundles_dir / profile_name
 
     if clean and bundle_dir.exists():
         shutil.rmtree(bundle_dir)

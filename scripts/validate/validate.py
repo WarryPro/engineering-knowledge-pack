@@ -67,10 +67,11 @@ SKIP_LINK_PREFIXES = ("http://", "https://", "mailto:", "#")
 TIERS = ("structural", "graph", "registry", "all")
 
 
-def collect_knowledge_files():
-    # type: () -> list
+def collect_knowledge_files(knowledge_dir=None):
+    # type: (Path) -> list
+    target = knowledge_dir or KNOWLEDGE_DIR
     return sorted(
-        p for p in KNOWLEDGE_DIR.rglob("*.md")
+        p for p in target.rglob("*.md")
         if p.name != "README.md" and not p.name.startswith("adr-")
     )
 
@@ -132,11 +133,12 @@ def validate_markdown_links(node):
     return errors
 
 
-def build_nodes(knowledge_files, result):
-    # type: (list, ValidationResult) -> list
+def build_nodes(knowledge_files, result, repo_root=None):
+    # type: (list, ValidationResult, Path) -> list
+    root = repo_root or REPO_ROOT
     nodes = []
     for path in knowledge_files:
-        node, errors = DocumentNode.from_path(path, REPO_ROOT)
+        node, errors = DocumentNode.from_path(path, root)
         if errors:
             result.add_errors(errors)
             continue
@@ -145,9 +147,10 @@ def build_nodes(knowledge_files, result):
     return nodes
 
 
-def load_nodes(result):
-    # type: (ValidationResult) -> list
-    return build_nodes(collect_knowledge_files(), result)
+def load_nodes(result, repo_root=None):
+    # type: (ValidationResult, Path) -> list
+    root = repo_root or REPO_ROOT
+    return build_nodes(collect_knowledge_files(root / "knowledge"), result, repo_root=root)
 
 
 def _runs_tier(tier, name):
@@ -312,14 +315,15 @@ def run_validation(
     return result.print_report(strict=strict)
 
 
-def run_generate_index(output_dir=None):
-    # type: (Path) -> int
+def run_generate_index(output_dir=None, repo_root=None):
+    # type: (Path, Path) -> int
+    root = repo_root or REPO_ROOT
     result = ValidationResult()
-    nodes = load_nodes(result)
+    nodes = load_nodes(result, repo_root=root)
     if result.errors:
         return result.print_report(strict=False)
 
-    target = output_dir or DIST_DIR
+    target = output_dir or (root / "dist")
     written = write_indexes(nodes, target)
     print("Generated indexes:")
     for key in sorted(written.keys()):

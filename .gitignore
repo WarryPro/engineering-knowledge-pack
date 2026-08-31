@@ -19,5 +19,10 @@ __pycache__/
 .venv/
 venv/
 
+# Python packaging
+build/
+*.egg-info/
+*.egg
+
 # Node (future adapter tooling)
 node_modules/
