@@ -5,6 +5,7 @@ import sys
 
 from ekp.detection.render import render_human, render_json
 from ekp.detection.service import DetectionService
+from ekp.install.service import InstallRequest, InstallService
 from ekp.paths import get_ekp_root
 from ekp.version import get_version
 
@@ -35,6 +36,30 @@ def main(argv=None):
 
     subparsers.add_parser("version", help="Show installed EKP version")
 
+    install_parser = subparsers.add_parser(
+        "install",
+        help="Install EKP Cursor rules into a consumer project",
+    )
+    install_parser.add_argument(
+        "--path",
+        default=".",
+        help="Project directory to install into (default: current directory)",
+    )
+    install_parser.add_argument(
+        "--profile",
+        help="Explicit Cursor profile to install (bypasses auto-detection)",
+    )
+    install_parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip confirmation prompts (does not bypass safety checks)",
+    )
+    install_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show installation plan without writing files",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "version":
@@ -57,6 +82,28 @@ def main(argv=None):
         else:
             print(render_human(report))
         return 0
+
+    if args.command == "install":
+        try:
+            result = InstallService().install(
+                InstallRequest(
+                    path=args.path,
+                    profile=args.profile,
+                    assume_yes=args.yes,
+                    dry_run=args.dry_run,
+                )
+            )
+        except (FileNotFoundError, NotADirectoryError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        except OSError as exc:
+            print("Installation failed: {}".format(exc), file=sys.stderr)
+            return 5
+
+        if result.message:
+            stream = sys.stderr if result.exit_code != 0 else sys.stdout
+            print(result.message, file=stream)
+        return result.exit_code
 
     parser.print_help()
     return 0

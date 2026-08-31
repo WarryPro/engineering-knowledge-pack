@@ -59,6 +59,9 @@ def main():
         if "detect" not in proc.stdout:
             print("Help missing detect command", file=sys.stderr)
             return 1
+        if "install" not in proc.stdout:
+            print("Help missing install command", file=sys.stderr)
+            return 1
 
         smoke_script = tmp_path / "smoke_assemble.py"
         smoke_script.write_text(
@@ -178,6 +181,135 @@ with tempfile.TemporaryDirectory() as empty_dir:
             "installed_detect_symfony_ok",
             "installed_detect_flutter_ok",
             "installed_detect_empty_ok",
+        ):
+            if marker not in proc.stdout:
+                return 1
+
+        install_script = tmp_path / "smoke_install.py"
+        install_script.write_text(
+            """
+import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
+
+ekp = sys.argv[1]
+
+def write_symfony(root: Path):
+    root.joinpath("composer.json").write_text(
+        '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
+        encoding="utf-8",
+    )
+    root.joinpath("symfony.lock").write_text("{}", encoding="utf-8")
+    root.joinpath("config").mkdir(exist_ok=True)
+    root.joinpath("config/bundles.php").write_text("<?php", encoding="utf-8")
+
+def write_flutter(root: Path):
+    root.joinpath("lib").mkdir(exist_ok=True)
+    root.joinpath("lib/main.dart").write_text("void main() {}", encoding="utf-8")
+    root.joinpath("pubspec.yaml").write_text(
+        "name: demo\\nflutter:\\n  sdk: flutter\\n",
+        encoding="utf-8",
+    )
+
+def count_rules(root: Path) -> int:
+    rules = root / ".cursor" / "rules"
+    return len(list(rules.glob("*.mdc"))) if rules.is_dir() else 0
+
+with tempfile.TemporaryDirectory() as symfony_dir:
+    symfony_root = Path(symfony_dir)
+    write_symfony(symfony_root)
+    proc = subprocess.run([ekp, "install", "--yes", "--path", str(symfony_root)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    manifest = json.loads((symfony_root / ".ekp" / "install.json").read_text(encoding="utf-8"))
+    assert manifest["profile"] == "cursor-symfony", manifest
+    assert count_rules(symfony_root) == 83, count_rules(symfony_root)
+    assert len(manifest["managed_files"]) == 83, manifest
+    proc = subprocess.run([ekp, "install", "--yes", "--path", str(symfony_root)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    assert count_rules(symfony_root) == 83
+    print("installed_install_symfony_ok")
+
+with tempfile.TemporaryDirectory() as flutter_dir:
+    flutter_root = Path(flutter_dir)
+    write_flutter(flutter_root)
+    proc = subprocess.run([ekp, "install", "--yes", "--path", str(flutter_root)], capture_output=True, text=True)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    manifest = json.loads((flutter_root / ".ekp" / "install.json").read_text(encoding="utf-8"))
+    assert manifest["profile"] == "cursor-flutter", manifest
+    assert count_rules(flutter_root) == 75, count_rules(flutter_root)
+    assert len(manifest["managed_files"]) == 75, manifest
+    assert not (flutter_root / ".github").exists()
+    print("installed_install_flutter_ok")
+
+with tempfile.TemporaryDirectory() as empty_dir:
+    empty_root = Path(empty_dir)
+    proc = subprocess.run(
+        [ekp, "install", "--yes", "--profile", "cursor-core", "--path", empty_dir],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    manifest = json.loads((empty_root / ".ekp" / "install.json").read_text(encoding="utf-8"))
+    assert len(manifest["managed_files"]) == 65, manifest
+    proc = subprocess.run([ekp, "install", "--yes", "--path", empty_dir], capture_output=True, text=True)
+    assert proc.returncode == 2, proc.stdout
+    assert not (empty_root / ".cursor").joinpath("rules").exists() or count_rules(empty_root) == 65
+    print("installed_install_empty_ok")
+
+with tempfile.TemporaryDirectory() as collision_dir:
+    collision_root = Path(collision_dir)
+    write_symfony(collision_root)
+    assembly_probe = subprocess.run(
+        [ekp, "install", "--dry-run", "--yes", "--path", str(collision_root)],
+        capture_output=True,
+        text=True,
+    )
+    assert assembly_probe.returncode == 0, assembly_probe.stderr
+    # Placeholder collision file using a known EKP-style name from dry-run output
+    rules_dir = collision_root / ".cursor" / "rules"
+    rules_dir.mkdir(parents=True, exist_ok=True)
+    rules_dir.joinpath("00-ekp-orchestrator.mdc").write_text("user", encoding="utf-8")
+    proc = subprocess.run([ekp, "install", "--yes", "--path", str(collision_root)], capture_output=True, text=True)
+    assert proc.returncode == 3, proc.stdout
+    assert not (collision_root / ".ekp" / "install.json").exists()
+    assert rules_dir.joinpath("00-ekp-orchestrator.mdc").read_text(encoding="utf-8") == "user"
+    print("installed_install_collision_ok")
+
+with tempfile.TemporaryDirectory() as dry_dir:
+    dry_root = Path(dry_dir)
+    before = list(dry_root.rglob("*"))
+    proc = subprocess.run(
+        [ekp, "install", "--profile", "cursor-flutter", "--dry-run", "--path", dry_dir],
+        capture_output=True,
+        text=True,
+    )
+    assert proc.returncode == 0, proc.stderr
+    after = list(dry_root.rglob("*"))
+    assert before == after, (before, after)
+    print("installed_install_dry_run_ok")
+""",
+            encoding="utf-8",
+        )
+
+        proc = subprocess.run(
+            [str(python), str(install_script), str(ekp)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        for marker in (
+            "installed_install_symfony_ok",
+            "installed_install_flutter_ok",
+            "installed_install_empty_ok",
+            "installed_install_collision_ok",
+            "installed_install_dry_run_ok",
         ):
             if marker not in proc.stdout:
                 return 1

@@ -19,6 +19,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("ekp", buffer.getvalue())
         self.assertIn("version", buffer.getvalue())
         self.assertIn("detect", buffer.getvalue())
+        self.assertIn("install", buffer.getvalue())
 
     def test_version(self):
         buffer = io.StringIO()
