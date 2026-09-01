@@ -186,9 +186,8 @@ class InstallDeployTests(unittest.TestCase):
             symfony_fixture(project)
             outside = root / "outside"
             outside.mkdir()
-            rules = project / ".cursor"
-            rules.mkdir()
-            rules.symlink_to(outside, target_is_directory=True)
+            cursor_path = project / ".cursor"
+            cursor_path.symlink_to(outside, target_is_directory=True)
 
             assembly = self._assemble("cursor-symfony", root / "asm")
             plan = self.deploy.build_plan(
