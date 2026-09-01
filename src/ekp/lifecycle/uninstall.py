@@ -237,6 +237,9 @@ def build_uninstall_plan(
             continue
         directories_to_remove.append(normalized)
 
+    store = ManifestStore(project_root)
+    manifest_sha256 = store.fingerprint() if store.exists() else None
+
     return LifecyclePlan(
         project_root=project_root,
         profile=manifest.profile,
@@ -247,5 +250,6 @@ def build_uninstall_plan(
         operations=operations,
         conflicts=conflicts,
         directories_to_remove=sorted(set(directories_to_remove)),
+        manifest_sha256=manifest_sha256,
         dry_run=dry_run,
     )

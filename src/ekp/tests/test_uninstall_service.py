@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import tempfile
 import unittest
 from pathlib import Path
@@ -12,6 +13,7 @@ from unittest import mock
 from ekp.assembly import AssemblyRequest, AssemblyService
 from ekp.cli import main
 from ekp.install.cursor_deploy import CursorDeployService, sha256_file
+from ekp.install.errors import InstallConflictError, InstallFilesystemError
 from ekp.install.manifest import InstallManifest, ManagedFile, ManifestStore
 from ekp.install.service import InstallRequest, InstallService
 from ekp.lifecycle.apply import LifecycleConflictError, LifecycleRollbackError, TransactionApplier
@@ -287,6 +289,7 @@ class UninstallServiceTests(unittest.TestCase):
                 created_directories=["../outside"],
             )
 
+            ManifestStore(project).save(manifest)
             plan = build_uninstall_plan(project, manifest)
             self.assertTrue(plan.has_conflicts)
             self.assertTrue(managed_path.exists())
@@ -317,6 +320,156 @@ class TransactionApplierTests(unittest.TestCase):
         self.deploy.apply(install_plan)
         manifest = ManifestStore(project).load()
         return build_uninstall_plan(project, manifest)
+
+    def test_post_backup_target_mutation_rolls_back(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            plan = self._plan_for_project(project)
+            delete_ops = [
+                op for op in plan.operations if op.kind == LifecycleOpKind.DELETE
+            ]
+            self.assertGreaterEqual(len(delete_ops), 2)
+            first_rel = delete_ops[0].relative_path
+            second_rel = delete_ops[1].relative_path
+            first_path = project / Path(first_rel.replace("/", os.sep))
+            second_path = project / Path(second_rel.replace("/", os.sep))
+            original_copy2 = shutil.copy2
+
+            def copy2_and_mutate(src, dst):
+                original_copy2(src, dst)
+                if src == second_path:
+                    src.write_text("mutated after backup\n", encoding="utf-8")
+
+            with mock.patch("ekp.lifecycle.apply.shutil.copy2", side_effect=copy2_and_mutate):
+                with self.assertRaises(LifecycleConflictError):
+                    self.applier.apply_uninstall(plan)
+
+            self.assertTrue(ManifestStore(project).exists())
+            self.assertTrue(first_path.exists())
+            self.assertTrue(second_path.exists())
+            self.assertEqual(
+                second_path.read_text(encoding="utf-8"), "mutated after backup\n"
+            )
+
+    def test_manifest_changed_after_plan_rolls_back(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            plan = self._plan_for_project(project)
+            manifest_path = project / ".ekp" / "install.json"
+            original_bytes = manifest_path.read_bytes()
+            manifest_path.write_bytes(original_bytes + b"\n")
+
+            with self.assertRaises(InstallConflictError):
+                self.applier.apply_uninstall(plan)
+
+            self.assertTrue(manifest_path.exists())
+            self.assertEqual(manifest_path.read_bytes(), original_bytes + b"\n")
+            self.assertGreater(
+                len(list((project / ".cursor" / "rules").glob("*.mdc"))), 0
+            )
+
+    @unittest.skipUnless(os.name != "nt", "Symlink test skipped on Windows")
+    def test_manifest_symlink_replacement_blocks_delete(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            plan = self._plan_for_project(project)
+            manifest_path = project / ".ekp" / "install.json"
+            outside = root / "outside-install.json"
+            outside.write_bytes(manifest_path.read_bytes())
+            manifest_path.unlink()
+            manifest_path.symlink_to(outside)
+
+            with self.assertRaises(InstallConflictError):
+                self.applier.apply_uninstall(plan)
+
+            self.assertTrue(manifest_path.is_symlink())
+            self.assertGreater(
+                len(list((project / ".cursor" / "rules").glob("*.mdc"))), 0
+            )
+
+    def test_rollback_collision_preserves_replacement(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            plan = self._plan_for_project(project)
+            delete_ops = [
+                op for op in plan.operations if op.kind == LifecycleOpKind.DELETE
+            ]
+            self.assertGreaterEqual(len(delete_ops), 2)
+            first_rel = delete_ops[0].relative_path
+            second_rel = delete_ops[1].relative_path
+            first_path = project / Path(first_rel.replace("/", os.sep))
+            original_apply_delete = TransactionApplier._apply_delete
+
+            def patched_apply_delete(self_, project_root, operation, backup_root, deleted):
+                original_apply_delete(
+                    self_, project_root, operation, backup_root, deleted
+                )
+                if operation.relative_path == first_rel:
+                    first_path.write_text("user replacement\n", encoding="utf-8")
+                if operation.relative_path == second_rel:
+                    raise OSError("simulated delete failure")
+
+            with mock.patch.object(TransactionApplier, "_apply_delete", patched_apply_delete):
+                with self.assertRaises(LifecycleRollbackError) as ctx:
+                    self.applier.apply_uninstall(plan)
+
+            self.assertEqual(first_path.read_text(encoding="utf-8"), "user replacement\n")
+            self.assertIn("rollback incomplete", str(ctx.exception).lower())
+            self.assertTrue(ManifestStore(project).exists())
+
+    def test_rollback_incomplete_preserves_backup_workspace(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            plan = self._plan_for_project(project)
+            delete_ops = [
+                op for op in plan.operations if op.kind == LifecycleOpKind.DELETE
+            ]
+            failing_rel = delete_ops[0].relative_path
+            original_apply_delete = TransactionApplier._apply_delete
+
+            def patched_apply_delete(self_, project_root, operation, backup_root, deleted):
+                if operation.relative_path == failing_rel:
+                    raise OSError("simulated delete failure")
+                return original_apply_delete(
+                    self_, project_root, operation, backup_root, deleted
+                )
+
+            with mock.patch.object(TransactionApplier, "_apply_delete", patched_apply_delete):
+                with mock.patch.object(
+                    TransactionApplier,
+                    "_rollback_deleted",
+                    return_value=False,
+                ):
+                    with self.assertRaises(LifecycleRollbackError) as ctx:
+                        self.applier.apply_uninstall(plan)
+
+            message = str(ctx.exception)
+            self.assertIn("Recovery data preserved at:", message)
+            backup_path = Path(message.rsplit(":", 1)[-1].strip().split(" ", 1)[0])
+            self.assertTrue(backup_path.exists())
+            self.assertTrue(backup_path.name.startswith("ekp-lifecycle-"))
+
+    def test_manifest_identity_conflict_exit_3(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            plan = self._plan_for_project(project)
+            manifest_path = project / ".ekp" / "install.json"
+            manifest_path.write_text(
+                manifest_path.read_text(encoding="utf-8") + "\n",
+                encoding="utf-8",
+            )
+
+            with self.assertRaises(InstallConflictError) as ctx:
+                self.applier.apply_uninstall(plan)
+            self.assertEqual(ctx.exception.exit_code, 3)
+            self.assertTrue(manifest_path.exists())
 
     def test_toctou_revalidation_rolls_back(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -409,8 +562,9 @@ class TransactionApplierTests(unittest.TestCase):
                 "ekp.lifecycle.apply.ManifestStore.delete",
                 side_effect=OSError("manifest delete failed"),
             ):
-                with self.assertRaises(Exception):
+                with self.assertRaises(InstallFilesystemError) as ctx:
                     self.applier.apply_uninstall(plan)
+            self.assertEqual(ctx.exception.exit_code, 5)
 
             self.assertTrue(ManifestStore(project).exists())
             self.assertEqual(
