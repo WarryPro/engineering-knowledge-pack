@@ -263,7 +263,7 @@ Generated rule counts are documented in CHANGELOG — not independently versione
 
 **Release remains human-approved:** staging → gate → CHANGELOG cut → merge `master` → annotated tag → GitHub Release.
 
-**Current release status:** Latest **published** release: `v0.14.0`. `v0.15.0` is prepared on `staging` (Consumer CLI) and is **not yet published**. `master` remains at the `v0.14.0` release commit. `staging` is the post-`v0.14.0` development baseline and may advance ahead of `master` until the next release gate.
+**Current release status:** Latest **published** release: `v0.15.0` (Consumer CLI). `master` is the immutable `v0.15.0` release baseline. `staging` is the post-`v0.15.0` development baseline and may advance ahead of `master` until the next release gate.
 
 ---
 

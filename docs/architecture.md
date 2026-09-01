@@ -204,7 +204,7 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 - Validator v2.3 with graph rules, namespaces, index generation, reports
 - Adapters: Cursor (all 15 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
 - Assemble pipeline with `--verify` (CI verifies all 15 profiles)
-- Consumer CLI (`v0.15.0` on `staging`) — Cursor-only install, detect, status for application projects
+- Consumer CLI (published in `v0.15.0`) — Cursor-only install, detect, status for application projects
 
 **Planned / deferred:**
 

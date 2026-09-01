@@ -23,11 +23,11 @@ Related:
 
 ### Install
 
-Once `v0.15.0` is published:
-
 ```bash
 pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0
 ```
+
+This command pins the published `v0.15.0` release tag for reproducible installation. Do not use `@main`, `@master`, or `@staging` for consumer installs.
 
 ### Deploy
 

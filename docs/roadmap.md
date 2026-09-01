@@ -14,7 +14,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); `ekp-flutter` deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot stack profiles complete (`ekp-php` through `ekp-nativescript` in `v0.6.0`–`v0.13.0`); Antigravity + Claude in `v0.4.0`/`v0.5.0` (`ekp-core` pilot only); `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Prepared (`v0.15.0` on `staging`, not yet published)** | Installable Python package; `ekp` CLI; project detection; profile resolution; safe Cursor installation; ownership manifest; status; Windows + Ubuntu validation |
+| Phase 6 — Consumer productization | **Initial milestone published (`v0.15.0`)** | Installable Python package; `ekp` CLI; project detection; profile resolution; safe Cursor installation; ownership manifest; status; Windows + Ubuntu validation; lifecycle work deferred |
 
 ---
 
@@ -271,11 +271,11 @@ Extend the adapter layer to additional AI assistant platforms.
 
 ## Phase 6: Consumer productization
 
-**Status:** Prepared on `staging` (`v0.15.0`, not yet published)
+**Status:** Initial milestone published in `v0.15.0` (2026-09-01)
 
 Deliver consumer-facing installation and deployment for Cursor without requiring a repository checkout.
 
-**Deliverables (complete on `staging`):**
+**Deliverables (published in `v0.15.0`):**
 
 - [x] Installable Python package (`engineering-knowledge-pack`)
 - [x] Consumer CLI (`ekp version`, `ekp detect`, `ekp install`, `ekp status`)
@@ -292,7 +292,7 @@ Deliver consumer-facing installation and deployment for Cursor without requiring
 - [ ] Automatic multi-profile / monorepo composition
 - [ ] Copilot, Antigravity, and Claude consumer installation
 
-**Exit criteria (met on `staging`):** A developer can install the package, detect or select a Cursor profile, install rules safely into a project, and inspect installation health — without cloning EKP or running the manual assemble pipeline.
+**Exit criteria (met in `v0.15.0`):** A developer can install the package, detect or select a Cursor profile, install rules safely into a project, and inspect installation health — without cloning EKP or running the manual assemble pipeline.
 
 ---
 
