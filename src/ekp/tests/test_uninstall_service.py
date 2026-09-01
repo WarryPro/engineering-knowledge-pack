@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -14,7 +15,7 @@ from ekp.assembly import AssemblyRequest, AssemblyService
 from ekp.cli import main
 from ekp.install.cursor_deploy import CursorDeployService, sha256_file
 from ekp.install.errors import InstallConflictError, InstallFilesystemError
-from ekp.install.manifest import InstallManifest, ManagedFile, ManifestStore
+from ekp.install.manifest import InstallManifest, ManagedFile, ManifestSnapshot, ManifestStore
 from ekp.install.service import InstallRequest, InstallService
 from ekp.lifecycle.apply import LifecycleConflictError, LifecycleRollbackError, TransactionApplier
 from ekp.lifecycle.plan import LifecycleOpKind
@@ -289,10 +290,124 @@ class UninstallServiceTests(unittest.TestCase):
                 created_directories=["../outside"],
             )
 
-            ManifestStore(project).save(manifest)
             plan = build_uninstall_plan(project, manifest)
             self.assertTrue(plan.has_conflicts)
             self.assertTrue(managed_path.exists())
+
+
+class ManifestSnapshotTests(unittest.TestCase):
+    def setUp(self):
+        self.deploy = CursorDeployService()
+        self.assembly = AssemblyService()
+        self.resource_root = get_ekp_root()
+
+    def _install_symfony(self, project: Path):
+        symfony_fixture(project)
+        assembly = self.assembly.assemble(
+            AssemblyRequest(
+                profile="cursor-symfony",
+                verify=True,
+                resource_root=self.resource_root,
+                workspace_dir=project.parent / "asm-workspace",
+                output_root=project.parent / "asm-output",
+            )
+        )
+        plan = self.deploy.build_plan(
+            project_root=project,
+            bundle_path=assembly.bundle_path,
+            profile="cursor-symfony",
+            ekp_version="0.15.0",
+        )
+        self.deploy.apply(plan)
+        manifest = ManifestStore(project).load()
+        manifest.ekp_version = "0.15.0"
+        ManifestStore(project).save(manifest)
+
+    def test_snapshot_race_preserves_replacement_manifest(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            self._install_symfony(project)
+            manifest_path = project / ".ekp" / "install.json"
+            snapshot = ManifestStore(project).load_with_fingerprint()
+            plan = build_uninstall_plan(
+                project,
+                snapshot.manifest,
+                manifest_sha256=snapshot.sha256,
+            )
+            managed_before = len(list((project / ".cursor" / "rules").glob("*.mdc")))
+            self.assertGreater(managed_before, 0)
+
+            manifest_b = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest_b["ekp_version"] = "9.9.9-replaced"
+            manifest_path.write_text(json.dumps(manifest_b, indent=2) + "\n", encoding="utf-8")
+            self.assertNotEqual(
+                hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+                snapshot.sha256,
+            )
+
+            with self.assertRaises(InstallConflictError) as ctx:
+                TransactionApplier().apply_uninstall(plan)
+            self.assertEqual(ctx.exception.exit_code, 3)
+            self.assertTrue(manifest_path.exists())
+            self.assertIn("9.9.9-replaced", manifest_path.read_text(encoding="utf-8"))
+            self.assertEqual(
+                len(list((project / ".cursor" / "rules").glob("*.mdc"))),
+                managed_before,
+            )
+
+    def test_uninstall_planning_uses_single_manifest_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            self._install_symfony(project)
+            manifest_path = project / ".ekp" / "install.json"
+            manifest_a = manifest_path.read_bytes()
+            manifest_b = manifest_a + b"\n"
+            read_count = {"n": 0}
+            original_read_bytes = Path.read_bytes
+
+            def counting_read_bytes(self):
+                if self.resolve() == manifest_path.resolve():
+                    read_count["n"] += 1
+                    if read_count["n"] == 1:
+                        return manifest_a
+                    return manifest_b
+                return original_read_bytes(self)
+
+            with mock.patch.object(Path, "read_bytes", counting_read_bytes):
+                result = UninstallService().uninstall(
+                    UninstallRequest(path=str(project), dry_run=True)
+                )
+
+            self.assertEqual(read_count["n"], 1)
+            self.assertEqual(result.exit_code, 0)
+
+    def test_snapshot_binds_parse_and_fingerprint(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            self._install_symfony(project)
+            manifest_path = project / ".ekp" / "install.json"
+            manifest_a = manifest_path.read_bytes()
+            manifest_b = manifest_a + b"\n"
+            read_count = {"n": 0}
+            original_read_bytes = Path.read_bytes
+
+            def alternating_read_bytes(self):
+                if self.resolve() == manifest_path.resolve():
+                    read_count["n"] += 1
+                    if read_count["n"] == 1:
+                        return manifest_a
+                    return manifest_b
+                return original_read_bytes(self)
+
+            with mock.patch.object(Path, "read_bytes", alternating_read_bytes):
+                snapshot = ManifestStore(project).load_with_fingerprint()
+
+            self.assertEqual(read_count["n"], 1)
+            self.assertEqual(snapshot.sha256, hashlib.sha256(manifest_a).hexdigest())
+            self.assertEqual(snapshot.manifest.ekp_version, "0.15.0")
 
 
 class TransactionApplierTests(unittest.TestCase):
@@ -318,8 +433,12 @@ class TransactionApplierTests(unittest.TestCase):
             ekp_version="0.15.0",
         )
         self.deploy.apply(install_plan)
-        manifest = ManifestStore(project).load()
-        return build_uninstall_plan(project, manifest)
+        snapshot = ManifestStore(project).load_with_fingerprint()
+        return build_uninstall_plan(
+            project,
+            snapshot.manifest,
+            manifest_sha256=snapshot.sha256,
+        )
 
     def test_post_backup_target_mutation_rolls_back(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -585,7 +704,12 @@ class TransactionApplierTests(unittest.TestCase):
             target.unlink()
             target.symlink_to(outside)
 
-            replan = build_uninstall_plan(project, ManifestStore(project).load())
+            replan_snapshot = ManifestStore(project).load_with_fingerprint()
+            replan = build_uninstall_plan(
+                project,
+                replan_snapshot.manifest,
+                manifest_sha256=replan_snapshot.sha256,
+            )
             self.assertTrue(replan.has_conflicts)
 
             result = UninstallService().uninstall(
@@ -607,7 +731,12 @@ class TransactionApplierTests(unittest.TestCase):
             cursor.rename(outside / "cursor-real")
             (project / ".cursor").symlink_to(outside / "cursor-real", target_is_directory=True)
 
-            replan = build_uninstall_plan(project, ManifestStore(project).load())
+            replan_snapshot = ManifestStore(project).load_with_fingerprint()
+            replan = build_uninstall_plan(
+                project,
+                replan_snapshot.manifest,
+                manifest_sha256=replan_snapshot.sha256,
+            )
             self.assertTrue(replan.has_conflicts)
 
             result = UninstallService().uninstall(

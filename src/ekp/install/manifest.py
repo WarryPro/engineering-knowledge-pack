@@ -110,6 +110,41 @@ class InstallManifest:
         )
 
 
+@dataclass(frozen=True)
+class ManifestSnapshot:
+    """Parsed manifest and fingerprint from one exact byte read."""
+
+    manifest: InstallManifest
+    sha256: str
+
+
+def _sha256_bytes(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _parse_manifest_bytes(raw: bytes) -> InstallManifest:
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except json.JSONDecodeError as exc:
+        raise InstallConflictError(
+            "Existing install manifest is not valid JSON: {}".format(MANIFEST_RELATIVE)
+        ) from exc
+
+    if not isinstance(payload, dict):
+        raise InstallConflictError(
+            "Existing install manifest is not a valid EKP ownership record."
+        )
+
+    try:
+        return InstallManifest.from_dict(payload)
+    except InstallConflictError:
+        raise
+    except (TypeError, ValueError, KeyError) as exc:
+        raise InstallConflictError(
+            "Existing install manifest is not a valid EKP ownership record."
+        ) from exc
+
+
 class ManifestStore:
     """Load and atomically persist install manifests."""
 
@@ -120,35 +155,37 @@ class ManifestStore:
     def exists(self) -> bool:
         return self.manifest_path.is_file()
 
-    def load(self) -> Optional[InstallManifest]:
-        if not self.exists():
-            return None
-
+    def _reject_symlinked_manifest(self) -> None:
         if self.manifest_path.is_symlink():
             raise InstallConflictError(
                 "Refusing to use symlinked ownership manifest: {}".format(MANIFEST_RELATIVE)
             )
 
-        try:
-            payload = json.loads(self.manifest_path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            raise InstallConflictError(
-                "Existing install manifest is not valid JSON: {}".format(MANIFEST_RELATIVE)
-            ) from exc
+    def _read_manifest_bytes(self, *, check_boundary: bool) -> bytes:
+        self._reject_symlinked_manifest()
+        if check_boundary:
+            boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
+            if boundary:
+                raise InstallConflictError(boundary)
+        return self.manifest_path.read_bytes()
 
-        if not isinstance(payload, dict):
-            raise InstallConflictError(
-                "Existing install manifest is not a valid EKP ownership record."
-            )
+    def load(self) -> Optional[InstallManifest]:
+        if not self.exists():
+            return None
 
-        try:
-            return InstallManifest.from_dict(payload)
-        except InstallConflictError:
-            raise
-        except (TypeError, ValueError, KeyError) as exc:
-            raise InstallConflictError(
-                "Existing install manifest is not a valid EKP ownership record."
-            ) from exc
+        raw = self._read_manifest_bytes(check_boundary=False)
+        return _parse_manifest_bytes(raw)
+
+    def load_with_fingerprint(self) -> Optional[ManifestSnapshot]:
+        """Load manifest and SHA-256 fingerprint from one exact byte read."""
+        if not self.exists():
+            return None
+
+        raw = self._read_manifest_bytes(check_boundary=True)
+        return ManifestSnapshot(
+            manifest=_parse_manifest_bytes(raw),
+            sha256=_sha256_bytes(raw),
+        )
 
     def save(self, manifest: InstallManifest) -> None:
         boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
@@ -173,30 +210,6 @@ class ManifestStore:
             if temp_path.exists():
                 temp_path.unlink(missing_ok=True)
 
-    def fingerprint(self) -> str:
-        """Return SHA-256 of the exact on-disk ownership manifest bytes."""
-        if not self.exists():
-            raise InstallConflictError(
-                "Ownership manifest is not installed: {}".format(MANIFEST_RELATIVE)
-            )
-
-        if self.manifest_path.is_symlink():
-            raise InstallConflictError(
-                "Refusing to fingerprint symlinked ownership manifest: {}".format(
-                    MANIFEST_RELATIVE
-                )
-            )
-
-        boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
-        if boundary:
-            raise InstallConflictError(boundary)
-
-        digest = hashlib.sha256()
-        with self.manifest_path.open("rb") as handle:
-            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-                digest.update(chunk)
-        return digest.hexdigest()
-
     def delete(self, expected_sha256: Optional[str] = None) -> None:
         """Remove the ownership manifest after managed files are deleted."""
         if self.manifest_path.is_symlink():
@@ -211,7 +224,7 @@ class ManifestStore:
             raise InstallConflictError(boundary)
 
         if expected_sha256 is not None:
-            current_sha256 = self.fingerprint()
+            current_sha256 = _sha256_bytes(self.manifest_path.read_bytes())
             if current_sha256 != expected_sha256:
                 raise InstallConflictError(
                     "Ownership manifest changed before uninstall could complete."
