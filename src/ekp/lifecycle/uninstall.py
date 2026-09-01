@@ -79,19 +79,26 @@ class UninstallService:
                 message="EKP is not installed in this project.",
             )
 
-        manifest = manifest_store.load()
-        if manifest is None:
+        snapshot = manifest_store.load_with_fingerprint()
+        if snapshot is None:
             return UninstallResult(
                 exit_code=0,
                 message="EKP is not installed in this project.",
             )
+
+        manifest = snapshot.manifest
 
         try:
             validate_lifecycle_manifest(manifest)
         except InstallConflictError as exc:
             return UninstallResult(exit_code=exc.exit_code, message=exc.message)
 
-        plan = build_uninstall_plan(project_root, manifest, dry_run=request.dry_run)
+        plan = build_uninstall_plan(
+            project_root,
+            manifest,
+            manifest_sha256=snapshot.sha256,
+            dry_run=request.dry_run,
+        )
 
         if plan.has_conflicts:
             return UninstallResult(
@@ -140,6 +147,7 @@ def build_uninstall_plan(
     project_root: Path,
     manifest: InstallManifest,
     *,
+    manifest_sha256: Optional[str] = None,
     dry_run: bool = False,
 ) -> LifecyclePlan:
     project_root = project_root.resolve()
@@ -236,9 +244,6 @@ def build_uninstall_plan(
             conflicts.append("Unsafe recorded directory in manifest: {}".format(relative))
             continue
         directories_to_remove.append(normalized)
-
-    store = ManifestStore(project_root)
-    manifest_sha256 = store.fingerprint() if store.exists() else None
 
     return LifecyclePlan(
         project_root=project_root,
