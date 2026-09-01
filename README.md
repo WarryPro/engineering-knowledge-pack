@@ -201,7 +201,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Prepared (`v0.15.0` on `staging`)** | Installable Python package; `ekp` CLI; project detection; profile resolution; safe Cursor installation; ownership manifest; status; Windows + Ubuntu CI; 83 Consumer CLI tests |
+| Phase 6 — Consumer productization | **Prepared (`v0.15.0` on `staging`)** | Installable Python package; `ekp` CLI; project detection; profile resolution; safe Cursor installation; ownership manifest; status; Windows + Ubuntu CI; 91 Consumer CLI tests |
 
 ### Repository metrics
 
@@ -212,7 +212,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Namespaces | 24 |
 | Profiles | 15 total — 8 operational Cursor (`cursor-core` + 7 stack) + 6 stack `ekp-*` (Cursor + Copilot) + `ekp-core` packaging pilot |
 | CI `--verify` gates | 15 profiles |
-| Consumer CLI tests | 83 (Windows + Ubuntu CI) |
+| Consumer CLI tests | 91 (Windows + Ubuntu CI) |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (frozen) |

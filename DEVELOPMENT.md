@@ -74,7 +74,7 @@ py -3 -m pip install -e .
 py -3 -m unittest discover -s src/ekp/tests -v
 ```
 
-On Windows, two Unix symlink safety tests are expected to skip. Ubuntu runs all 83 tests.
+On Windows, two Unix symlink safety tests are expected to skip. Ubuntu runs all 91 tests.
 
 ### 4c. Package build and packaging smoke
 

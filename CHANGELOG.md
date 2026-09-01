@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Validation
 
 - Historical EKP suite: 238/238 PASS (65 adapter + 102 assemble + 71 validate)
-- Consumer CLI suite: 83 tests; Windows CI: 81 passed, 2 expected Unix symlink skips; Ubuntu CI: 83/83 PASS, 0 skipped
+- Consumer CLI suite: 91 tests; Windows CI: 89 passed, 2 expected Unix symlink skips; Ubuntu CI: 91/91 PASS, 0 skipped
 - 15/15 profile `--verify` gates PASS with unchanged rule counts
 - Cross-platform CI: Windows + Ubuntu Consumer CLI workflow; installed-wheel smoke on both platforms
 - Unix external-symlink safety tests (`test_symlink_target_rejected`, `test_symlink_reinstall_rejected`) execute and pass on Ubuntu

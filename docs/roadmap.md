@@ -282,7 +282,7 @@ Deliver consumer-facing installation and deployment for Cursor without requiring
 - [x] Project-local technology detection and profile resolution
 - [x] Safe Cursor installation with `.ekp/install.json` ownership manifest
 - [x] Read-only `ekp status`
-- [x] Windows + Ubuntu CI and installed-wheel smoke validation (83 Consumer CLI tests)
+- [x] Windows + Ubuntu CI and installed-wheel smoke validation (91 Consumer CLI tests)
 
 **Deferred lifecycle:**
 
