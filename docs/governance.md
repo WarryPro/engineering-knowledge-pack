@@ -163,6 +163,24 @@ Generated artifact (dist/<profile>/ — gitignored)
 
 **Prohibited in knowledge:** Cursor `alwaysApply`, Copilot directives, tool-specific globs. Those belong in adapters/generated output only.
 
+### Consumer deployment ownership (`v0.15.0`)
+
+The Consumer CLI adds a deployment layer **after** adapter generation:
+
+```
+knowledge → profile → adapter → generated bundle → Consumer CLI → consumer project
+```
+
+| Artifact | Canonical? | Notes |
+|----------|------------|-------|
+| `knowledge/` | **Yes** | Source of truth |
+| `dist/<profile>/` (manual assemble) | Derived | Regenerated; not committed |
+| `.cursor/rules/` in a consumer project | Derived | Deployed output; not canonical knowledge |
+| `.ekp/install.json` | Derived | Ownership manifest for Consumer CLI installs only |
+
+- Consumer CLI-managed files are tracked in `.ekp/install.json`; manually copied files are not automatically owned.
+- Manifest ownership does not make `.cursor/rules/` canonical — it records which deployed files EKP may manage.
+
 **Copilot PATH_GROUPS (v0.13.0):** The `nativescript` group routes `knowledge/nativescript/` to `nativescript.instructions.md` with `applyTo: "**/*.xml,**/App_Resources/**,**/nativescript.config.{ts,js}"`. Broad `**/*.ts`, `**/*.js`, or `**/*.vue` globs are intentionally excluded from the NativeScript group; TypeScript knowledge continues to route via the existing `typescript` PATH_GROUP. PATH_GROUPS order and filenames are part of the Copilot adapter contract (`scripts/adapters/copilot/grouping.py`).
 
 ---
@@ -245,7 +263,7 @@ Generated rule counts are documented in CHANGELOG — not independently versione
 
 **Release remains human-approved:** staging → gate → CHANGELOG cut → merge `master` → annotated tag → GitHub Release.
 
-**Current release status:** Latest **published** release: `v0.14.0`. `master` remains at the `v0.14.0` release commit. `staging` is the post-`v0.14.0` development baseline and may advance ahead of `master` until the next release gate.
+**Current release status:** Latest **published** release: `v0.14.0`. `v0.15.0` is prepared on `staging` (Consumer CLI) and is **not yet published**. `master` remains at the `v0.14.0` release commit. `staging` is the post-`v0.14.0` development baseline and may advance ahead of `master` until the next release gate.
 
 ---
 

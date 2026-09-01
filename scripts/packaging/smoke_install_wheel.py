@@ -32,7 +32,7 @@ def main():
     if not wheels:
         print("No wheel produced", file=sys.stderr)
         return 1
-    wheel = wheels[-1]
+    wheel = max(wheels, key=lambda path: path.stat().st_mtime)
     print("Built wheel: {}".format(wheel.name))
 
     with tempfile.TemporaryDirectory(prefix="ekp-smoke-") as tmp:
@@ -51,7 +51,8 @@ def main():
 
         proc = subprocess.run([str(ekp), "version"], capture_output=True, text=True, check=True)
         print(proc.stdout.strip())
-        if "0.15.0.dev0" not in proc.stdout:
+        version_line = proc.stdout.splitlines()[0].strip()
+        if version_line != "0.15.0":
             print("Unexpected version output", file=sys.stderr)
             return 1
 

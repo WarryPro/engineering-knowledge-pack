@@ -4,6 +4,79 @@ An open-source engineering knowledge base that captures how senior software engi
 
 EKP is the **source of truth** for engineering practices. It is intentionally independent of any AI assistant, IDE, or vendor tooling. Tool-specific formats—Cursor Rules, Claude Skills, GitHub Copilot instructions—are derived from this knowledge through adapters, not authored here directly.
 
+## Using EKP in a consumer project
+
+For **Cursor** in a real project, install the published Python package and use the Consumer CLI. You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
+
+```bash
+# Once v0.15.0 is published:
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0
+```
+
+Alternative: install into a virtual environment with `pip install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0`.
+
+### Basic usage
+
+```bash
+cd my-project
+ekp detect
+ekp install
+ekp status
+```
+
+Explicit profile:
+
+```bash
+ekp install --profile cursor-symfony
+```
+
+Non-interactive:
+
+```bash
+ekp install --profile cursor-flutter --yes
+```
+
+Preview without writing files:
+
+```bash
+ekp install --profile cursor-flutter --dry-run
+```
+
+Scoped directory:
+
+```bash
+ekp install --path ./backend
+```
+
+### Empty project
+
+```bash
+mkdir my-project
+cd my-project
+ekp install
+```
+
+If no stack is detected, interactive mode asks for the intended stack. Non-interactive mode requires `--profile`. EKP does not auto-detect a profile in an empty directory.
+
+### Safety
+
+- EKP-managed files are tracked in `.ekp/install.json`
+- Existing unmanaged Cursor rule collisions are preserved and block install
+- `--yes` skips confirmation prompts, not safety checks
+- `--dry-run` shows the installation plan without writing files
+
+### Current limitation
+
+**Consumer CLI v0.15.0 deploys Cursor only.** Copilot, Antigravity, and Claude adapters still exist in this repository and are generated through the manual assemble pipeline where supported — adapter existence is not the same as Consumer CLI installation.
+
+See [`docs/deployment.md`](docs/deployment.md) for the full Consumer CLI path vs manual adapter deployment.
+
+---
+
+## Developing EKP itself
+
+Contributors and maintainers work with the knowledge pipeline below. This path is **not** required for the supported Cursor Consumer CLI workflow.
+
 ## What this repository contains
 
 | Area | Purpose |
@@ -54,11 +127,18 @@ py -3 -m pip install -r scripts/validate/requirements.txt
 
 ## Getting started
 
+### Consumer projects (Cursor)
+
+1. Install the package once `v0.15.0` is published (see [Using EKP in a consumer project](#using-ekp-in-a-consumer-project)).
+2. Run `ekp detect`, `ekp install`, and `ekp status` in your project directory.
+
+### Contributors
+
 1. Read [`docs/vision.md`](docs/vision.md) to understand why EKP exists.
 2. Read [`docs/architecture.md`](docs/architecture.md) to understand how the repository is organized.
 3. Read [`docs/governance.md`](docs/governance.md) for lifecycle, namespaces, profiles, and releases.
 4. Read [`docs/adapter-architecture.md`](docs/adapter-architecture.md) for the operational adapter pipeline.
-5. Read [`docs/deployment.md`](docs/deployment.md) to assemble a profile and copy artifacts into a consumer project.
+5. Read [`docs/deployment.md`](docs/deployment.md) for Consumer CLI deployment and manual adapter copy paths.
 6. Read [`docs/contribution-guide.md`](docs/contribution-guide.md) before adding or changing content.
 7. Read [`DEVELOPMENT.md`](DEVELOPMENT.md) to run validation and assemble locally.
 
@@ -82,6 +162,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 ## Release status
 
 - **Latest published release:** `v0.14.0`
+- **v0.15.0:** prepared on `staging`, not yet published — Consumer CLI (`ekp version`, `detect`, `install`, `status`); Cursor-only consumer installation; project detection and profile resolution; ownership manifest and safe deployment; Windows + Ubuntu validation
 - **v0.14.0:** Flutter L2 technology vertical — `EKP-FL01`–`FL09` engineering knowledge; profile `cursor-flutter` (`includes: [cursor-core]`, `outputs: [cursor]` only); 75 Cursor rules (65 inherited core + 10 Flutter); no TypeScript/frontend/NativeScript inheritance; 15 profiles; 15th CI `--verify` gate; `ekp-flutter` and Copilot Flutter routing deferred
 - **v0.13.0:** Sixth stack-specific multi-adapter profile `ekp-nativescript` (`includes: [cursor-nativescript]`, `outputs: [cursor, copilot]`); adds Copilot `nativescript` PATH_GROUP; Cursor output byte-identical to `cursor-nativescript` (84 rules); Copilot emits NativeScript, TypeScript, and testing instruction groups; completes Phase 5 stack multi-adapter profiles
 - **v0.12.0:** Fifth stack-specific multi-adapter profile `ekp-devops` (`includes: [cursor-devops]`, `outputs: [cursor, copilot]`); packaging-only Phase 5 continuation; Cursor output byte-identical to `cursor-devops` (74 rules); Copilot uses existing DevOps + inherited testing routing
@@ -120,6 +201,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
+| Phase 6 — Consumer productization | **Prepared (`v0.15.0` on `staging`)** | Installable Python package; `ekp` CLI; project detection; profile resolution; safe Cursor installation; ownership manifest; status; Windows + Ubuntu CI; 83 Consumer CLI tests |
 
 ### Repository metrics
 
@@ -130,6 +212,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Namespaces | 24 |
 | Profiles | 15 total — 8 operational Cursor (`cursor-core` + 7 stack) + 6 stack `ekp-*` (Cursor + Copilot) + `ekp-core` packaging pilot |
 | CI `--verify` gates | 15 profiles |
+| Consumer CLI tests | 83 (Windows + Ubuntu CI) |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (frozen) |

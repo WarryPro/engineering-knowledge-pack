@@ -7,6 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-01
+
+### Added
+
+- Installable Python distribution `engineering-knowledge-pack` with Consumer CLI entry point `ekp`
+- Commands: `ekp version`, `ekp detect`, `ekp install`, `ekp status`
+- Project-local stack detection for PHP, Symfony, TypeScript, frontend, NativeScript, Flutter, and DevOps signals — local/offline, evidence- and confidence-based; ambiguous stacks do not silently select a profile; empty projects support explicit or interactive profile selection
+- Cursor-only consumer installation for eight operational `cursor-*` profiles: `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`, `cursor-nativescript`, `cursor-flutter`
+- Automatic recommended profile selection with explicit `--profile`, scoped `--path`, non-interactive `--yes`, and preview `--dry-run`
+- Ownership manifest `.ekp/install.json` tracking EKP-managed files under `.cursor/rules/`
+- Read-only `ekp status` reporting healthy, modified, incomplete/missing, version mismatch, invalid manifest, and not-installed states
+
+### Security / Safety
+
+- Consumer install writes manifest-owned files only; unmanaged collisions abort before any write
+- User-modified managed files are never overwritten
+- Idempotent reinstall for the same version and profile
+- Rollback on failed deployment
+- Path traversal protection and external symlink escape rejection
+- Install manifest written atomically and last
+
+### Validation
+
+- Historical EKP suite: 238/238 PASS (65 adapter + 102 assemble + 71 validate)
+- Consumer CLI suite: 83 tests; Windows CI: 81 passed, 2 expected Unix symlink skips; Ubuntu CI: 83/83 PASS, 0 skipped
+- 15/15 profile `--verify` gates PASS with unchanged rule counts
+- Cross-platform CI: Windows + Ubuntu Consumer CLI workflow; installed-wheel smoke on both platforms
+- Unix external-symlink safety tests (`test_symlink_target_rejected`, `test_symlink_reinstall_rejected`) execute and pass on Ubuntu
+
+### Packaging
+
+- Python `>=3.9`; Hatchling build; canonical `knowledge/`, `profiles/`, `schema/`, and pipeline scripts bundled into the wheel at build time
+- No repository checkout required at runtime; package resources are read-only; assembly uses temporary runtime workspaces
+
+### Compatibility
+
+- No knowledge, profile composition, or namespace changes
+- All 15 operational profiles preserved with unchanged Cursor rule counts (`cursor-core` 65; `cursor-flutter` 75; etc.)
+- Adapter output contracts unchanged — assembled profile content byte-identical to `v0.14.0` for existing generated adapter artifacts (excluding manifest `generated_at` timestamps)
+- Deferred: `ekp update`, `ekp uninstall`, Copilot/Antigravity/Claude consumer installation, `ekp-flutter`, online release acquisition, PyPI publication, dynamic multi-profile composition
+
 ## [0.14.0] - 2026-08-31
 
 ### Added

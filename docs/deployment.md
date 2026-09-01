@@ -1,14 +1,87 @@
 # Deploying EKP to a consumer project
 
-How to choose a profile, assemble a bundle, and copy generated artifacts into a consumer repository for each implemented adapter.
+How to deploy EKP engineering context into a consumer repository.
 
-This guide describes **what EKP generates and how to copy it**. It does not claim that a consumer AI tool will load or follow those files at runtime unless that behavior is listed under automated verification.
+This guide has **two paths**:
+
+| Path | Audience | Adapters |
+|------|----------|----------|
+| **A — Consumer CLI** (recommended for Cursor) | Application developers | Cursor only (`v0.15.0`) |
+| **B — Manual assembly** | Contributors and advanced/manual deployment | Cursor, Copilot, Antigravity, Claude (per profile) |
 
 Related:
 
 - [`adapter-architecture.md`](adapter-architecture.md) — how adapters transform knowledge
 - [`../DEVELOPMENT.md`](../DEVELOPMENT.md) — local validate / test / assemble pipeline
 - [`../scripts/adapters/README.md`](../scripts/adapters/README.md) — adapter package layout
+
+---
+
+## Path A — Consumer CLI (Cursor)
+
+**Recommended for Cursor** in application projects. No repository checkout, validator, index generation, or manual file copying required.
+
+### Install
+
+Once `v0.15.0` is published:
+
+```bash
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0
+```
+
+### Deploy
+
+```bash
+cd <project>
+ekp detect          # optional — inspect detected stack and recommended profile
+ekp install         # interactive or auto-detected profile
+ekp status          # read-only installation health
+```
+
+| Flag | Purpose |
+|------|---------|
+| `--path <dir>` | Target project directory (default: current directory) |
+| `--profile <name>` | Explicit Cursor profile (bypasses auto-detection) |
+| `--yes` | Skip confirmation prompts (does not bypass safety checks) |
+| `--dry-run` | Show plan without writing files |
+
+Supported Consumer CLI profiles: `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`, `cursor-nativescript`, `cursor-flutter`.
+
+### What gets written
+
+```
+<project>/.cursor/rules/*.mdc    # Cursor rules for the selected profile
+<project>/.ekp/install.json      # ownership manifest (EKP-managed files)
+```
+
+### Ownership warning
+
+Manual copying into `.cursor/rules/` (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
+
+### Installation lifecycle (`v0.15.0`)
+
+Supported:
+
+- `install`
+- reinstall same version/profile
+- `status`
+
+Not supported in `v0.15.0`:
+
+- `ekp update`
+- `ekp uninstall`
+- profile replacement
+- cross-version migration
+
+If another CLI version encounters a manifest from a different EKP version, installation refuses rather than silently upgrading.
+
+---
+
+## Path B — Manual assembly
+
+Contributor workflow, advanced deployment, and the **current required path** for Copilot, Antigravity, and Claude consumer deployment.
+
+---
 
 ## 1. Choose a profile
 
@@ -117,6 +190,8 @@ Adapters do not overwrite each other's manifests. Do **not** copy EKP manifests 
 
 ## 3. Cursor deployment
 
+**Path A:** use `ekp install` (see above). **Path B:** copy assembled artifacts manually.
+
 **Source profile:** any `cursor-*` profile, `ekp-php` (same Cursor knowledge as `cursor-php`), `ekp-typescript` (same Cursor knowledge as `cursor-typescript`), `ekp-symfony` (same Cursor knowledge as `cursor-symfony`), `ekp-frontend` (same Cursor knowledge as `cursor-frontend`), `ekp-devops` (same Cursor knowledge as `cursor-devops`), `ekp-nativescript` (same Cursor knowledge as `cursor-nativescript`), or `ekp-core` (same Cursor knowledge as `cursor-core`).
 
 **Generated:** `dist/<profile>/cursor/*.mdc`
@@ -142,6 +217,8 @@ dist/ekp-core/cursor/           →  <project>/.cursor/rules/
 ```
 
 Copy the `.mdc` files only (or the whole `cursor/` directory). Leave `bundle-manifest.json` at `dist/<profile>/`; it is an EKP inventory file, not a Cursor rule.
+
+**Manual copy warning:** files placed in `.cursor/rules/` without `ekp install` are not tracked in `.ekp/install.json` and are not managed by the Consumer CLI.
 
 Expected `cursor-core` count: **65** `.mdc` files (frozen). Stack profiles add technology guides (~74 single-stack, ~83 combined-stack, ~84 NativeScript). `cursor-nativescript` is a combined TypeScript + NativeScript Cursor product.
 

@@ -10,8 +10,32 @@ knowledge/
     ↓ generate-index  →  dist/*.json
     ↓ adapter         →  dist/<profile>/<tool>/
     ↓ assemble        →  bundle-manifest.json
-    ↓ deploy          →  consumer project (see deployment.md)
+    ↓ deploy          →  consumer project (Consumer CLI or manual copy — see deployment.md)
 ```
+
+### Consumer CLI deployment layer (`v0.15.0`)
+
+For application developers using Cursor, the Consumer CLI deploys assembled output directly into a project:
+
+```
+Canonical knowledge (knowledge/, profiles/, schema/)
+      ↓
+Validator / profile resolver
+      ↓
+Adapters / AssemblyService
+      ↓
+temporary generated bundle
+      ↓
+Consumer CLI (DetectionService → ProfileResolver → InstallService)
+      ↓
+safe deployment (.cursor/rules/ + .ekp/install.json)
+      ↓
+consumer project
+```
+
+Key services: `DetectionService`, `ProfileResolver`, `AssemblyService`, `InstallService`, `StatusService`. Status inspection is read-only via `StatusService`.
+
+Manual assembly (contributor path) stops at `dist/<profile>/` for copy-based deployment. See [`deployment.md`](deployment.md).
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -160,7 +184,7 @@ Vision, architecture, roadmap, contribution process, deployment—not engineerin
 3. Extract    — scripts/adapters/common/ parses knowledge
 4. Transform  — registered adapters (cursor, copilot, antigravity, claude)
 5. Assemble   — Profile bundle + manifests + --verify
-6. Deploy     — Copy dist/<profile>/<adapter>/ artifacts (see deployment.md)
+6. Deploy     — Consumer CLI (`ekp install`) or copy dist/<profile>/<adapter>/ artifacts (see deployment.md)
 ```
 
 ### Design constraints
@@ -180,6 +204,7 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 - Validator v2.3 with graph rules, namespaces, index generation, reports
 - Adapters: Cursor (all 15 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
 - Assemble pipeline with `--verify` (CI verifies all 15 profiles)
+- Consumer CLI (`v0.15.0` on `staging`) — Cursor-only install, detect, status for application projects
 
 **Planned / deferred:**
 

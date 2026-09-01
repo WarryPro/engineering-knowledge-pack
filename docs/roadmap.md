@@ -14,6 +14,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); `ekp-flutter` deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot stack profiles complete (`ekp-php` through `ekp-nativescript` in `v0.6.0`–`v0.13.0`); Antigravity + Claude in `v0.4.0`/`v0.5.0` (`ekp-core` pilot only); `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
+| Phase 6 — Consumer productization | **Prepared (`v0.15.0` on `staging`, not yet published)** | Installable Python package; `ekp` CLI; project detection; profile resolution; safe Cursor installation; ownership manifest; status; Windows + Ubuntu validation |
 
 ---
 
@@ -265,6 +266,33 @@ Extend the adapter layer to additional AI assistant platforms.
 **v0.13.0:** `ekp-nativescript` (`includes: [cursor-nativescript]`, `outputs: [cursor, copilot]`) is the sixth and final stack-specific multi-adapter profile. Cursor `.mdc` content matches `cursor-nativescript` and remains byte-identical to `v0.12.0` for all existing profiles. Adds Copilot `nativescript` PATH_GROUP (`applyTo: "**/*.xml,**/App_Resources/**,**/nativescript.config.{ts,js}"`); TypeScript knowledge continues via existing `typescript` PATH_GROUP. No knowledge or schema changes. Completes Phase 5 stack multi-adapter packaging. Antigravity/Claude on stack profiles, `ekp-core` promotion, and Flutter remain deferred.
 
 **v0.14.0:** Flutter L2 technology vertical — `flutter-architecture.md` (EKP-FL01–FL09); profile `cursor-flutter` (`includes: [cursor-core]`, `outputs: [cursor]`); 75 Cursor rules (65 inherited core + 10 Flutter); no TypeScript/frontend/NativeScript inheritance; Flutter README validator registration; assemble/profile tests; 15th CI `--verify` gate. Existing fourteen profiles unchanged and byte-identical to `v0.13.0`. **`ekp-flutter`**, Copilot Flutter PATH_GROUP, Antigravity/Claude on stack profiles, and `ekp-core` promotion remain deferred.
+
+---
+
+## Phase 6: Consumer productization
+
+**Status:** Prepared on `staging` (`v0.15.0`, not yet published)
+
+Deliver consumer-facing installation and deployment for Cursor without requiring a repository checkout.
+
+**Deliverables (complete on `staging`):**
+
+- [x] Installable Python package (`engineering-knowledge-pack`)
+- [x] Consumer CLI (`ekp version`, `ekp detect`, `ekp install`, `ekp status`)
+- [x] Project-local technology detection and profile resolution
+- [x] Safe Cursor installation with `.ekp/install.json` ownership manifest
+- [x] Read-only `ekp status`
+- [x] Windows + Ubuntu CI and installed-wheel smoke validation (83 Consumer CLI tests)
+
+**Deferred lifecycle:**
+
+- [ ] `ekp update` / `ekp uninstall`
+- [ ] Remote release acquisition
+- [ ] PyPI publication
+- [ ] Automatic multi-profile / monorepo composition
+- [ ] Copilot, Antigravity, and Claude consumer installation
+
+**Exit criteria (met on `staging`):** A developer can install the package, detect or select a Cursor profile, install rules safely into a project, and inspect installation health — without cloning EKP or running the manual assemble pipeline.
 
 ---
 
