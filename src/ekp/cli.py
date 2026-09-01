@@ -7,6 +7,7 @@ from ekp.detection.render import render_human, render_json
 from ekp.detection.service import DetectionService
 from ekp.install.service import InstallRequest, InstallService
 from ekp.lifecycle.uninstall import UninstallRequest, UninstallService
+from ekp.lifecycle.update import UpdateRequest, UpdateService
 from ekp.paths import get_ekp_root
 from ekp.status.render import render_human as render_status_human
 from ekp.status.render import render_json as render_status_json
@@ -99,6 +100,26 @@ def main(argv=None):
         help="Show uninstall plan without removing files",
     )
 
+    update_parser = subparsers.add_parser(
+        "update",
+        help="Synchronize an installed project with the running EKP package",
+    )
+    update_parser.add_argument(
+        "--path",
+        default=".",
+        help="Project directory to update (default: current directory)",
+    )
+    update_parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip confirmation prompts (does not bypass safety checks)",
+    )
+    update_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show update plan without writing files",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "version":
@@ -174,6 +195,27 @@ def main(argv=None):
             return 2
         except OSError as exc:
             print("Uninstall failed: {}".format(exc), file=sys.stderr)
+            return 5
+
+        if result.message:
+            stream = sys.stderr if result.exit_code != 0 else sys.stdout
+            print(result.message, file=stream)
+        return result.exit_code
+
+    if args.command == "update":
+        try:
+            result = UpdateService().update(
+                UpdateRequest(
+                    path=args.path,
+                    assume_yes=args.yes,
+                    dry_run=args.dry_run,
+                )
+            )
+        except (FileNotFoundError, NotADirectoryError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        except OSError as exc:
+            print("Update failed: {}".format(exc), file=sys.stderr)
             return 5
 
         if result.message:

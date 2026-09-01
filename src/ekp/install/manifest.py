@@ -188,9 +188,37 @@ class ManifestStore:
         )
 
     def save(self, manifest: InstallManifest) -> None:
+        self._write_manifest(manifest, expected_sha256=None)
+
+    def replace(self, manifest: InstallManifest, expected_sha256: str) -> None:
+        """Atomically replace manifest when current bytes match expected_sha256."""
+        self._write_manifest(manifest, expected_sha256=expected_sha256)
+
+    def _write_manifest(
+        self, manifest: InstallManifest, expected_sha256: Optional[str]
+    ) -> None:
         boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
         if boundary:
             raise InstallConflictError(boundary)
+
+        if not self.manifest_path.exists():
+            if expected_sha256 is not None:
+                raise InstallConflictError(
+                    "Ownership manifest changed before update could complete."
+                )
+        else:
+            if self.manifest_path.is_symlink():
+                raise InstallConflictError(
+                    "Refusing to replace symlinked ownership manifest: {}".format(
+                        MANIFEST_RELATIVE
+                    )
+                )
+            if expected_sha256 is not None:
+                current_sha256 = _sha256_bytes(self.manifest_path.read_bytes())
+                if current_sha256 != expected_sha256:
+                    raise InstallConflictError(
+                        "Ownership manifest changed before update could complete."
+                    )
 
         manifest_dir = self.manifest_path.parent
         manifest_dir.mkdir(parents=True, exist_ok=True)
@@ -205,6 +233,14 @@ class ManifestStore:
                     os.fsync(handle.fileno())
                 except OSError:
                     pass
+
+            if expected_sha256 is not None and self.manifest_path.exists():
+                current_sha256 = _sha256_bytes(self.manifest_path.read_bytes())
+                if current_sha256 != expected_sha256:
+                    raise InstallConflictError(
+                        "Ownership manifest changed before update could complete."
+                    )
+
             os.replace(str(temp_path), str(self.manifest_path))
         finally:
             if temp_path.exists():
