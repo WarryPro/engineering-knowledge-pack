@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 from dataclasses import dataclass, field
@@ -172,7 +173,31 @@ class ManifestStore:
             if temp_path.exists():
                 temp_path.unlink(missing_ok=True)
 
-    def delete(self) -> None:
+    def fingerprint(self) -> str:
+        """Return SHA-256 of the exact on-disk ownership manifest bytes."""
+        if not self.exists():
+            raise InstallConflictError(
+                "Ownership manifest is not installed: {}".format(MANIFEST_RELATIVE)
+            )
+
+        if self.manifest_path.is_symlink():
+            raise InstallConflictError(
+                "Refusing to fingerprint symlinked ownership manifest: {}".format(
+                    MANIFEST_RELATIVE
+                )
+            )
+
+        boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
+        if boundary:
+            raise InstallConflictError(boundary)
+
+        digest = hashlib.sha256()
+        with self.manifest_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
+
+    def delete(self, expected_sha256: Optional[str] = None) -> None:
         """Remove the ownership manifest after managed files are deleted."""
         if self.manifest_path.is_symlink():
             raise InstallConflictError(
@@ -180,6 +205,18 @@ class ManifestStore:
             )
         if not self.manifest_path.exists():
             return
+
+        boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
+        if boundary:
+            raise InstallConflictError(boundary)
+
+        if expected_sha256 is not None:
+            current_sha256 = self.fingerprint()
+            if current_sha256 != expected_sha256:
+                raise InstallConflictError(
+                    "Ownership manifest changed before uninstall could complete."
+                )
+
         self.manifest_path.unlink()
 
 

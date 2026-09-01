@@ -40,6 +40,7 @@ class LifecyclePlan:
     operations: List[LifecycleFileOperation] = field(default_factory=list)
     conflicts: List[str] = field(default_factory=list)
     directories_to_remove: List[str] = field(default_factory=list)
+    manifest_sha256: Optional[str] = None
     dry_run: bool = False
 
     @property
