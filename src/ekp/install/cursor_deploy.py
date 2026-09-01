@@ -360,7 +360,7 @@ class InstallSelectionErrorVersionMismatch(InstallSelectionError):
         super().__init__(
             "Installed EKP version: {}\n"
             "Running EKP version: {}\n\n"
-            "Cross-version update is not yet supported.".format(
+            "Run `ekp update` to synchronize this project with the running EKP version.".format(
                 installed_version, running_version
             )
         )
