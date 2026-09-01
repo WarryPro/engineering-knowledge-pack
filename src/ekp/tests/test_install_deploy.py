@@ -292,7 +292,7 @@ class InstallServiceTests(unittest.TestCase):
             symfony_fixture(root)
             service = InstallService()
 
-            with mock.patch("ekp.install.cursor_deploy.shutil.copyfile", side_effect=OSError("simulated")):
+            with mock.patch("ekp.install.atomic.shutil.copyfileobj", side_effect=OSError("simulated")):
                 result = service.install(
                     InstallRequest(path=str(root), profile="cursor-core", assume_yes=True)
                 )

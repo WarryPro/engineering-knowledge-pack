@@ -139,8 +139,24 @@ def validate_lifecycle_manifest(manifest: InstallManifest) -> None:
     adapter_set = set(manifest.adapters)
     if adapter_set != SUPPORTED_LIFECYCLE_ADAPTERS:
         raise InstallConflictError(
-            "Lifecycle uninstall supports Cursor-only Consumer CLI installations."
+            "Lifecycle operations support Cursor-only Consumer CLI installations."
         )
+
+    seen_paths = set()
+    for item in manifest.managed_files:
+        if item.relative_path in seen_paths:
+            raise InstallConflictError(
+                "Duplicate managed file in ownership manifest: {}".format(
+                    item.relative_path
+                )
+            )
+        seen_paths.add(item.relative_path)
+        if item.adapter != CURSOR_ADAPTER:
+            raise InstallConflictError(
+                "Managed file adapter does not match lifecycle adapter contract: {}".format(
+                    item.relative_path
+                )
+            )
 
 
 def build_uninstall_plan(

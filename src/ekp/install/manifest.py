@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ekp.install.atomic import ExclusiveTempFile
 from ekp.install.errors import InstallConflictError
 from ekp.install.paths import check_symlink_boundary, relative_posix_path, resolve_under_root
 
@@ -223,16 +224,10 @@ class ManifestStore:
         manifest_dir = self.manifest_path.parent
         manifest_dir.mkdir(parents=True, exist_ok=True)
 
-        temp_path = self.manifest_path.with_suffix(".json.tmp")
         payload = json.dumps(manifest.to_dict(), indent=2, sort_keys=True) + "\n"
+        temp = ExclusiveTempFile.create(manifest_dir)
         try:
-            with temp_path.open("w", encoding="utf-8") as handle:
-                handle.write(payload)
-                handle.flush()
-                try:
-                    os.fsync(handle.fileno())
-                except OSError:
-                    pass
+            temp.write_text(payload)
 
             if expected_sha256 is not None and self.manifest_path.exists():
                 current_sha256 = _sha256_bytes(self.manifest_path.read_bytes())
@@ -241,10 +236,10 @@ class ManifestStore:
                         "Ownership manifest changed before update could complete."
                     )
 
-            os.replace(str(temp_path), str(self.manifest_path))
-        finally:
-            if temp_path.exists():
-                temp_path.unlink(missing_ok=True)
+            temp.commit(self.manifest_path)
+        except Exception:
+            temp.cleanup()
+            raise
 
     def delete(self, expected_sha256: Optional[str] = None) -> None:
         """Remove the ownership manifest after managed files are deleted."""
