@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
+from ekp.install.atomic import ExclusiveTempFile
 from ekp.install.cursor_deploy import sha256_file
 from ekp.install.errors import InstallAssemblyError, InstallConflictError, InstallFilesystemError
 from ekp.install.manifest import InstallManifest, ManifestStore
@@ -132,6 +133,8 @@ class TransactionApplier:
                     self._apply_delete(plan.project_root, operation, backup_root, deleted)
 
             if plan.commit_manifest and plan.new_manifest is not None:
+                # Same-version repair leaves commit_manifest false, so recreated
+                # directories are not recorded in the ownership manifest.
                 manifest = self._finalize_new_manifest(plan, created_directories)
                 ManifestStore(plan.project_root).replace(
                     manifest, expected_sha256=plan.manifest_sha256
@@ -140,7 +143,9 @@ class TransactionApplier:
             shutil.rmtree(backup_root, ignore_errors=True)
             return UpdateApplyResult(warnings=[])
         except InstallConflictError:
-            if self._rollback_update(plan.project_root, created, written, deleted):
+            if self._rollback_update(
+                plan.project_root, created, written, deleted, created_directories
+            ):
                 shutil.rmtree(backup_root, ignore_errors=True)
             else:
                 raise LifecycleRollbackError(
@@ -148,19 +153,25 @@ class TransactionApplier:
                 )
             raise
         except OSError as exc:
-            if not self._rollback_update(plan.project_root, created, written, deleted):
+            if not self._rollback_update(
+                plan.project_root, created, written, deleted, created_directories
+            ):
                 raise LifecycleRollbackError(
                     self._rollback_incomplete_message(backup_root, exc)
                 ) from exc
             shutil.rmtree(backup_root, ignore_errors=True)
             raise InstallFilesystemError("Update failed: {}".format(exc)) from exc
         except InstallAssemblyError:
-            if not self._rollback_update(plan.project_root, created, written, deleted):
+            if not self._rollback_update(
+                plan.project_root, created, written, deleted, created_directories
+            ):
                 raise LifecycleRollbackError(self._rollback_incomplete_message(backup_root))
             shutil.rmtree(backup_root, ignore_errors=True)
             raise
         except Exception:
-            if not self._rollback_update(plan.project_root, created, written, deleted):
+            if not self._rollback_update(
+                plan.project_root, created, written, deleted, created_directories
+            ):
                 raise LifecycleRollbackError(self._rollback_incomplete_message(backup_root))
             shutil.rmtree(backup_root, ignore_errors=True)
             raise
@@ -226,9 +237,18 @@ class TransactionApplier:
             raise InstallFilesystemError(
                 "Parent directory missing for {}".format(relative)
             )
-        shutil.copy2(source, target)
-        if sha256_file(target) != operation.expected_sha256:
-            raise InstallFilesystemError("Created file verification failed for {}".format(relative))
+
+        temp = ExclusiveTempFile.create(target.parent)
+        try:
+            temp.write_from_source(source)
+            if sha256_file(temp.path) != operation.expected_sha256:
+                raise InstallFilesystemError(
+                    "Created file verification failed for {}".format(relative)
+                )
+            temp.commit(target)
+        except Exception:
+            temp.cleanup()
+            raise
 
         created.append(
             _CreatedFile(
@@ -267,10 +287,10 @@ class TransactionApplier:
                 "Managed file changed before update could complete: {}".format(relative)
             )
 
-        temp_path = target.with_suffix(target.suffix + ".ekp.tmp")
+        temp = ExclusiveTempFile.create(target.parent)
         try:
-            shutil.copy2(source, temp_path)
-            if sha256_file(temp_path) != operation.expected_sha256:
+            temp.write_from_source(source)
+            if sha256_file(temp.path) != operation.expected_sha256:
                 raise InstallFilesystemError(
                     "Temp file verification failed for {}".format(relative)
                 )
@@ -283,10 +303,10 @@ class TransactionApplier:
                     "Managed file changed before update could complete: {}".format(relative)
                 )
 
-            os.replace(str(temp_path), str(target))
-        finally:
-            if temp_path.exists():
-                temp_path.unlink(missing_ok=True)
+            temp.commit(target)
+        except Exception:
+            temp.cleanup()
+            raise
 
         written.append(
             _WrittenFile(
@@ -330,6 +350,7 @@ class TransactionApplier:
         manifest = plan.new_manifest
         if manifest is None:
             raise InstallFilesystemError("Update plan is missing new manifest.")
+        # Cross-version updates may claim only directories actually created here.
         merged = sorted(set(manifest.created_directories) | set(created_directories))
         return InstallManifest(
             schema_version=manifest.schema_version,
@@ -348,10 +369,40 @@ class TransactionApplier:
         created: List[_CreatedFile],
         written: List[_WrittenFile],
         deleted: List[_DeletedFile],
+        created_directories: List[str],
     ) -> bool:
         restored_all = self._rollback_deleted(project_root, deleted)
         restored_all = self._rollback_written(project_root, written) and restored_all
         restored_all = self._rollback_created(project_root, created) and restored_all
+        restored_all = (
+            self._rollback_created_directories(project_root, created_directories)
+            and restored_all
+        )
+        return restored_all
+
+    def _rollback_created_directories(
+        self, project_root: Path, created_directories: List[str]
+    ) -> bool:
+        restored_all = True
+        for relative in sorted(created_directories, key=lambda path: path.count("/"), reverse=True):
+            boundary = check_symlink_boundary(project_root, relative)
+            if boundary:
+                restored_all = False
+                continue
+            try:
+                target = resolve_under_root(project_root, relative)
+            except ValueError:
+                restored_all = False
+                continue
+            if not target.exists() or not target.is_dir() or target.is_symlink():
+                continue
+            try:
+                if any(target.iterdir()):
+                    restored_all = False
+                    continue
+                target.rmdir()
+            except OSError:
+                restored_all = False
         return restored_all
 
     def _rollback_written(self, project_root: Path, written: List[_WrittenFile]) -> bool:

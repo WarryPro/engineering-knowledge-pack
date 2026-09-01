@@ -8,6 +8,7 @@ import shutil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
+from ekp.install.atomic import ExclusiveTempFile
 from ekp.install.errors import (
     InstallAssemblyError,
     InstallConflictError,
@@ -154,17 +155,19 @@ class CursorDeployService:
                     )
 
                 existed = target.exists()
-                temp_path = target.with_suffix(target.suffix + ".ekp.tmp")
-                shutil.copyfile(operation.source_path, temp_path)
+                temp = ExclusiveTempFile.create(target.parent)
                 try:
-                    with temp_path.open("rb") as handle:
-                        try:
-                            os.fsync(handle.fileno())
-                        except OSError:
-                            pass
-                except OSError:
-                    pass
-                os.replace(str(temp_path), str(target))
+                    temp.write_from_source(operation.source_path)
+                    if sha256_file(temp.path) != operation.expected_sha256:
+                        raise InstallFilesystemError(
+                            "Temp file verification failed for {}".format(
+                                operation.relative_path
+                            )
+                        )
+                    temp.commit(target)
+                except Exception:
+                    temp.cleanup()
+                    raise
                 if not existed:
                     created_files.append(target)
 

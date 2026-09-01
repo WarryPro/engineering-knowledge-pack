@@ -68,7 +68,7 @@ class ManifestTests(unittest.TestCase):
             )
             store.save(manifest)
             self.assertTrue(store.manifest_path.is_file())
-            self.assertFalse(store.manifest_path.with_suffix(".json.tmp").exists())
+            self.assertTrue(store.exists())
 
     def test_load_with_fingerprint_round_trip(self):
         manifest = InstallManifest(

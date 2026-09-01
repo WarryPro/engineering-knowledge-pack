@@ -344,6 +344,7 @@ class UpdateApplySafetyTests(unittest.TestCase):
             )
             create_rel = plan.operations[0].relative_path
             create_path = project / Path(create_rel.replace("/", os.sep))
+            create_path.parent.mkdir(parents=True, exist_ok=True)
             original_create = TransactionApplier._apply_create
 
             def patched_create(self_, plan_, operation, created):
