@@ -197,6 +197,45 @@ class InstallDeployTests(unittest.TestCase):
                 ekp_version=self.version,
             )
             self.assertTrue(plan.has_conflicts)
+            self.assertTrue(
+                any("Symlink escapes project root" in conflict for conflict in plan.conflicts),
+                plan.conflicts,
+            )
+
+    @unittest.skipUnless(os.name != "nt", "Symlink test skipped on Windows")
+    def test_symlink_reinstall_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            symfony_fixture(project)
+            assembly = self._assemble("cursor-symfony", root / "asm")
+            plan = self.deploy.build_plan(
+                project_root=project,
+                bundle_path=assembly.bundle_path,
+                profile="cursor-symfony",
+                ekp_version=self.version,
+            )
+            self.deploy.apply(plan)
+            manifest = ManifestStore(project).load()
+
+            outside = root / "outside"
+            cursor_dir = project / ".cursor"
+            cursor_dir.rename(outside)
+            (project / ".cursor").symlink_to(outside, target_is_directory=True)
+
+            plan2 = self.deploy.build_plan(
+                project_root=project,
+                bundle_path=assembly.bundle_path,
+                profile="cursor-symfony",
+                ekp_version=self.version,
+                existing_manifest=manifest,
+            )
+            self.assertTrue(plan2.has_conflicts)
+            self.assertTrue(
+                any("Symlink escapes project root" in conflict for conflict in plan2.conflicts),
+                plan2.conflicts,
+            )
 
 
 class InstallServiceTests(unittest.TestCase):

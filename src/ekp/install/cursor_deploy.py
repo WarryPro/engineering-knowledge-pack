@@ -225,11 +225,11 @@ class CursorDeployService:
         conflicts: List[str] = []
 
         for relative, (source, digest) in sorted(expected_by_path.items()):
-            target = resolve_under_root(project_root, relative)
             boundary = check_symlink_boundary(project_root, relative)
             if boundary:
                 conflicts.append(boundary)
                 continue
+            target = resolve_under_root(project_root, relative)
             if target.exists() or target.is_symlink():
                 conflicts.append(relative)
                 continue
@@ -261,11 +261,11 @@ class CursorDeployService:
             )
 
         for relative, (source, digest) in sorted(expected_by_path.items()):
-            target = resolve_under_root(project_root, relative)
             boundary = check_symlink_boundary(project_root, relative)
             if boundary:
                 conflicts.append(boundary)
                 continue
+            target = resolve_under_root(project_root, relative)
 
             owned = managed[relative]
             if owned.sha256 != digest:
