@@ -21,6 +21,7 @@ class CliTests(unittest.TestCase):
         self.assertIn("detect", buffer.getvalue())
         self.assertIn("install", buffer.getvalue())
         self.assertIn("status", buffer.getvalue())
+        self.assertIn("uninstall", buffer.getvalue())
 
     def test_version(self):
         buffer = io.StringIO()

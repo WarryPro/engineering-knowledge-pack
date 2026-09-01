@@ -6,6 +6,7 @@ import sys
 from ekp.detection.render import render_human, render_json
 from ekp.detection.service import DetectionService
 from ekp.install.service import InstallRequest, InstallService
+from ekp.lifecycle.uninstall import UninstallRequest, UninstallService
 from ekp.paths import get_ekp_root
 from ekp.status.render import render_human as render_status_human
 from ekp.status.render import render_json as render_status_json
@@ -78,6 +79,26 @@ def main(argv=None):
         help="Output machine-readable JSON",
     )
 
+    uninstall_parser = subparsers.add_parser(
+        "uninstall",
+        help="Remove EKP-managed Cursor files from a consumer project",
+    )
+    uninstall_parser.add_argument(
+        "--path",
+        default=".",
+        help="Project directory to uninstall from (default: current directory)",
+    )
+    uninstall_parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip confirmation prompts (does not bypass safety checks)",
+    )
+    uninstall_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show uninstall plan without removing files",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "version":
@@ -137,6 +158,27 @@ def main(argv=None):
             print(render_status_json(result), end="")
         else:
             print(render_status_human(result))
+        return result.exit_code
+
+    if args.command == "uninstall":
+        try:
+            result = UninstallService().uninstall(
+                UninstallRequest(
+                    path=args.path,
+                    assume_yes=args.yes,
+                    dry_run=args.dry_run,
+                )
+            )
+        except (FileNotFoundError, NotADirectoryError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        except OSError as exc:
+            print("Uninstall failed: {}".format(exc), file=sys.stderr)
+            return 5
+
+        if result.message:
+            stream = sys.stderr if result.exit_code != 0 else sys.stdout
+            print(result.message, file=stream)
         return result.exit_code
 
     parser.print_help()

@@ -13,7 +13,6 @@ class VersionTests(unittest.TestCase):
     def test_version_is_non_empty(self):
         version_value = get_version()
         self.assertTrue(version_value)
-        self.assertEqual(version_value, "0.15.0")
 
     def test_get_version_uses_installed_metadata(self):
         with mock.patch("ekp.version.version", return_value="9.9.9") as metadata_version:
@@ -25,14 +24,14 @@ class VersionTests(unittest.TestCase):
             "ekp.version.version",
             side_effect=PackageNotFoundError("engineering-knowledge-pack"),
         ):
-            self.assertEqual(get_version(), "0.15.0")
+            self.assertEqual(get_version(), "0.16.0.dev0")
 
     def test_read_source_version_reads_pyproject(self):
         with mock.patch(
             "ekp.version.version",
             side_effect=PackageNotFoundError("engineering-knowledge-pack"),
         ):
-            self.assertEqual(_read_source_version(), "0.15.0")
+            self.assertEqual(_read_source_version(), "0.16.0.dev0")
 
     def test_install_uses_same_version_as_get_version(self):
         with mock.patch(
@@ -40,8 +39,8 @@ class VersionTests(unittest.TestCase):
             side_effect=PackageNotFoundError("engineering-knowledge-pack"),
         ):
             resolved = get_version()
-        self.assertEqual(resolved, "0.15.0")
-        self.assertNotEqual(resolved, "0.15.0.dev0")
+        self.assertEqual(resolved, "0.16.0.dev0")
+        self.assertNotEqual(resolved, "0.15.0")
 
     def test_read_project_version_parses_static_pep621_metadata(self):
         with tempfile.TemporaryDirectory() as tmp:

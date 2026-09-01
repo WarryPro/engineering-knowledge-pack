@@ -172,6 +172,16 @@ class ManifestStore:
             if temp_path.exists():
                 temp_path.unlink(missing_ok=True)
 
+    def delete(self) -> None:
+        """Remove the ownership manifest after managed files are deleted."""
+        if self.manifest_path.is_symlink():
+            raise InstallConflictError(
+                "Refusing to remove symlinked ownership manifest: {}".format(MANIFEST_RELATIVE)
+            )
+        if not self.manifest_path.exists():
+            return
+        self.manifest_path.unlink()
+
 
 def utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
