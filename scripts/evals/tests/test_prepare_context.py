@@ -19,8 +19,10 @@ if str(SCRIPTS_EVALS) not in sys.path:
 from context import (  # noqa: E402
     EMPTY_BYTES_SHA256,
     ContextRenderError,
+    SemanticUnit,
     build_treatment_units,
     empty_context_sha256,
+    neutralize_model_visible_text,
     normalize_newlines,
     render_context_markdown,
 )
@@ -66,6 +68,75 @@ class ContextRendererTests(unittest.TestCase):
         self.assertTrue(text.startswith("# Engineering Context\n"))
         self.assertNotIn("Evaluation treatment", text)
         self.assertNotIn("Cursor rules", text)
+        self.assertNotRegex(text, r"(?i)Engineering Knowledge Pack")
+        self.assertNotRegex(text, r"\bEKP-")
+        self.assertNotRegex(text, r"\bEKP\b")
+
+    def test_identity_neutral_synthetic_content(self):
+        units = [
+            SemanticUnit(
+                unit_id="principle:EKP-P03",
+                unit_type="foundation-principle",
+                source_document="knowledge/engineering/engineering-principles.md",
+                title="EKP-P03: Prefer reversible changes",
+                body=(
+                    "Intent:\n"
+                    "Preserve rollback capability (EKP-P03).\n\n"
+                    "Rule:\n"
+                    "Use incremental, reviewable steps.\n"
+                ),
+                concept_id="EKP-P03",
+            ),
+            SemanticUnit(
+                unit_id="concept:EKP-AI01",
+                unit_type="selected-concept",
+                source_document="knowledge/ai/ai-assisted-development.md",
+                title="EKP-AI01 — Prefer small diffs",
+                body=(
+                    "Across all technology stacks in EKP, see testing.md, EKP-TS05.\n"
+                    "This operationalizes EKP-P03.\n"
+                    "Engineering Knowledge Pack branding must not leak.\n"
+                ),
+                concept_id="EKP-AI01",
+            ),
+        ]
+        text = render_context_markdown(units)
+        self.assertIn("Preserve rollback capability.", text)
+        self.assertIn("Use incremental, reviewable steps.", text)
+        self.assertIn("Prefer reversible changes", text)
+        self.assertNotIn("EKP-P03", text)
+        self.assertNotIn("EKP-P01", text)
+        self.assertNotIn("EKP-AI01", text)
+        self.assertNotIn("EKP-TS05", text)
+        self.assertNotIn("EKP-LB09", text)
+        self.assertNotRegex(text, r"(?i)Engineering Knowledge Pack")
+        self.assertNotRegex(text, r"\bEKP\b")
+        # Audit metadata retains IDs
+        rows = [u.to_manifest() for u in units]
+        self.assertEqual(rows[0]["concept_id"], "EKP-P03")
+        self.assertEqual(rows[0]["unit_id"], "principle:EKP-P03")
+        self.assertEqual(rows[1]["concept_id"], "EKP-AI01")
+
+    def test_neutralize_helper_retains_rules(self):
+        out = neutralize_model_visible_text(
+            "Intent:\nPreserve rollback capability (EKP-P03).\n\n"
+            "Rule:\nUse incremental, reviewable steps.\n",
+            {"EKP-P03": "Prefer reversible changes"},
+        )
+        self.assertIn("Preserve rollback capability.", out)
+        self.assertIn("Use incremental, reviewable steps.", out)
+        self.assertNotIn("EKP-P03", out)
+
+    def test_profile_contexts_have_zero_identity_leakage(self):
+        for profile in ("cursor-core", "cursor-symfony", "cursor-frontend"):
+            units = build_treatment_units(REPO_ROOT, profile)
+            text = render_context_markdown(units)
+            self.assertNotRegex(text, r"(?i)Engineering Knowledge Pack", msg=profile)
+            self.assertNotRegex(text, r"\bEKP-", msg=profile)
+            self.assertNotRegex(text, r"\bEKP\b", msg=profile)
+            # Selection freeze: unit identity still present for audit
+            concept_units = [u for u in units if u.concept_id]
+            self.assertTrue(any(u.concept_id.startswith("EKP-") for u in concept_units), profile)
 
     def test_repeated_render_byte_identical(self):
         a = render_context_markdown(build_treatment_units(REPO_ROOT, "cursor-core")).encode("utf-8")
@@ -98,6 +169,14 @@ class ContextRendererTests(unittest.TestCase):
             for sid in core_ids:
                 self.assertEqual(by_id[sid]["baseline_context_sha256"], EMPTY_SHA)
                 self.assertGreater(by_id[sid]["context_bytes"], 0)
+                request = json.loads(
+                    (Path(tmp) / sid / "treatment" / "request.json").read_text(encoding="utf-8")
+                )
+                self.assertEqual(request["renderer_version"], 2)
+                units = json.loads(
+                    (Path(tmp) / sid / "treatment" / "units.json").read_text(encoding="utf-8")
+                )
+                self.assertTrue(any(u.get("concept_id") for u in units["units"]))
 
 
 class PreparePackageTests(unittest.TestCase):
