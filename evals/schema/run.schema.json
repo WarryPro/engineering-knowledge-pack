@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/WarryPro/engineering-knowledge-pack/evals/schema/run.schema.json",
+  "title": "EKP Evaluation Run",
+  "description": "One captured model response for a scenario condition and replicate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "run_id",
+    "scenario_id",
+    "scenario_version",
+    "ekp_commit",
+    "ekp_version",
+    "profile",
+    "condition",
+    "provider",
+    "model_config_id",
+    "model_id_observed",
+    "executed_at",
+    "replicate_index",
+    "sampling",
+    "tools_enabled",
+    "session_isolation",
+    "prompt_sha256",
+    "context_sha256",
+    "response_sha256",
+    "response_file"
+  ],
+  "properties": {
+    "run_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "scenario_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "ekp_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "ekp_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "profile": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "condition": {
+      "type": "string",
+      "enum": ["baseline", "treatment"]
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_config_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model_id_observed": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Model identity as reported by the execution environment"
+    },
+    "executed_at": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Execution timestamp (ISO-8601 recommended)"
+    },
+    "replicate_index": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sampling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["temperature", "top_p", "seed", "seed_supported", "max_output"],
+      "properties": {
+        "temperature": {
+          "type": ["number", "null"]
+        },
+        "top_p": {
+          "type": ["number", "null"]
+        },
+        "seed": {
+          "type": ["integer", "null"]
+        },
+        "seed_supported": {
+          "type": ["boolean", "null"]
+        },
+        "max_output": {
+          "type": ["integer", "null"],
+          "minimum": 1
+        }
+      }
+    },
+    "tools_enabled": {
+      "type": "boolean",
+      "const": false
+    },
+    "session_isolation": {
+      "type": "string",
+      "const": "fresh"
+    },
+    "prompt_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "context_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 of rendered treatment context, or SHA-256 of empty bytes for baseline"
+    },
+    "response_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "response_file": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Relative path to the exact raw response bytes used for scoring"
+    },
+    "input_chars": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "output_chars": {
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "notes": {
+      "type": "string"
+    }
+  }
+}

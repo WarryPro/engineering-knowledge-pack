@@ -1,0 +1,133 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/WarryPro/engineering-knowledge-pack/evals/schema/score-sheet.schema.json",
+  "title": "EKP Evaluation Score Sheet",
+  "description": "One blind rater score for one response pair. Must not reveal condition mapping.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "score_id",
+    "pair_id",
+    "scenario_id",
+    "scenario_version",
+    "rubric_version",
+    "rubric_sha256",
+    "replicate_index",
+    "rater_alias",
+    "blinded",
+    "response_a",
+    "response_b",
+    "pairwise_preference",
+    "pairwise_reason",
+    "scored_at"
+  ],
+  "properties": {
+    "score_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pair_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "scenario_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "rubric_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "rubric_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "replicate_index": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "rater_alias": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Anonymous stable rater alias"
+    },
+    "blinded": {
+      "type": "boolean",
+      "const": true
+    },
+    "response_a": {
+      "$ref": "#/$defs/response_score"
+    },
+    "response_b": {
+      "$ref": "#/$defs/response_score"
+    },
+    "pairwise_preference": {
+      "type": "string",
+      "enum": ["A", "B", "tie"]
+    },
+    "pairwise_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scored_at": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "dimension_score": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 3
+    },
+    "response_score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "response_id",
+        "response_sha256",
+        "dimension_scores",
+        "critical_failures"
+      ],
+      "properties": {
+        "response_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "response_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "dimension_scores": {
+          "type": "object",
+          "description": "Only applicable dimensions; omit non-applicable dimensions",
+          "additionalProperties": false,
+          "properties": {
+            "technical-correctness": { "$ref": "#/$defs/dimension_score" },
+            "architecture-boundaries": { "$ref": "#/$defs/dimension_score" },
+            "tradeoff-reasoning": { "$ref": "#/$defs/dimension_score" },
+            "maintainability-change-safety": { "$ref": "#/$defs/dimension_score" },
+            "testing-verifiability": { "$ref": "#/$defs/dimension_score" },
+            "security-operational-risk": { "$ref": "#/$defs/dimension_score" },
+            "constraint-adherence": { "$ref": "#/$defs/dimension_score" }
+          }
+        },
+        "critical_failures": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CF-[0-9]{2,}$"
+          },
+          "uniqueItems": true
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

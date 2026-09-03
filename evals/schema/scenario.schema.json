@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/WarryPro/engineering-knowledge-pack/evals/schema/scenario.schema.json",
+  "title": "EKP Evaluation Scenario",
+  "description": "Authored scenario contract for knowledge-effect evaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "id",
+    "version",
+    "title",
+    "description",
+    "category",
+    "difficulty",
+    "profile",
+    "task_type",
+    "prompt_file",
+    "rubric_file",
+    "status",
+    "shared_system_instruction_ref"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+      "description": "Stable kebab-case scenario identifier"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Explicit scenario artifact version (semver-like)"
+    },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "architecture",
+        "api",
+        "database",
+        "testing",
+        "security",
+        "maintainability",
+        "stack"
+      ]
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["intro", "intermediate", "advanced"]
+    },
+    "profile": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "EKP profile whose selected knowledge is evaluated in treatment"
+    },
+    "task_type": {
+      "type": "string",
+      "enum": ["decision", "review"]
+    },
+    "prompt_file": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Participant-visible prompt path relative to the scenario directory"
+    },
+    "rubric_file": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Evaluator-only rubric path relative to the scenario directory"
+    },
+    "fixture": {
+      "description": "Optional fixture directory relative to the scenario directory, or null",
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "string",
+          "minLength": 1
+        }
+      ]
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated"]
+    },
+    "shared_system_instruction_ref": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Path relative to evals/ pointing into evals/shared/"
+    }
+  }
+}
