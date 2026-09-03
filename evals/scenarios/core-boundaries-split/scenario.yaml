@@ -1,0 +1,17 @@
+id: core-boundaries-split
+version: "1.0.0"
+title: Restructure a coupled order fulfillment path
+description: >
+  A growing fulfillment path mixes validation, business decisions, persistence, provider calls, and notifications. The team must evolve it for a second provider and multiple entry points without a rewrite.
+category: architecture
+difficulty: advanced
+profile: cursor-core
+task_type: decision
+prompt_file: prompt.md
+rubric_file: rubric.yaml
+fixture: fixture
+tags:
+  - boundaries
+  - incremental-change
+status: active
+shared_system_instruction_ref: shared/system_instruction.md

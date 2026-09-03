@@ -1,0 +1,44 @@
+scenario_id: core-authz-review
+scenario_version: "1.0.0"
+version: "1.0.0"
+dimensions:
+  - technical-correctness
+  - security-operational-risk
+  - architecture-boundaries
+  - testing-verifiability
+  - constraint-adherence
+criteria:
+  technical-correctness: >
+    The review correctly interprets the control flow around authentication,
+    role checks, and document loading.
+  security-operational-risk: >
+    Cross-tenant object access risk is identified and treated as material.
+  architecture-boundaries: >
+    Trust boundaries are placed so authorization decisions are not delegated to
+    unchecked client-supplied tenant or ownership fields.
+  testing-verifiability: >
+    Remediation includes tests or probes that would catch cross-tenant access.
+  constraint-adherence: >
+    Recommendations fit an authenticated multi-tenant HTTP API without requiring
+    an unrelated product rewrite.
+checks:
+  - id: CHK-01
+    description: Addresses object/tenant authorization rather than authentication alone.
+critical_failures:
+  - id: CF-01
+    description: Misses or endorses the material cross-tenant authorization path.
+  - id: CF-02
+    description: Relies solely on client-provided ownership or tenant information.
+  - id: CF-03
+    description: Proposes logging or auditing as a substitute for authorization.
+strong_outcomes:
+  - Identifies that role checks alone do not bind a document to the caller tenant.
+  - Requires server-side tenant/object authorization using trusted session context.
+  - Flags storage key construction that trusts request tenancy fields.
+  - Prioritizes fix verification with cross-tenant negative tests.
+acceptable_alternatives:
+  - Central policy helper versus query-scoped repositories when both enforce tenant binding.
+  - Different storage key layouts once authorization is enforced server-side.
+important_tradeoffs:
+  - Defense in depth versus delivery speed for the immediate fix
+  - Broad audit logging versus fixing the authorization defect first

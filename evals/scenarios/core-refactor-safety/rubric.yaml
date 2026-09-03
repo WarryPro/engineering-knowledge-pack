@@ -1,0 +1,47 @@
+scenario_id: core-refactor-safety
+scenario_version: "1.0.0"
+version: "1.0.0"
+dimensions:
+  - technical-correctness
+  - maintainability-change-safety
+  - testing-verifiability
+  - tradeoff-reasoning
+  - constraint-adherence
+criteria:
+  technical-correctness: >
+    The plan can introduce the partner discount band without inventing unavailable
+    freeze time or casually redefining existing prices.
+  maintainability-change-safety: >
+    Changes are sequenced to reduce risk before widening behavior, preserving
+    relied-upon outcomes.
+  testing-verifiability: >
+    Compatibility is protected by concrete characterization or equivalent safety nets
+    before structural moves.
+  tradeoff-reasoning: >
+    The response balances cleanup ambition against delivery pressure.
+  constraint-adherence: >
+    Feature delivery remains possible; no full stop-the-world rewrite is required.
+checks:
+  - id: CHK-01
+    description: Keeps existing public pricing behavior compatible unless explicitly changed.
+  - id: CHK-02
+    description: Allows incremental delivery of the partner discount band.
+critical_failures:
+  - id: CF-01
+    description: Big-bang rewrite without a behavioral safety net.
+  - id: CF-02
+    description: Casually changes externally relied-upon pricing behavior.
+  - id: CF-03
+    description: Adds another divergent implementation that increases risk instead of reducing it.
+strong_outcomes:
+  - Captures current behavior before structural edits.
+  - Sequences extraction/deduplication around a narrow seam useful for the new band.
+  - Preserves rounding and threshold quirks until intentionally addressed.
+  - Defines rollout checks for checkout and invoice callers.
+acceptable_alternatives:
+  - Characterize-then-extract versus branch-by-abstraction for the new band when justified.
+  - Temporary duplication with a deadline versus immediate consolidation when risk is argued clearly.
+important_tradeoffs:
+  - Cleanup depth versus feature deadline
+  - Behavioral fidelity versus ideal pricing model purity
+  - Short-term duplication versus premature abstraction

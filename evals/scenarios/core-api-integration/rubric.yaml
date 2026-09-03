@@ -1,0 +1,50 @@
+scenario_id: core-api-integration
+scenario_version: "1.0.0"
+version: "1.0.0"
+dimensions:
+  - technical-correctness
+  - architecture-boundaries
+  - tradeoff-reasoning
+  - security-operational-risk
+  - maintainability-change-safety
+criteria:
+  technical-correctness: >
+    The design accounts for timeout-after-accept, transient failure, and duplicate
+    callbacks without assuming the provider can be fixed.
+  architecture-boundaries: >
+    External settlement concerns are isolated enough that user-facing confirmation
+    is not permanently identical to an unresolved provider round-trip.
+  tradeoff-reasoning: >
+    The response balances latency, operational complexity, and financial safety
+    instead of optimizing only one dimension.
+  security-operational-risk: >
+    Duplicate money movement and opaque failures are treated as first-class risks
+    with concrete mitigations and observability.
+  maintainability-change-safety: >
+    The migration can be introduced without reckless cutover of live payouts.
+checks:
+  - id: CHK-01
+    description: Does not require changing ClearSettle behavior.
+  - id: CHK-02
+    description: Addresses duplicate callback or duplicate payout risk explicitly.
+critical_failures:
+  - id: CF-01
+    description: Recommends blind retries of a non-idempotent payout with no duplicate mitigation.
+  - id: CF-02
+    description: Swallows provider failures or leaves support unable to diagnose payout state.
+  - id: CF-03
+    description: Allows duplicate charged or committed payouts with no mitigation strategy.
+strong_outcomes:
+  - Separates user-visible acceptance from unresolved provider settlement where justified.
+  - Makes payout identity/correlation explicit across request and callback.
+  - Handles duplicate callbacks safely.
+  - Defines operator-visible states for in-flight, settled, and failed payouts.
+  - Explains verification with failure injection or staged rollout.
+acceptable_alternatives:
+  - Synchronous confirmation with strong correlation and careful retry policy when justified.
+  - Asynchronous settlement with explicit pending states when latency or timeout risk dominates.
+  - Different storage choices for correlation records when they preserve diagnosability.
+important_tradeoffs:
+  - User-facing latency versus settlement certainty
+  - Operational complexity versus financial safety
+  - Immediate retries versus deferred reconciliation

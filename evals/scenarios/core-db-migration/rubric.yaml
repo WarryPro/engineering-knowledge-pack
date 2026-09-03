@@ -1,0 +1,50 @@
+scenario_id: core-db-migration
+scenario_version: "1.0.0"
+version: "1.0.0"
+dimensions:
+  - technical-correctness
+  - tradeoff-reasoning
+  - maintainability-change-safety
+  - testing-verifiability
+  - constraint-adherence
+criteria:
+  technical-correctness: >
+    The strategy works for a populated live table with continuing writes and
+    overlapping application versions.
+  tradeoff-reasoning: >
+    The response weighs migration speed against operational safety and temporary
+    dual representation cost.
+  maintainability-change-safety: >
+    Rollback remains plausible and irreversible data loss is avoided.
+  testing-verifiability: >
+    The plan includes concrete ways to validate backfill correctness and
+    version-overlap behavior before full cutover.
+  constraint-adherence: >
+    The response respects overlapping deploys, continued writes, and no long
+    offline rewrite window.
+checks:
+  - id: CHK-01
+    description: Accounts for old and new application versions running together.
+  - id: CHK-02
+    description: Does not assume traffic can simply stop contrary to constraints.
+critical_failures:
+  - id: CF-01
+    description: One-step destructive migration incompatible with overlapping versions.
+  - id: CF-02
+    description: Irreversible data loss or drop of needed values without mitigation.
+  - id: CF-03
+    description: Assumes traffic can stop or a long exclusive lock contrary to constraints.
+strong_outcomes:
+  - Introduces additive compatibility before removing the old representation.
+  - Explains how old and new writers/readers coexist temporarily.
+  - Covers backfill of existing rows with verification.
+  - Keeps a rollback path until confidence is established.
+  - Addresses reporting consumers that still need the old field temporarily.
+acceptable_alternatives:
+  - Different sequencing of read/write cutover when justified by risk.
+  - Application-side dual maintenance versus database-generated compatibility fields.
+  - Batch backfill strategies with different chunking approaches.
+important_tradeoffs:
+  - Migration speed versus operational safety
+  - Temporary dual-write or dual-read complexity versus cleaner final schema
+  - Reporting lag versus forcing every consumer to move immediately

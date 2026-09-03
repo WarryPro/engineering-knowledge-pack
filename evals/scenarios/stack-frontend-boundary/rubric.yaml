@@ -1,0 +1,47 @@
+scenario_id: stack-frontend-boundary
+scenario_version: "1.0.0"
+version: "1.0.0"
+dimensions:
+  - technical-correctness
+  - architecture-boundaries
+  - maintainability-change-safety
+  - tradeoff-reasoning
+  - constraint-adherence
+criteria:
+  technical-correctness: >
+    The plan supports two screens with shared payable-total behavior and visible
+    loading/error states without a framework rewrite.
+  architecture-boundaries: >
+    Reusable calculation and API mapping are not permanently trapped inside
+    presentational rendering code.
+  maintainability-change-safety: >
+    Existing product-page behavior remains intact during extraction.
+  tradeoff-reasoning: >
+    The response justifies the chosen sharing mechanism against duplication and
+    over-abstraction.
+  constraint-adherence: >
+    Honors no-rewrite, reuse, and user-visible async/error requirements.
+checks:
+  - id: CHK-01
+    description: Avoids duplicating core quote behavior into the second screen.
+  - id: CHK-02
+    description: Keeps loading/error states user-visible on both screens.
+critical_failures:
+  - id: CF-01
+    description: Duplicates core behavior into the second component.
+  - id: CF-02
+    description: Leaves reusable business decisions permanently mixed only into rendering code.
+  - id: CF-03
+    description: Ignores async/error state migration for the shared behavior.
+strong_outcomes:
+  - Extracts shared quote mapping/calculation from the presentational component.
+  - Provides a reuse path for the cart review screen.
+  - Preserves loading and failure UX.
+  - Anticipates API shape evolution without scattering parsing logic.
+acceptable_alternatives:
+  - Shared module versus lightweight store/hook approaches when boundaries stay clear.
+  - Different UI state ownership models that still avoid duplicating domain calculations.
+important_tradeoffs:
+  - Reuse versus premature abstraction
+  - Local component simplicity versus cross-screen consistency
+  - Early API adapter investment versus waiting for the next API change

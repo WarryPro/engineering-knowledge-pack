@@ -1,0 +1,46 @@
+scenario_id: core-test-strategy
+scenario_version: "1.0.0"
+version: "1.0.0"
+dimensions:
+  - technical-correctness
+  - architecture-boundaries
+  - testing-verifiability
+  - tradeoff-reasoning
+  - constraint-adherence
+criteria:
+  technical-correctness: >
+    The strategy targets the actual regression classes (partial failure and cleanup)
+    rather than unrelated coverage cosmetics.
+  architecture-boundaries: >
+    The response distinguishes valuable seams from collaborators that should not be
+    mocked away when the risk lives at that boundary.
+  testing-verifiability: >
+    Failure-path and integration-boundary behavior become observable by the suite.
+  tradeoff-reasoning: >
+    CI cost is treated as a real constraint; investment is prioritized by risk.
+  constraint-adherence: >
+    The plan does not assume unlimited CI time.
+checks:
+  - id: CHK-01
+    description: Prioritizes the demonstrated failure/integration risks.
+  - id: CHK-02
+    description: Stays within constrained CI budget rather than unbounded suite growth.
+critical_failures:
+  - id: CF-01
+    description: Only increases test count with no risk prioritization.
+  - id: CF-02
+    description: Recommends mocking away the exact integration behavior that caused regressions.
+  - id: CF-03
+    description: Ignores failure-path verification.
+strong_outcomes:
+  - Rebalances toward fewer high-value boundary/failure tests.
+  - Reduces brittle interaction-asserting mocks where they hide risk.
+  - Keeps a lean set of broad tests focused on critical journeys.
+  - Defines signals for whether the new mix is working.
+acceptable_alternatives:
+  - Different mixes of focused integration tests and selective broad tests when justified.
+  - Contract tests at service boundaries instead of full end-to-end coverage where appropriate.
+important_tradeoffs:
+  - Test fidelity versus CI cost
+  - Fast feedback versus confidence at real boundaries
+  - Rewriting brittle tests versus leaving coverage gaps temporarily
