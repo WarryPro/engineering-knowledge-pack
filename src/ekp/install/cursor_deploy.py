@@ -352,7 +352,7 @@ class InstallSelectionErrorProfileMismatch(InstallSelectionError):
     def __init__(self, installed_profile: str):
         super().__init__(
             "EKP is already installed with profile {}.\n\n"
-            "Profile replacement is not supported by this v0.15.0 installer.".format(
+            "Profile replacement is not supported by this EKP installer.".format(
                 installed_profile
             )
         )

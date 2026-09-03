@@ -32,14 +32,6 @@ packages = ["src/ekp"]
 "scripts/assemble" = "ekp/_resources/scripts/assemble"
 "scripts/validate" = "ekp/_resources/scripts/validate"
 
-[tool.hatch.build.targets.sdist.force-include]
-"knowledge" = "ekp/_resources/knowledge"
-"profiles" = "ekp/_resources/profiles"
-"schema" = "ekp/_resources/schema"
-"scripts/adapters" = "ekp/_resources/scripts/adapters"
-"scripts/assemble" = "ekp/_resources/scripts/assemble"
-"scripts/validate" = "ekp/_resources/scripts/validate"
-
 [tool.hatch.build.targets.sdist]
 exclude = [
     "/.git",
