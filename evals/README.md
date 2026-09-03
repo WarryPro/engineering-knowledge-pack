@@ -30,7 +30,7 @@ The only intended independent variable is whether selection-equivalent EKP evalu
 
 Treatment context is **not** “concatenate every Markdown file listed by the profile.”
 
-Operational contract (renderer implemented in a later phase):
+Operational contract (**renderer version 1**, implemented):
 
 ```text
 load profile
@@ -44,7 +44,53 @@ load profile
 
 Reuse selection/extract/profile resolution from `scripts/adapters/common/` (for example `profile_loader`, `profile_resolve`, `selection`, `extract`). Do **not** depend on Cursor writers, Cursor frontmatter, activation metadata, or Cursor runtime.
 
-Semantic units (selected concepts and, where the pipeline exposes them, decision flows) appear **once**. Ordering must be deterministic and tested when the renderer lands.
+Model-visible semantic categories:
+
+```text
+foundation-summary
+foundation-principle
+decision-flow
+selected-concept
+```
+
+Semantic units appear **once**. Deterministic order: orchestrator flow → foundation summary → principles P01–P10 → remaining document flows (profile knowledge order) → remaining selected concepts (`select_manifest_rules` order). Missing selected concepts are a hard preparation failure.
+
+## Preparation and run capture
+
+Offline commands (no provider execution):
+
+```bash
+python scripts/validate/validate.py --generate-index
+python scripts/evals/prepare.py --all
+python scripts/evals/prepare.py --scenario <scenario-id>
+python scripts/evals/import_run.py --package <prepared-condition-dir> --response <file> --execution <meta.json> --output <dir>
+```
+
+Generated request packages (gitignored) live under:
+
+```text
+dist/evals/prepared/<scenario-id>/{baseline,treatment}/
+  request.json
+  system_instruction.md
+  participant.md
+  context.md
+  units.json
+```
+
+Contracts frozen for renderer v1:
+
+- Baseline `context.md` is exactly **zero bytes**; `context_sha256` is the SHA-256 of empty bytes.
+- Treatment `context.md` is the selected Engineering Context (not labeled as “EKP treatment”).
+- `prompt_sha256` is SHA-256 of generated `participant.md` (normalized prompt **plus** lexicographic fixture serialization), not `prompt.md` alone.
+- Baseline and treatment share identical system instruction and participant bytes; only context differs.
+- Importer stores response bytes **exactly** as provided (no trim/rewrite) and binds `response_sha256` to those bytes.
+- Condition, scenario, profile, EKP commit/version, and prompt/context hashes are taken from the prepared package and cannot be overridden by execution metadata.
+
+Local tooling tests:
+
+```bash
+python -m unittest discover -s scripts/evals/tests -v
+```
 
 ## Shared system instruction
 
