@@ -83,14 +83,39 @@ class SchemaContractTests(unittest.TestCase):
         )
 
 
-class FoundationScenarioPresenceTests(unittest.TestCase):
-    def test_repo_foundation_passes_with_authored_scenarios(self):
-        validator = EvalValidator(repo_root=REPO_ROOT)
-        status = validator.validate()
-        self.assertEqual(status, 0, msg=validator.errors)
-        self.assertEqual(validator.scenario_count, 8)
+class IsolatedInventoryCountingTests(unittest.TestCase):
+    """Inventory counts are local to synthetic trees — never the live evals/scenarios set."""
 
-    def test_main_exit_zero(self):
+    def _harness(self):
+        tmp = tempfile.TemporaryDirectory()
+        evals = Path(tmp.name) / "evals"
+        copy_real_schemas(evals, EVALS_DIR)
+        return tmp, evals
+
+    def test_zero_scenarios_is_structurally_valid(self):
+        tmp, evals = self._harness()
+        with tmp:
+            validator = EvalValidator(repo_root=REPO_ROOT, evals_root=evals)
+            status = validator.validate()
+            self.assertEqual(status, 0, msg=validator.errors)
+            self.assertEqual(validator.scenario_count, 0)
+
+    def test_two_synthetic_scenarios_count_deterministically(self):
+        tmp, evals = self._harness()
+        with tmp:
+            first = dict(MIN_SCENARIO)
+            first["id"] = "synthetic-alpha"
+            second = dict(MIN_SCENARIO)
+            second["id"] = "synthetic-beta"
+            add_scenario(evals, scenario=first)
+            add_scenario(evals, scenario=second)
+            validator = EvalValidator(repo_root=REPO_ROOT, evals_root=evals)
+            status = validator.validate()
+            self.assertEqual(status, 0, msg=validator.errors)
+            self.assertEqual(validator.scenario_count, 2)
+
+    def test_main_exit_zero_against_real_repository(self):
+        # Real inventory must validate; exact scenario count is a phase gate, not a unit invariant.
         self.assertEqual(main([]), 0)
 
 
