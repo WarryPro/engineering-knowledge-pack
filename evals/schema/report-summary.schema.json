@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/WarryPro/engineering-knowledge-pack/evals/schema/report-summary.schema.json",
+  "title": "EKP Evaluation Report Summary",
+  "description": "Stable summary contract for paired-replicate evaluation outcomes. No magic overall score.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "evaluation_id",
+    "ekp_version",
+    "ekp_commit",
+    "model_config_id",
+    "scenario_count",
+    "pair_count",
+    "outcomes",
+    "limitations"
+  ],
+  "properties": {
+    "evaluation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ekp_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ekp_commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "model_config_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "pair_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["improved", "tied", "regressed", "disputed"],
+      "properties": {
+        "improved": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tied": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "regressed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "disputed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "scenario_distributions": {
+      "type": "array",
+      "description": "Optional per-scenario replicate outcome counts",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenario_id", "improved", "tied", "regressed", "disputed"],
+        "properties": {
+          "scenario_id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "improved": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "tied": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "regressed": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "disputed": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}
