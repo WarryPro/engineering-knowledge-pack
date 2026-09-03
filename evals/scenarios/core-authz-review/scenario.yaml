@@ -1,0 +1,17 @@
+id: core-authz-review
+version: "1.0.0"
+title: Review multi-tenant document export authorization
+description: >
+  A multi-tenant document export endpoint authenticates callers and performs some checks, but object access may still cross tenant boundaries via request-supplied identifiers.
+category: security
+difficulty: intermediate
+profile: cursor-core
+task_type: review
+prompt_file: prompt.md
+rubric_file: rubric.yaml
+fixture: fixture
+tags:
+  - authorization
+  - multi-tenant
+status: active
+shared_system_instruction_ref: shared/system_instruction.md

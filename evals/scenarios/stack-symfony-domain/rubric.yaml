@@ -1,0 +1,46 @@
+scenario_id: stack-symfony-domain
+scenario_version: "1.0.0"
+version: "1.0.0"
+dimensions:
+  - technical-correctness
+  - architecture-boundaries
+  - tradeoff-reasoning
+  - maintainability-change-safety
+  - constraint-adherence
+criteria:
+  technical-correctness: >
+    The proposal works inside an existing Symfony app and supports both HTTP and
+    a message consumer without fake request context.
+  architecture-boundaries: >
+    The reusable business decision is not trapped exclusively in controller or
+    request-specific framework wiring.
+  tradeoff-reasoning: >
+    The response justifies a pragmatic boundary rather than ceremony for its own sake.
+  maintainability-change-safety: >
+    HTTP behavior remains compatible while the decision is made reusable.
+  constraint-adherence: >
+    Avoids rewrite fantasies and copied divergent rule implementations.
+checks:
+  - id: CHK-01
+    description: Supports reuse outside the current HTTP controller.
+  - id: CHK-02
+    description: Does not require a full application rewrite.
+critical_failures:
+  - id: CF-01
+    description: Keeps essential reusable business policy exclusively in the controller/request layer.
+  - id: CF-02
+    description: Requires framework HTTP/security request context to execute the core business decision with no justification.
+  - id: CF-03
+    description: Over-engineered rewrite that ignores project constraints.
+strong_outcomes:
+  - Extracts a reusable eligibility decision callable from HTTP and messaging.
+  - Keeps Symfony wiring thin around that decision.
+  - Avoids duplicating the rule in the consumer.
+  - Preserves current HTTP outcomes during the move.
+acceptable_alternatives:
+  - Application service versus domain service placement when the boundary is clear and justified.
+  - Different persistence read models feeding the same decision function.
+important_tradeoffs:
+  - Framework convenience versus reuse outside HTTP
+  - Incremental extraction versus larger structural redesign
+  - Purity of domain modeling versus delivery cost in an existing app

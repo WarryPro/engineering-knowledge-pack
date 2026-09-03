@@ -1,0 +1,17 @@
+id: core-api-integration
+version: "1.0.0"
+title: Harden a fragile third-party settlement call
+description: >
+  A user-facing request path calls an external settlement provider that can timeout after accept, fail transiently, and deliver duplicate callbacks. The team must improve reliability without changing the provider.
+category: api
+difficulty: advanced
+profile: cursor-core
+task_type: decision
+prompt_file: prompt.md
+rubric_file: rubric.yaml
+fixture: fixture
+tags:
+  - integration
+  - reliability
+status: active
+shared_system_instruction_ref: shared/system_instruction.md

@@ -1,0 +1,17 @@
+id: stack-frontend-boundary
+version: "1.0.0"
+title: Share quote calculation across a second screen
+description: >
+  A TypeScript UI mixes API access, state transitions, quote calculations, presentation, and error handling in one component. A second screen needs the same behavior while the API will evolve.
+category: stack
+difficulty: intermediate
+profile: cursor-frontend
+task_type: decision
+prompt_file: prompt.md
+rubric_file: rubric.yaml
+fixture: fixture
+tags:
+  - frontend
+  - state
+status: active
+shared_system_instruction_ref: shared/system_instruction.md

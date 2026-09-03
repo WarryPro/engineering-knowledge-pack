@@ -1,0 +1,17 @@
+id: stack-symfony-domain
+version: "1.0.0"
+title: Reuse a Symfony eligibility rule outside HTTP
+description: >
+  A Symfony feature spreads a business eligibility decision across controller, Doctrine entity, and a framework-oriented service. A new non-HTTP channel must reuse the same decision without a rewrite.
+category: stack
+difficulty: advanced
+profile: cursor-symfony
+task_type: decision
+prompt_file: prompt.md
+rubric_file: rubric.yaml
+fixture: fixture
+tags:
+  - symfony
+  - domain
+status: active
+shared_system_instruction_ref: shared/system_instruction.md

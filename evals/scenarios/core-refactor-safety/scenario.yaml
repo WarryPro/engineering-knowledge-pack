@@ -1,0 +1,17 @@
+id: core-refactor-safety
+version: "1.0.0"
+title: Evolve a fragile pricing module under delivery pressure
+description: >
+  A billing pricing module has duplicated logic, implicit caller-reliant behavior, and weak tests while a new pricing variation is due soon.
+category: maintainability
+difficulty: intermediate
+profile: cursor-core
+task_type: review
+prompt_file: prompt.md
+rubric_file: rubric.yaml
+fixture: fixture
+tags:
+  - refactor
+  - compatibility
+status: active
+shared_system_instruction_ref: shared/system_instruction.md

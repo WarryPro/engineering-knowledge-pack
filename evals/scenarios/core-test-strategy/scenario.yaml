@@ -1,0 +1,17 @@
+id: core-test-strategy
+version: "1.0.0"
+title: Rebalance checkout tests after integration regressions
+description: >
+  A checkout component has many implementation-coupled mocked tests and a few slow broad tests. Recent regressions hit failure paths and integration boundaries while CI time is constrained.
+category: testing
+difficulty: intermediate
+profile: cursor-core
+task_type: decision
+prompt_file: prompt.md
+rubric_file: rubric.yaml
+fixture: fixture
+tags:
+  - testing
+  - risk
+status: active
+shared_system_instruction_ref: shared/system_instruction.md

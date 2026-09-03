@@ -83,12 +83,12 @@ class SchemaContractTests(unittest.TestCase):
         )
 
 
-class FoundationZeroScenarioTests(unittest.TestCase):
-    def test_repo_foundation_passes_with_zero_scenarios(self):
+class FoundationScenarioPresenceTests(unittest.TestCase):
+    def test_repo_foundation_passes_with_authored_scenarios(self):
         validator = EvalValidator(repo_root=REPO_ROOT)
         status = validator.validate()
         self.assertEqual(status, 0, msg=validator.errors)
-        self.assertEqual(validator.scenario_count, 0)
+        self.assertEqual(validator.scenario_count, 8)
 
     def test_main_exit_zero(self):
         self.assertEqual(main([]), 0)

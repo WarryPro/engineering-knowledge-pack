@@ -1,0 +1,17 @@
+id: core-db-migration
+version: "1.0.0"
+title: Evolve customer name storage under overlapping deploys
+description: >
+  A live customers table must split a single full_name field while old and new app versions overlap, writes continue, and rollback must remain feasible.
+category: database
+difficulty: advanced
+profile: cursor-core
+task_type: decision
+prompt_file: prompt.md
+rubric_file: rubric.yaml
+fixture: fixture
+tags:
+  - migration
+  - compatibility
+status: active
+shared_system_instruction_ref: shared/system_instruction.md

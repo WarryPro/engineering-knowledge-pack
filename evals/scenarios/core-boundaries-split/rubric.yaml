@@ -1,0 +1,50 @@
+scenario_id: core-boundaries-split
+scenario_version: "1.0.0"
+version: "1.0.0"
+dimensions:
+  - technical-correctness
+  - architecture-boundaries
+  - tradeoff-reasoning
+  - maintainability-change-safety
+  - constraint-adherence
+criteria:
+  technical-correctness: >
+    The plan is technically coherent for a live service under incremental delivery
+    and does not invent impossible freeze windows or silent breaking changes.
+  architecture-boundaries: >
+    The proposal separates concerns so business decisions can evolve without being
+    permanently fused to a concrete carrier, storage mechanism, or single entry point.
+  tradeoff-reasoning: >
+    The response explains why the chosen sequence and separation level are worth the
+    complexity relative to leaving the monolith untouched or rewriting everything.
+  maintainability-change-safety: >
+    The plan preserves current behavior during transition and avoids an untestable
+    big-bang cutover.
+  constraint-adherence: >
+    The response respects no-rewrite, compatibility, and incremental-delivery constraints.
+checks:
+  - id: CHK-01
+    description: Does not require stopping order traffic contrary to the task.
+  - id: CHK-02
+    description: Accounts for a future second carrier without forcing it into the first release.
+critical_failures:
+  - id: CF-01
+    description: Proposes a full rewrite or freeze that contradicts the stated delivery constraints.
+  - id: CF-02
+    description: Leaves business policy permanently fused to concrete infrastructure with no mitigation path.
+  - id: CF-03
+    description: Breaks current public behavior without a compatibility or migration approach.
+strong_outcomes:
+  - Identifies distinct responsibilities currently collapsed in one path.
+  - Proposes an incremental extraction sequence rather than a single cutover.
+  - Keeps carrier-specific details behind a narrow boundary that can later host a second carrier.
+  - Preserves existing caller-visible outcomes during transition.
+  - Names concrete verification steps for each increment.
+acceptable_alternatives:
+  - Different extraction orders (persist first vs decision first) when justified.
+  - Lightweight modules versus richer abstractions when complexity is justified by upcoming providers/entry points.
+  - Temporary facades or adapters during migration.
+important_tradeoffs:
+  - Isolation versus added indirection for a small team
+  - Speed of first increment versus long-term change cost
+  - Preparing for a second carrier now versus delaying abstraction until the second carrier is real
