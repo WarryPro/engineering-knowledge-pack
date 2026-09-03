@@ -30,7 +30,7 @@ The only intended independent variable is whether selection-equivalent EKP evalu
 
 Treatment context is **not** “concatenate every Markdown file listed by the profile.”
 
-Operational contract (**renderer version 1**, implemented):
+Operational contract (**renderer version 2**, implemented):
 
 ```text
 load profile
@@ -39,8 +39,17 @@ load profile
 → use canonical generation indexes
 → select_manifest_rules(...)
 → extract selected canonical semantic units
-→ render them deterministically in adapter-neutral form
+→ render them deterministically in adapter-neutral, identity-neutral form
 ```
+
+Renderer versions:
+
+```text
+v1 = selection-equivalent initial renderer
+v2 = selection-equivalent + identity-neutral presentation
+```
+
+Model-visible `context.md` must not expose EKP brand names or internal concept IDs; audit identity remains in `units.json` / `request.json`.
 
 Reuse selection/extract/profile resolution from `scripts/adapters/common/` (for example `profile_loader`, `profile_resolve`, `selection`, `extract`). Do **not** depend on Cursor writers, Cursor frontmatter, activation metadata, or Cursor runtime.
 
@@ -77,10 +86,10 @@ dist/evals/prepared/<scenario-id>/{baseline,treatment}/
   units.json
 ```
 
-Contracts frozen for renderer v1:
+Contracts frozen for renderer v2:
 
 - Baseline `context.md` is exactly **zero bytes**; `context_sha256` is the SHA-256 of empty bytes.
-- Treatment `context.md` is the selected Engineering Context (not labeled as “EKP treatment”).
+- Treatment `context.md` is the selected Engineering Context (not labeled as “EKP treatment”), with identity-neutral presentation (no product brand / internal concept IDs in model-visible text).
 - `prompt_sha256` is SHA-256 of generated `participant.md` (normalized prompt **plus** lexicographic fixture serialization), not `prompt.md` alone.
 - Baseline and treatment share identical system instruction and participant bytes; only context differs.
 - Importer stores response bytes **exactly** as provided (no trim/rewrite) and binds `response_sha256` to those bytes.

@@ -1,13 +1,12 @@
 """Selection-equivalent, adapter-neutral evaluation context renderer.
 
-Renderer version 1. Reuses profile resolution + select_manifest_rules + extract_*.
+Renderer version 2: selection-equivalent + identity-neutral model-visible presentation.
+Reuses profile resolution + select_manifest_rules + extract_*.
 Does not import Cursor writers or activation metadata.
 """
 
 from __future__ import annotations
 
-import hashlib
-import importlib.util
 import json
 import re
 import sys
@@ -17,7 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from eval_common import EMPTY_BYTES_SHA256, REPO_ROOT, sha256_bytes
 
-RENDERER_VERSION = 1
+RENDERER_VERSION = 2
 
 ORCHESTRATOR_PATH = "knowledge/ai/ai-assisted-development.md"
 FOUNDATION_PATH = "knowledge/engineering/engineering-principles.md"
@@ -36,6 +35,13 @@ PRINCIPLE_ORDER = [
 ]
 
 BLOCKING_TOKENS = ("block", "hard block")
+
+# Full concept IDs and namespace-style EKP-XX refs (e.g. EKP-LB without digits).
+CONCEPT_ID_RE = re.compile(r"\bEKP-(?:P(?:0[1-9]|10)|[A-Z]{2}\d{2})\b")
+EKP_NAMESPACE_RE = re.compile(r"\bEKP-[A-Z]{2}\b")
+PACK_NAME_RE = re.compile(r"\bEngineering Knowledge Pack\b", re.IGNORECASE)
+KNOWLEDGE_PATH_RE = re.compile(r"\bknowledge/[A-Za-z0-9_./-]+\.md\b")
+DOC_FILENAME_RE = re.compile(r"\b([a-z0-9]+(?:-[a-z0-9]+)*)\.md\b")
 
 
 class ContextRenderError(Exception):
@@ -99,6 +105,99 @@ def _load_adapters():
 
 def normalize_newlines(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def _stem_to_guidance(stem: str) -> str:
+    return "the {} guidance".format(stem.replace("-", " ").replace("_", " "))
+
+
+def neutralize_model_visible_text(
+    text: str, title_by_concept_id: Optional[Dict[str, str]] = None
+) -> str:
+    """Strip experiment-identifying brand/IDs while preserving engineering meaning.
+
+    Internal audit metadata is unaffected; this transforms model-visible prose only.
+    """
+    title_by_concept_id = title_by_concept_id or {}
+    out = normalize_newlines(text)
+
+    out = PACK_NAME_RE.sub("the engineering guidance", out)
+    out = re.sub(r"\bEKP knowledge\b", "the engineering guidance", out, flags=re.IGNORECASE)
+    out = re.sub(r"\bin EKP\b", "", out, flags=re.IGNORECASE)
+    out = re.sub(r"\bacross EKP\b", "across technology stacks", out, flags=re.IGNORECASE)
+
+    # knowledge/foo/bar.md → the bar guidance (path fingerprint removal)
+    def _knowledge_path(match: re.Match) -> str:
+        stem = Path(match.group(0)).stem
+        return _stem_to_guidance(stem)
+
+    out = KNOWLEDGE_PATH_RE.sub(_knowledge_path, out)
+
+    # bare doc filenames used as cross-refs (not fixture paths in participant.md)
+    out = DOC_FILENAME_RE.sub(lambda m: _stem_to_guidance(m.group(1)), out)
+
+    # Parenthetical concept IDs: (EKP-AI03) → removed
+    out = re.sub(
+        r"\(\s*" + CONCEPT_ID_RE.pattern + r"\s*\)",
+        "",
+        out,
+    )
+
+    # Prefixed identity forms: "EKP-AI01 — " / "EKP-P06: "
+    out = re.sub(
+        CONCEPT_ID_RE.pattern + r"\s*[—–:-]\s*",
+        "",
+        out,
+    )
+
+    # Remaining full concept IDs → human title when known, else drop
+    def _replace_concept(match: re.Match) -> str:
+        cid = match.group(0)
+        return title_by_concept_id.get(cid, "")
+
+    out = CONCEPT_ID_RE.sub(_replace_concept, out)
+
+    # Namespace-only refs such as EKP-LB
+    out = EKP_NAMESPACE_RE.sub("", out)
+
+    # Brand token "EKP"
+    out = re.sub(r"\bEKP\b", "", out)
+
+    # Cleanup artifacts from removals
+    out = re.sub(r"\(\s*\)", "", out)
+    out = re.sub(r"\[\s*\]", "", out)
+    out = re.sub(r"\s+([,.;:!?])", r"\1", out)
+    out = re.sub(r",\s*,", ",", out)
+    out = re.sub(r"[—–-]\s*[—–-]", "—", out)
+    out = re.sub(r"\s+[—–]\s*$", "", out, flags=re.MULTILINE)
+    out = re.sub(r"[—–]\s*$", "", out, flags=re.MULTILINE)
+    out = re.sub(r" {2,}", " ", out)
+    out = re.sub(r" *\n", "\n", out)
+    out = re.sub(r"\n{3,}", "\n\n", out)
+    # Avoid "the testing guidance guidance" when prose already said "…md guidance"
+    out = re.sub(
+        r"\bthe ([a-z0-9]+(?: [a-z0-9]+)*) guidance guidance\b",
+        r"the \1 guidance",
+        out,
+        flags=re.IGNORECASE,
+    )
+    return out
+
+
+def human_concept_title(concept_id: str, title: str) -> str:
+    """Human-readable concept title without leading identity prefix."""
+    raw = (title or "").strip()
+    if concept_id:
+        raw = re.sub(
+            r"^" + re.escape(concept_id) + r"\s*[—–:-]\s*",
+            "",
+            raw,
+        )
+    raw = CONCEPT_ID_RE.sub("", raw)
+    raw = EKP_NAMESPACE_RE.sub("", raw)
+    raw = re.sub(r"\bEKP\b", "", raw)
+    raw = re.sub(r" {2,}", " ", raw).strip(" :—–-")
+    return raw
 
 
 def require_indexes(dist_dir: Path) -> Tuple[dict, dict]:
@@ -385,16 +484,28 @@ def build_treatment_units(
 
 
 def render_context_markdown(units: List[SemanticUnit]) -> str:
-    """Render model-visible Engineering Context from semantic units."""
+    """Render identity-neutral model-visible Engineering Context from semantic units."""
     if not units:
         return ""
+    title_by_id: Dict[str, str] = {}
+    for unit in units:
+        if unit.concept_id:
+            ht = human_concept_title(unit.concept_id, unit.title)
+            if ht:
+                title_by_id[unit.concept_id] = ht
+
     parts = ["# Engineering Context", ""]
     for unit in units:
-        parts.append("## {}".format(unit.title.strip() or unit.unit_id))
+        if unit.concept_id:
+            heading = human_concept_title(unit.concept_id, unit.title) or "Guidance"
+        else:
+            heading = unit.title.strip() or "Guidance"
+        heading = neutralize_model_visible_text(heading, title_by_id).strip() or "Guidance"
+        parts.append("## {}".format(heading))
         parts.append("")
         body = unit.body.rstrip("\n")
         if body:
-            parts.append(body)
+            parts.append(neutralize_model_visible_text(body, title_by_id).rstrip("\n"))
             parts.append("")
     text = "\n".join(parts).rstrip() + "\n"
     return normalize_newlines(text)
