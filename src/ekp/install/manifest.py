@@ -151,7 +151,41 @@ class ManifestStore:
 
     def __init__(self, project_root: Path):
         self.project_root = project_root.resolve()
-        self.manifest_path = resolve_under_root(self.project_root, MANIFEST_RELATIVE)
+        self.manifest_path = self._safe_manifest_path()
+
+    def _safe_manifest_path(self) -> Path:
+        """
+        Locate install.json without resolving the final path component.
+
+        Parent components (``.ekp``) are validated against the project root.
+        The final ``install.json`` name is joined lexically so an escaping
+        final symlink can still be classified as a conflict instead of raising
+        a raw path ValueError during construction.
+        """
+        parts = Path(MANIFEST_RELATIVE).parts
+        if not parts or any(part in (".", "..") for part in parts):
+            raise InstallConflictError(
+                "Unsafe ownership manifest path: {}".format(MANIFEST_RELATIVE)
+            )
+
+        parent_parts = parts[:-1]
+        if parent_parts:
+            parent_rel = "/".join(parent_parts)
+            boundary = check_symlink_boundary(self.project_root, parent_rel)
+            if boundary:
+                raise InstallConflictError(boundary)
+            try:
+                parent = resolve_under_root(self.project_root, parent_rel)
+            except ValueError as exc:
+                raise InstallConflictError(
+                    "Ownership manifest path escapes project root: {}".format(
+                        MANIFEST_RELATIVE
+                    )
+                ) from exc
+        else:
+            parent = self.project_root
+
+        return parent / parts[-1]
 
     def exists(self) -> bool:
         return self.manifest_path.is_file()
@@ -162,19 +196,22 @@ class ManifestStore:
                 "Refusing to use symlinked ownership manifest: {}".format(MANIFEST_RELATIVE)
             )
 
-    def _read_manifest_bytes(self, *, check_boundary: bool) -> bytes:
+    def _ensure_manifest_path_safe(self) -> None:
+        """Reject symlinked or escaping manifest paths before read/write."""
         self._reject_symlinked_manifest()
-        if check_boundary:
-            boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
-            if boundary:
-                raise InstallConflictError(boundary)
+        boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
+        if boundary:
+            raise InstallConflictError(boundary)
+
+    def _read_manifest_bytes(self) -> bytes:
+        self._ensure_manifest_path_safe()
         return self.manifest_path.read_bytes()
 
     def load(self) -> Optional[InstallManifest]:
         if not self.exists():
             return None
 
-        raw = self._read_manifest_bytes(check_boundary=False)
+        raw = self._read_manifest_bytes()
         return _parse_manifest_bytes(raw)
 
     def load_with_fingerprint(self) -> Optional[ManifestSnapshot]:
@@ -182,7 +219,7 @@ class ManifestStore:
         if not self.exists():
             return None
 
-        raw = self._read_manifest_bytes(check_boundary=True)
+        raw = self._read_manifest_bytes()
         return ManifestSnapshot(
             manifest=_parse_manifest_bytes(raw),
             sha256=_sha256_bytes(raw),
@@ -202,18 +239,19 @@ class ManifestStore:
         if boundary:
             raise InstallConflictError(boundary)
 
+        if self.manifest_path.is_symlink():
+            raise InstallConflictError(
+                "Refusing to replace symlinked ownership manifest: {}".format(
+                    MANIFEST_RELATIVE
+                )
+            )
+
         if not self.manifest_path.exists():
             if expected_sha256 is not None:
                 raise InstallConflictError(
                     "Ownership manifest changed before update could complete."
                 )
         else:
-            if self.manifest_path.is_symlink():
-                raise InstallConflictError(
-                    "Refusing to replace symlinked ownership manifest: {}".format(
-                        MANIFEST_RELATIVE
-                    )
-                )
             if expected_sha256 is not None:
                 current_sha256 = _sha256_bytes(self.manifest_path.read_bytes())
                 if current_sha256 != expected_sha256:

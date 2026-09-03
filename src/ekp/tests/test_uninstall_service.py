@@ -453,14 +453,21 @@ class TransactionApplierTests(unittest.TestCase):
             second_rel = delete_ops[1].relative_path
             first_path = project / Path(first_rel.replace("/", os.sep))
             second_path = project / Path(second_rel.replace("/", os.sep))
-            original_copy2 = shutil.copy2
+            validation_counts = {}
+            original_validate = TransactionApplier._validate_delete_target
 
-            def copy2_and_mutate(src, dst):
-                original_copy2(src, dst)
-                if src == second_path:
-                    src.write_text("mutated after backup\n", encoding="utf-8")
+            def validate_and_mutate(self_, project_root, relative, expected_sha256):
+                validation_counts[relative] = validation_counts.get(relative, 0) + 1
+                # Second validation is the post-backup commit-point check.
+                if relative == second_rel and validation_counts[relative] == 2:
+                    second_path.write_text("mutated after backup\n", encoding="utf-8")
+                return original_validate(
+                    self_, project_root, relative, expected_sha256
+                )
 
-            with mock.patch("ekp.lifecycle.apply.shutil.copy2", side_effect=copy2_and_mutate):
+            with mock.patch.object(
+                TransactionApplier, "_validate_delete_target", validate_and_mutate
+            ):
                 with self.assertRaises(LifecycleConflictError):
                     self.applier.apply_uninstall(plan)
 
@@ -498,7 +505,8 @@ class TransactionApplierTests(unittest.TestCase):
             plan = self._plan_for_project(project)
             manifest_path = project / ".ekp" / "install.json"
             outside = root / "outside-install.json"
-            outside.write_bytes(manifest_path.read_bytes())
+            outside_bytes = manifest_path.read_bytes()
+            outside.write_bytes(outside_bytes)
             manifest_path.unlink()
             manifest_path.symlink_to(outside)
 
@@ -506,6 +514,30 @@ class TransactionApplierTests(unittest.TestCase):
                 self.applier.apply_uninstall(plan)
 
             self.assertTrue(manifest_path.is_symlink())
+            self.assertEqual(outside.read_bytes(), outside_bytes)
+            self.assertGreater(
+                len(list((project / ".cursor" / "rules").glob("*.mdc"))), 0
+            )
+
+    @unittest.skipUnless(os.name != "nt", "Symlink test skipped on Windows")
+    def test_ekp_parent_symlink_blocks_uninstall(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            plan = self._plan_for_project(project)
+            outside = root / "outside-ekp"
+            outside.mkdir()
+            sentinel = outside / "sentinel.txt"
+            sentinel.write_text("outside-ekp\n", encoding="utf-8")
+            ekp_dir = project / ".ekp"
+            ekp_dir.rename(outside / "ekp-real")
+            (project / ".ekp").symlink_to(outside / "ekp-real", target_is_directory=True)
+
+            with self.assertRaises(InstallConflictError):
+                self.applier.apply_uninstall(plan)
+
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "outside-ekp\n")
             self.assertGreater(
                 len(list((project / ".cursor" / "rules").glob("*.mdc"))), 0
             )
@@ -551,6 +583,8 @@ class TransactionApplierTests(unittest.TestCase):
             ]
             failing_rel = delete_ops[0].relative_path
             original_apply_delete = TransactionApplier._apply_delete
+            original_mkdtemp = tempfile.mkdtemp
+            recovery_roots = []
 
             def patched_apply_delete(self_, project_root, operation, backup_root, deleted):
                 if operation.relative_path == failing_rel:
@@ -559,20 +593,35 @@ class TransactionApplierTests(unittest.TestCase):
                     self_, project_root, operation, backup_root, deleted
                 )
 
+            def tracking_mkdtemp(*args, **kwargs):
+                path = original_mkdtemp(*args, **kwargs)
+                prefix = kwargs.get("prefix")
+                if prefix is None and args:
+                    prefix = args[0]
+                if isinstance(prefix, str) and prefix.startswith("ekp-lifecycle-"):
+                    recovery_roots.append(Path(path))
+                return path
+
             with mock.patch.object(TransactionApplier, "_apply_delete", patched_apply_delete):
                 with mock.patch.object(
                     TransactionApplier,
                     "_rollback_deleted",
                     return_value=False,
                 ):
-                    with self.assertRaises(LifecycleRollbackError) as ctx:
-                        self.applier.apply_uninstall(plan)
+                    with mock.patch(
+                        "ekp.lifecycle.apply.tempfile.mkdtemp",
+                        side_effect=tracking_mkdtemp,
+                    ):
+                        with self.assertRaises(LifecycleRollbackError) as ctx:
+                            self.applier.apply_uninstall(plan)
 
+            self.assertEqual(len(recovery_roots), 1)
+            recovery_root = recovery_roots[0]
+            self.assertTrue(recovery_root.exists())
+            self.assertTrue(recovery_root.name.startswith("ekp-lifecycle-"))
             message = str(ctx.exception)
             self.assertIn("Recovery data preserved at:", message)
-            backup_path = Path(message.rsplit(":", 1)[-1].strip().split(" ", 1)[0])
-            self.assertTrue(backup_path.exists())
-            self.assertTrue(backup_path.name.startswith("ekp-lifecycle-"))
+            self.assertIn(str(recovery_root), message)
 
     def test_manifest_identity_conflict_exit_3(self):
         with tempfile.TemporaryDirectory() as tmp:
