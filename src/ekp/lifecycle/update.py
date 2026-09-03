@@ -139,37 +139,37 @@ class UpdateService:
                 bundle_path=assembly_result.bundle_path,
                 dry_run=request.dry_run,
             )
+
+            if plan.has_conflicts:
+                return UpdateResult(
+                    exit_code=InstallConflictError.exit_code,
+                    message=render_update_conflict_message(plan),
+                )
+
+            if request.dry_run:
+                return UpdateResult(exit_code=0, message=render_update_dry_run(plan))
+
+            if not request.assume_yes and not _is_complete_noop(plan):
+                self.output_fn(render_update_confirmation(plan))
+                answer = self.input_fn("").strip().lower()
+                if answer not in ("", "y", "yes"):
+                    raise UpdateCancelled()
+
+            try:
+                self.applier.apply_update(plan)
+            except LifecycleConflictError as exc:
+                return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+            except LifecycleRollbackError as exc:
+                return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+            except InstallFilesystemError as exc:
+                return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+
+            return UpdateResult(exit_code=0, message=render_update_success(plan))
         except InstallAssemblyError as exc:
             return UpdateResult(exit_code=exc.exit_code, message=exc.message)
         finally:
             if assembly_result is not None and assembly_result._temp_ctx is not None:
                 assembly_result._temp_ctx.cleanup()
-
-        if plan.has_conflicts:
-            return UpdateResult(
-                exit_code=InstallConflictError.exit_code,
-                message=render_update_conflict_message(plan),
-            )
-
-        if request.dry_run:
-            return UpdateResult(exit_code=0, message=render_update_dry_run(plan))
-
-        if not request.assume_yes and not _is_complete_noop(plan):
-            self.output_fn(render_update_confirmation(plan))
-            answer = self.input_fn("").strip().lower()
-            if answer not in ("", "y", "yes"):
-                raise UpdateCancelled()
-
-        try:
-            self.applier.apply_update(plan)
-        except LifecycleConflictError as exc:
-            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
-        except LifecycleRollbackError as exc:
-            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
-        except InstallFilesystemError as exc:
-            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
-
-        return UpdateResult(exit_code=0, message=render_update_success(plan))
 
     @staticmethod
     def _inventory_to_map(

@@ -11,11 +11,12 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
-from ekp.assembly import AssemblyRequest, AssemblyService
+from ekp.assembly import AssemblyRequest, AssemblyResult, AssemblyService
 from ekp.cli import main
 from ekp.install.cursor_deploy import CursorDeployService, sha256_file
 from ekp.install.errors import InstallAssemblyError, InstallConflictError, InstallFilesystemError
 from ekp.install.manifest import InstallManifest, ManagedFile, ManifestSnapshot, ManifestStore
+from ekp.install.service import InstallRequest, InstallService
 from ekp.lifecycle.apply import LifecycleConflictError, LifecycleRollbackError, TransactionApplier
 from ekp.lifecycle.plan import LifecycleOpKind
 from ekp.lifecycle.update import UpdateRequest, UpdateService, build_update_plan
@@ -312,6 +313,97 @@ class UpdateServiceIntegrationTests(unittest.TestCase):
             self.assertEqual(
                 ManifestStore(project).load_with_fingerprint().sha256, fp_before
             )
+
+    def test_same_version_repair_keeps_assembly_sources_until_apply(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            install = InstallService().install(
+                InstallRequest(path=str(project), profile="cursor-core", assume_yes=True)
+            )
+            self.assertEqual(install.exit_code, 0, install.message)
+            snapshot = ManifestStore(project).load_with_fingerprint()
+            fp_before = snapshot.sha256
+            target = next((project / ".cursor" / "rules").glob("*.mdc"))
+            target_name = target.name
+            target.unlink()
+
+            temps = []
+            assembly = AssemblyService()
+            original = assembly.assemble
+
+            def tracking_assemble(request):
+                result = original(request)
+                if result._temp_ctx is not None:
+                    temps.append(Path(result._temp_ctx.name))
+                return result
+
+            assembly.assemble = tracking_assemble
+            result = UpdateService(assembly=assembly).update(
+                UpdateRequest(path=str(project), assume_yes=True)
+            )
+            self.assertEqual(result.exit_code, 0, result.message)
+            restored = project / ".cursor" / "rules" / target_name
+            self.assertTrue(restored.is_file())
+            self.assertEqual(
+                ManifestStore(project).load_with_fingerprint().sha256, fp_before
+            )
+            status = StatusService().inspect(StatusRequest(path=str(project)))
+            self.assertEqual(status.state, StatusState.HEALTHY)
+            self.assertTrue(temps)
+            for path in temps:
+                self.assertFalse(path.exists(), path)
+
+    def test_cross_version_content_diff_uses_live_assembly_sources(self):
+        class TempLifetimeAssembly:
+            def __init__(self):
+                self.temp_path = None
+
+            def assemble(self, request):
+                temp_ctx = tempfile.TemporaryDirectory(prefix="ekp-assembly-")
+                self.temp_path = Path(temp_ctx.name)
+                bundle = self.temp_path / "output" / request.profile
+                cursor = bundle / "cursor"
+                cursor.mkdir(parents=True)
+                (cursor / "a.mdc").write_text("new-bytes\n", encoding="utf-8")
+                (cursor / "b.mdc").write_text("created\n", encoding="utf-8")
+                return AssemblyResult(
+                    profile=request.profile,
+                    adapters=["cursor"],
+                    bundle_path=bundle,
+                    _temp_ctx=temp_ctx,
+                )
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            digest = _write_file(project, ".cursor/rules/a.mdc", "old\n")
+            _save_manifest(
+                project,
+                {".cursor/rules/a.mdc": digest},
+                ekp_version="0.15.0",
+                profile="cursor-core",
+            )
+            assembly = TempLifetimeAssembly()
+            with mock.patch(
+                "ekp.lifecycle.update.get_version", return_value=self.RUNNING_VERSION
+            ):
+                result = UpdateService(assembly=assembly).update(
+                    UpdateRequest(path=str(project), assume_yes=True)
+                )
+            self.assertEqual(result.exit_code, 0, result.message)
+            self.assertEqual(
+                (project / ".cursor" / "rules" / "a.mdc").read_text(encoding="utf-8"),
+                "new-bytes\n",
+            )
+            self.assertEqual(
+                (project / ".cursor" / "rules" / "b.mdc").read_text(encoding="utf-8"),
+                "created\n",
+            )
+            manifest = ManifestStore(project).load()
+            self.assertEqual(manifest.ekp_version, self.RUNNING_VERSION)
+            self.assertEqual(len(manifest.managed_files), 2)
+            self.assertFalse(assembly.temp_path.exists(), assembly.temp_path)
 
 
 class UpdateApplySafetyTests(unittest.TestCase):
