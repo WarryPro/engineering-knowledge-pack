@@ -13,9 +13,9 @@ knowledge/
     ↓ deploy          →  consumer project (Consumer CLI or manual copy — see deployment.md)
 ```
 
-### Consumer CLI deployment layer (`v0.15.0`)
+### Consumer CLI deployment layer (`v0.16.0`)
 
-For application developers using Cursor, the Consumer CLI deploys assembled output directly into a project:
+For application developers using Cursor, the Consumer CLI deploys and manages assembled output in a project:
 
 ```
 Canonical knowledge (knowledge/, profiles/, schema/)
@@ -26,14 +26,35 @@ Adapters / AssemblyService
       ↓
 temporary generated bundle
       ↓
-Consumer CLI (DetectionService → ProfileResolver → InstallService)
+Consumer CLI
+├── detect / profile resolver
+├── install
+├── status
+└── lifecycle
+    ├── update
+    └── uninstall
       ↓
 safe deployment (.cursor/rules/ + .ekp/install.json)
       ↓
 consumer project
 ```
 
-Key services: `DetectionService`, `ProfileResolver`, `AssemblyService`, `InstallService`, `StatusService`. Status inspection is read-only via `StatusService`.
+Key concepts:
+
+- **ManifestSnapshot** — ownership parse and fingerprint from one byte read
+- **LifecyclePlan** — planned CREATE / WRITE / DELETE / NOOP operations bound to a manifest snapshot
+- **TransactionApplier** — backup, apply-time revalidation, rollback, and recovery workspace retention
+- **ManifestStore** — ownership persistence with compare-and-swap for update and last-step removal for uninstall
+
+Package vs project version:
+
+```text
+running installed package version
+  = bundled resource version
+  = update target version
+```
+
+There is no remote version resolver in `v0.16.0`. Same-version resource drift inside one package is treated as an internal consistency failure.
 
 Manual assembly (contributor path) stops at `dist/<profile>/` for copy-based deployment. See [`deployment.md`](deployment.md).
 
@@ -184,7 +205,7 @@ Vision, architecture, roadmap, contribution process, deployment—not engineerin
 3. Extract    — scripts/adapters/common/ parses knowledge
 4. Transform  — registered adapters (cursor, copilot, antigravity, claude)
 5. Assemble   — Profile bundle + manifests + --verify
-6. Deploy     — Consumer CLI (`ekp install`) or copy dist/<profile>/<adapter>/ artifacts (see deployment.md)
+6. Deploy     — Consumer CLI (`ekp install` / `update` / `uninstall`) or copy dist/<profile>/<adapter>/ artifacts (see deployment.md)
 ```
 
 ### Design constraints
@@ -204,7 +225,7 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 - Validator v2.3 with graph rules, namespaces, index generation, reports
 - Adapters: Cursor (all 15 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
 - Assemble pipeline with `--verify` (CI verifies all 15 profiles)
-- Consumer CLI (published in `v0.15.0`) — Cursor-only install, detect, status for application projects
+- Consumer CLI (published in `v0.16.0`) — Cursor-only detect, install, status, update, and uninstall for application projects
 
 **Planned / deferred:**
 

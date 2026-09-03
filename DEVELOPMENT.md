@@ -74,7 +74,7 @@ py -3 -m pip install -e .
 py -3 -m unittest discover -s src/ekp/tests -v
 ```
 
-On Windows, two Unix symlink safety tests are expected to skip. Ubuntu runs all 91 tests.
+On Windows, nine Unix-only symlink safety tests are expected to skip. Ubuntu runs all 160 tests.
 
 ### 4c. Package build and packaging smoke
 
@@ -83,7 +83,7 @@ py -3 -m pip install build hatchling
 py -3 scripts/packaging/smoke_install_wheel.py
 ```
 
-Builds a wheel outside the repository checkout, installs it in a temporary venv, and exercises `ekp version`, `detect`, `install`, and `status`.
+Builds a wheel outside the repository checkout, installs it in a temporary venv, and exercises `ekp version`, `detect`, `install`, `status`, same-version `update` / repair, and `uninstall` (including dry-run and idempotency).
 
 Cross-platform validation: [`.github/workflows/consumer-cli.yml`](.github/workflows/consumer-cli.yml) (Windows + Ubuntu).
 

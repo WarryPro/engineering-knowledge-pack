@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-09-03
+
+### Added
+
+- `ekp update` — synchronizes an existing managed project's EKP-owned files to the engineering resources bundled with the **currently running** EKP package (not a package downloader; does not fetch releases from the network)
+- `ekp uninstall` — removes only EKP-owned managed files recorded in `.ekp/install.json`
+- Cross-version project synchronization using the installed package resources as the update target (for example, a project installed with `v0.15.0` can be migrated after upgrading the local package to `v0.16.0`)
+- Same-version repair of missing managed files when the project profile and package version already match
+- Manifest-driven uninstall with ownership proof before destructive removal
+- Lifecycle preview via `--dry-run` for update and uninstall
+- `--yes` skips confirmation prompts only; it does not bypass ownership, collision, or safety checks
+
+### Security / Safety
+
+- Full preflight before destructive lifecycle mutations
+- User-modified managed files are never overwritten or deleted
+- Unmanaged files are never silently adopted
+- CREATE / WRITE / DELETE apply-time revalidation with SHA-verified sources and backups
+- Transactional rollback; rollback collisions preserve the user's replacement content
+- Recovery workspace retained when rollback is incomplete
+- Manifest snapshot binds ownership parse and fingerprint from one byte read
+- Manifest compare-and-swap for update; manifest removal last for uninstall
+- Exclusive randomized temporary files for atomic writes
+- Final-manifest and parent `.ekp` symlink escape protection
+- Conservative directory ownership recording and rollback
+
+### Packaging
+
+- Direct wheel build, direct sdist build, and standard `python -m build` (`sdist → wheel`) supported
+- Installed package remains checkout-independent (`ekp/_resources`)
+- Lifecycle packaging smoke covers install, same-version update/repair, update dry-run, uninstall dry-run, uninstall, and uninstall idempotency
+- Python `>=3.9`; GitHub release tags remain the current distribution mechanism (no PyPI publication in this release)
+
+### Validation
+
+- Historical EKP suite: 238/238 PASS (65 adapter + 102 assemble + 71 validate)
+- Consumer CLI suite: 160 tests; Ubuntu: 160/160 PASS, 0 skipped; Windows: 160 run, 151 passed, 9 expected Unix-only skips, 0 failed
+- 15/15 profile `--verify` PASS with unchanged rule counts
+- Ubuntu + Windows installed-wheel lifecycle smoke PASS
+- Public compatibility gate: `v0.15.0` project → `v0.16.0` package → `VERSION_MISMATCH` → `ekp update` → `HEALTHY` → `ekp uninstall` → `NOT_INSTALLED`
+
+### Compatibility
+
+- Ownership manifest `schema_version = 1` unchanged; public `v0.15.0` ownership manifests remain supported
+- Installed profile remains authoritative during update — no automatic profile switching or redetection for lifecycle apply
+- No knowledge, profile, or schema changes in the Consumer Lifecycle initiative; all 15 profiles and Cursor rule counts unchanged; existing generated engineering knowledge content unchanged
+- Deferred: remote package/release acquisition, PyPI publication, profile replacement, non-Cursor Consumer lifecycle, Copilot/Antigravity/Claude Consumer deployment, dynamic multi-profile composition, automatic monorepo orchestration, `ekp-flutter`
+
 ## [0.15.0] - 2026-09-01
 
 ### Added

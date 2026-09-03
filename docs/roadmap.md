@@ -14,7 +14,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); `ekp-flutter` deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot stack profiles complete (`ekp-php` through `ekp-nativescript` in `v0.6.0`–`v0.13.0`); Antigravity + Claude in `v0.4.0`/`v0.5.0` (`ekp-core` pilot only); `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Initial milestone published (`v0.15.0`)** | Installable Python package; `ekp` CLI; project detection; profile resolution; safe Cursor installation; ownership manifest; status; Windows + Ubuntu validation; lifecycle work deferred |
+| Phase 6 — Consumer productization | **Substantially operational (`v0.16.0`)** | Package; Consumer CLI lifecycle (`update` / `uninstall`); safe Cursor project management; Windows + Ubuntu validation; remote acquisition / PyPI / non-Cursor Consumer lifecycle deferred |
 
 ---
 
@@ -271,28 +271,54 @@ Extend the adapter layer to additional AI assistant platforms.
 
 ## Phase 6: Consumer productization
 
-**Status:** Initial milestone published in `v0.15.0` (2026-09-01)
+**Status:** Substantially operational (`v0.16.0`, 2026-09-03)
 
-Deliver consumer-facing installation and deployment for Cursor without requiring a repository checkout.
+Deliver consumer-facing installation and lifecycle management for Cursor without requiring a repository checkout.
 
-**Deliverables (published in `v0.15.0`):**
+**Deliverables published in `v0.15.0`:**
 
 - [x] Installable Python package (`engineering-knowledge-pack`)
 - [x] Consumer CLI (`ekp version`, `ekp detect`, `ekp install`, `ekp status`)
 - [x] Project-local technology detection and profile resolution
 - [x] Safe Cursor installation with `.ekp/install.json` ownership manifest
 - [x] Read-only `ekp status`
-- [x] Windows + Ubuntu CI and installed-wheel smoke validation (91 Consumer CLI tests)
+- [x] Windows + Ubuntu CI and installed-wheel smoke validation
 
-**Deferred lifecycle:**
+**Deliverables completed in `v0.16.0`:**
 
-- [ ] `ekp update` / `ekp uninstall`
-- [ ] Remote release acquisition
+- [x] `ekp update` and `ekp uninstall`
+- [x] Transactional lifecycle with rollback and recovery workspace retention
+- [x] Cross-version project migration using the currently running package resources
+- [x] Cross-platform lifecycle validation (160 Consumer CLI tests; Ubuntu + Windows packaging smoke)
+
+**Still deferred (remaining Phase 6):**
+
+- [ ] Remote release/package acquisition
 - [ ] PyPI publication
-- [ ] Automatic multi-profile / monorepo composition
-- [ ] Copilot, Antigravity, and Claude consumer installation
+- [ ] Additional Consumer adapters (Copilot / Antigravity / Claude deployment)
+- [ ] Automatic multi-profile / monorepo orchestration
 
-**Exit criteria (met in `v0.15.0`):** A developer can install the package, detect or select a Cursor profile, install rules safely into a project, and inspect installation health — without cloning EKP or running the manual assemble pipeline.
+**Exit criteria (met through `v0.16.0`):** A developer can install the package, detect or select a Cursor profile, install rules safely, inspect health, synchronize an existing project after upgrading the package, and uninstall managed ownership — without cloning EKP or running the manual assemble pipeline.
+
+---
+
+## Next initiative — Evaluation MVP (`v0.17`)
+
+**Status:** Planned (roadmap only; not implemented in `v0.16.0`)
+
+After Consumer Lifecycle, the next primary product initiative is an **Evaluation MVP**. EKP's core claim is that it improves AI engineering decisions; structural correctness and safety validation are necessary but not sufficient evidence of that claim.
+
+**Evaluation MVP is required before `v1.0`.**
+
+Planned shape:
+
+- Vendor-neutral scenarios
+- Baseline vs EKP comparison
+- Human-readable rubrics
+- 5–10 initial scenarios
+- Evidence rather than fake precision
+
+Do not treat this section as an implementation authorization. No `evals/` tree is created by the `v0.16.0` release preparation.
 
 ---
 

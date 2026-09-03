@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "engineering-knowledge-pack"
-version = "0.16.0.dev0"
+version = "0.16.0"
 description = "Engineering Knowledge Pack — tool-agnostic engineering knowledge with AI adapters"
 readme = "README.md"
 license = { text = "MIT" }

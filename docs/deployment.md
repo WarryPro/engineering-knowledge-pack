@@ -6,7 +6,7 @@ This guide has **two paths**:
 
 | Path | Audience | Adapters |
 |------|----------|----------|
-| **A — Consumer CLI** (recommended for Cursor) | Application developers | Cursor only (`v0.15.0`) |
+| **A — Consumer CLI** (recommended for Cursor) | Application developers | Cursor only (`v0.16.0`) |
 | **B — Manual assembly** | Contributors and advanced/manual deployment | Cursor, Copilot, Antigravity, Claude (per profile) |
 
 Related:
@@ -21,15 +21,15 @@ Related:
 
 **Recommended for Cursor** in application projects. No repository checkout, validator, index generation, or manual file copying required.
 
-### Install
+### Install the package (machine)
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0
 ```
 
-This command pins the published `v0.15.0` release tag for reproducible installation. Do not use `@main`, `@master`, or `@staging` for consumer installs.
+This command pins the published `v0.16.0` release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for consumer installs. Package acquisition is separate from project synchronization: installing or upgrading the CLI does not rewrite project files by itself.
 
-### Deploy
+### Deploy into a project
 
 ```bash
 cd <project>
@@ -58,22 +58,54 @@ Supported Consumer CLI profiles: `cursor-core`, `cursor-php`, `cursor-symfony`, 
 
 Manual copying into `.cursor/rules/` (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
 
-### Installation lifecycle (`v0.15.0`)
+### Project lifecycle (`v0.16.0`)
 
-Supported:
+Typical flow:
 
-- `install`
-- reinstall same version/profile
-- `status`
+```text
+machine/package installation
+    ↓
+project install
+    ↓
+status
+    ↓
+package upgrade (new Git tag / reinstall)
+    ↓
+project update (`ekp update`)
+    ↓
+uninstall (`ekp uninstall`) when removing EKP ownership
+```
 
-Not supported in `v0.15.0`:
+#### `ekp update`
 
-- `ekp update`
-- `ekp uninstall`
-- profile replacement
-- cross-version migration
+Synchronizes an existing managed project to the resources bundled with the **currently running** EKP package. Update is local/offline with respect to release acquisition — it does not download packages or contact GitHub.
 
-If another CLI version encounters a manifest from a different EKP version, installation refuses rather than silently upgrading.
+User-facing contract:
+
+- `manifest.profile` is authoritative
+- update does **not** redetect profile, change profile, merge profiles, or download the latest release
+- same-version missing managed files can be repaired
+- modified owned files are conflicts
+- new unmanaged collisions are conflicts
+- `--dry-run` previews without mutation; `--yes` skips confirmation only
+
+#### `ekp uninstall`
+
+Removes EKP-owned managed files using the ownership manifest:
+
+- manifest-driven ownership and hash verification
+- modified owned files conflict and block uninstall
+- missing owned files are tolerated
+- unmanaged content is ignored
+- ownership manifest is removed last
+- conservative directory cleanup may leave empty `.cursor` / `.ekp` directories when ownership was not proven
+
+#### Not supported in `v0.16.0`
+
+- remote package/release acquisition from inside `ekp update`
+- profile replacement / automatic profile switching
+- non-Cursor Consumer lifecycle
+- PyPI publication as the distribution channel
 
 ---
 

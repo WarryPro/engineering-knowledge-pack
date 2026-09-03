@@ -6,13 +6,13 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 
 ## Using EKP in a consumer project
 
-For **Cursor** in a real project, install the published Python package and use the Consumer CLI. You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
+Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. In v0.16.0, automatic Consumer CLI deployment and lifecycle management target Cursor. You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0
 ```
 
-Alternative: install into a virtual environment with `pip install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0`.
+Alternative: install into a virtual environment with `pip install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`.
 
 ### Basic usage
 
@@ -21,7 +21,12 @@ cd my-project
 ekp detect
 ekp install
 ekp status
+ekp update
+ekp uninstall
 ```
+
+- `ekp update` synchronizes the project's existing managed EKP files to the resources bundled with the currently running package.
+- `ekp uninstall` removes only EKP-owned managed files recorded in `.ekp/install.json`.
 
 Explicit profile:
 
@@ -47,6 +52,52 @@ Scoped directory:
 ekp install --path ./backend
 ```
 
+### Package upgrade vs project update
+
+Upgrading the CLI/package and synchronizing a project are separate steps:
+
+```bash
+# upgrade or reinstall a newer Git tag on your machine
+pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0
+
+# then synchronize an existing managed project
+cd my-project
+ekp update
+```
+
+`ekp update` uses the resources bundled with the currently running package. It does not contact GitHub or download releases.
+
+### Update an existing project
+
+```bash
+# after installing a newer EKP package
+cd my-project
+ekp status
+ekp update --dry-run
+ekp update
+ekp status
+```
+
+Non-interactive:
+
+```bash
+ekp update --yes
+```
+
+`--yes` skips confirmation only; it does not bypass ownership or safety checks.
+
+### Uninstall managed files
+
+```bash
+ekp uninstall --dry-run
+ekp uninstall
+```
+
+- Only managed files recorded by EKP are removed
+- Modified owned files block uninstall
+- Unmanaged Cursor rules survive
+- Conservative directory cleanup may intentionally leave harmless empty `.cursor` / `.ekp` directories when ownership was not proven
+
 ### Empty project
 
 ```bash
@@ -62,11 +113,11 @@ If no stack is detected, interactive mode asks for the intended stack. Non-inter
 - EKP-managed files are tracked in `.ekp/install.json`
 - Existing unmanaged Cursor rule collisions are preserved and block install
 - `--yes` skips confirmation prompts, not safety checks
-- `--dry-run` shows the installation plan without writing files
+- `--dry-run` shows the installation or lifecycle plan without writing files
 
 ### Current limitation
 
-**Consumer CLI v0.15.0 deploys Cursor only.** Copilot, Antigravity, and Claude adapters still exist in this repository and are generated through the manual assemble pipeline where supported — adapter existence is not the same as Consumer CLI installation.
+**Consumer CLI v0.16.0 deploys and manages Cursor only.** Copilot, Antigravity, and Claude adapters still exist in this repository and are generated through the manual assemble pipeline where supported — adapter existence is not the same as Consumer CLI deployment support.
 
 See [`docs/deployment.md`](docs/deployment.md) for the full Consumer CLI path vs manual adapter deployment.
 
@@ -129,7 +180,7 @@ py -3 -m pip install -r scripts/validate/requirements.txt
 ### Consumer projects (Cursor)
 
 1. Install the published package (see [Using EKP in a consumer project](#using-ekp-in-a-consumer-project)).
-2. Run `ekp detect`, `ekp install`, and `ekp status` in your project directory.
+2. Run `ekp detect`, `ekp install`, `ekp status`, and later `ekp update` / `ekp uninstall` as needed.
 
 ### Contributors
 
@@ -160,7 +211,8 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.15.0`
+- **Latest published release:** `v0.16.0`
+- **v0.16.0:** Consumer Lifecycle — `ekp update` and `ekp uninstall`; safe cross-version project synchronization; transactional rollback; manifest CAS; 160 Consumer CLI tests; Ubuntu + Windows lifecycle packaging smoke; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`
 - **v0.15.0:** Consumer CLI (`ekp version`, `detect`, `install`, `status`); Cursor-only consumer installation; project detection and profile resolution; ownership manifest and safe deployment; Windows + Ubuntu validation; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0`
 - **v0.14.0:** Flutter L2 technology vertical — `EKP-FL01`–`FL09` engineering knowledge; profile `cursor-flutter` (`includes: [cursor-core]`, `outputs: [cursor]` only); 75 Cursor rules (65 inherited core + 10 Flutter); no TypeScript/frontend/NativeScript inheritance; 15 profiles; 15th CI `--verify` gate; `ekp-flutter` and Copilot Flutter routing deferred
 - **v0.13.0:** Sixth stack-specific multi-adapter profile `ekp-nativescript` (`includes: [cursor-nativescript]`, `outputs: [cursor, copilot]`); adds Copilot `nativescript` PATH_GROUP; Cursor output byte-identical to `cursor-nativescript` (84 rules); Copilot emits NativeScript, TypeScript, and testing instruction groups; completes Phase 5 stack multi-adapter profiles
@@ -200,7 +252,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Initial milestone published (`v0.15.0`)** | Installable Python package; `ekp` CLI; project detection; profile resolution; safe Cursor installation; ownership manifest; status; Windows + Ubuntu CI; 91 Consumer CLI tests; lifecycle work (`update`, `uninstall`, PyPI) deferred |
+| Phase 6 — Consumer productization | **Substantially operational (`v0.16.0`)** | Package; `ekp` CLI (`version`, `detect`, `install`, `status`, `update`, `uninstall`); safe Cursor lifecycle; Windows + Ubuntu CI; 160 Consumer CLI tests; remote acquisition / PyPI / non-Cursor Consumer lifecycle still deferred |
 
 ### Repository metrics
 
@@ -211,7 +263,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Namespaces | 24 |
 | Profiles | 15 total — 8 operational Cursor (`cursor-core` + 7 stack) + 6 stack `ekp-*` (Cursor + Copilot) + `ekp-core` packaging pilot |
 | CI `--verify` gates | 15 profiles |
-| Consumer CLI tests | 91 (Windows + Ubuntu CI) |
+| Consumer CLI tests | 160 (Windows + Ubuntu CI; 9 expected Unix-only skips on Windows) |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (frozen) |

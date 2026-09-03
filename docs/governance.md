@@ -163,9 +163,9 @@ Generated artifact (dist/<profile>/ — gitignored)
 
 **Prohibited in knowledge:** Cursor `alwaysApply`, Copilot directives, tool-specific globs. Those belong in adapters/generated output only.
 
-### Consumer deployment ownership (`v0.15.0`)
+### Consumer deployment ownership (`v0.16.0`)
 
-The Consumer CLI adds a deployment layer **after** adapter generation:
+The Consumer CLI adds a deployment and lifecycle layer **after** adapter generation:
 
 ```
 knowledge → profile → adapter → generated bundle → Consumer CLI → consumer project
@@ -180,6 +180,9 @@ knowledge → profile → adapter → generated bundle → Consumer CLI → cons
 
 - Consumer CLI-managed files are tracked in `.ekp/install.json`; manually copied files are not automatically owned.
 - Manifest ownership does not make `.cursor/rules/` canonical — it records which deployed files EKP may manage.
+- Ownership manifests are safety contracts: destructive lifecycle operations require ownership proof.
+- The installed profile is stable unless an explicit future migration exists; update does not silently switch profiles.
+- Published same-version package content is immutable for a given release tag.
 
 **Copilot PATH_GROUPS (v0.13.0):** The `nativescript` group routes `knowledge/nativescript/` to `nativescript.instructions.md` with `applyTo: "**/*.xml,**/App_Resources/**,**/nativescript.config.{ts,js}"`. Broad `**/*.ts`, `**/*.js`, or `**/*.vue` globs are intentionally excluded from the NativeScript group; TypeScript knowledge continues to route via the existing `typescript` PATH_GROUP. PATH_GROUPS order and filenames are part of the Copilot adapter contract (`scripts/adapters/copilot/grouping.py`).
 
@@ -263,7 +266,7 @@ Generated rule counts are documented in CHANGELOG — not independently versione
 
 **Release remains human-approved:** staging → gate → CHANGELOG cut → merge `master` → annotated tag → GitHub Release.
 
-**Current release status:** Latest **published** release: `v0.15.0` (Consumer CLI). `master` is the immutable `v0.15.0` release baseline. `staging` is the post-`v0.15.0` development baseline and may advance ahead of `master` until the next release gate.
+**Current release status:** Latest **published** release: `v0.16.0` (Consumer Lifecycle). `master` remains the immutable previous publication baseline until the `v0.16.0` publication phase merges and tags. `staging` holds the release candidate and may advance ahead of `master` until the next release gate.
 
 ---
 
