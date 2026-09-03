@@ -6,15 +6,77 @@ Run from repository root after building:
     py -3 scripts/packaging/smoke_install_wheel.py
 """
 
+import hashlib
+import json
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
 
+REQUIRED_COMMANDS = (
+    "detect",
+    "version",
+    "install",
+    "status",
+    "update",
+    "uninstall",
+)
+
+
+def write_symfony(root):
+    root.joinpath("composer.json").write_text(
+        '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
+        encoding="utf-8",
+    )
+    root.joinpath("symfony.lock").write_text("{}", encoding="utf-8")
+    root.joinpath("config").mkdir(exist_ok=True)
+    root.joinpath("config/bundles.php").write_text("<?php", encoding="utf-8")
+
+
+def file_inventory(root):
+    items = {}
+    for path in sorted(root.rglob("*")):
+        if path.is_file():
+            rel = path.relative_to(root).as_posix()
+            items[rel] = hashlib.sha256(path.read_bytes()).hexdigest()
+    return items
+
+
+def run_ekp(ekp, args, path):
+    return subprocess.run(
+        [str(ekp)] + args + ["--path", str(path)],
+        capture_output=True,
+        text=True,
+    )
+
+
+def load_manifest(root):
+    return json.loads((root / ".ekp" / "install.json").read_text(encoding="utf-8"))
+
+
+def load_status(ekp, root):
+    proc = run_ekp(ekp, ["status", "--json"], root)
+    assert proc.returncode == 0, proc.stderr + proc.stdout
+    return json.loads(proc.stdout)
+
+
+def count_rules(root):
+    rules = root / ".cursor" / "rules"
+    return len(list(rules.glob("*.mdc"))) if rules.is_dir() else 0
+
+
+def expected_version_from_wheel(wheel):
+    name = wheel.name
+    prefix = "engineering_knowledge_pack-"
+    suffix = "-py3-none-any.whl"
+    if not (name.startswith(prefix) and name.endswith(suffix)):
+        raise SystemExit("Unexpected wheel filename: {}".format(name))
+    return name[len(prefix) : -len(suffix)]
+
+
 def main():
     repo_root = Path(__file__).resolve().parents[2]
-    build_dir = repo_root / "build"
     dist_dir = repo_root / "dist"
 
     subprocess.run(
@@ -34,6 +96,7 @@ def main():
         return 1
     wheel = max(wheels, key=lambda path: path.stat().st_mtime)
     print("Built wheel: {}".format(wheel.name))
+    wheel_version = expected_version_from_wheel(wheel)
 
     with tempfile.TemporaryDirectory(prefix="ekp-smoke-") as tmp:
         tmp_path = Path(tmp)
@@ -49,23 +112,38 @@ def main():
 
         subprocess.run([str(python), "-m", "pip", "install", str(wheel)], check=True)
 
+        meta = subprocess.run(
+            [
+                str(python),
+                "-c",
+                "from importlib.metadata import version; print(version('engineering-knowledge-pack'))",
+            ],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        installed_version = meta.stdout.strip()
+        if installed_version != wheel_version:
+            print(
+                "Wheel/package version mismatch: {} vs {}".format(
+                    wheel_version, installed_version
+                ),
+                file=sys.stderr,
+            )
+            return 1
+
         proc = subprocess.run([str(ekp), "version"], capture_output=True, text=True, check=True)
         print(proc.stdout.strip())
         version_line = proc.stdout.splitlines()[0].strip()
-        if version_line != "0.15.0":
+        if version_line != installed_version:
             print("Unexpected version output", file=sys.stderr)
             return 1
 
         proc = subprocess.run([str(ekp), "--help"], capture_output=True, text=True, check=True)
-        if "detect" not in proc.stdout:
-            print("Help missing detect command", file=sys.stderr)
-            return 1
-        if "install" not in proc.stdout:
-            print("Help missing install command", file=sys.stderr)
-            return 1
-        if "status" not in proc.stdout:
-            print("Help missing status command", file=sys.stderr)
-            return 1
+        for command in REQUIRED_COMMANDS:
+            if command not in proc.stdout:
+                print("Help missing {} command".format(command), file=sys.stderr)
+                return 1
 
         smoke_script = tmp_path / "smoke_assemble.py"
         smoke_script.write_text(
@@ -79,7 +157,13 @@ import tempfile
 root = get_ekp_root()
 assert (root / "knowledge").is_dir(), root
 assert (root / "profiles").is_dir(), root
+assert (root / "schema").is_dir(), root
+assert (root / "scripts").is_dir(), root
 assert root.name == "_resources", "Expected installed bundled resources"
+assert root.parent.name == "ekp", root
+posix = root.as_posix()
+assert "/site-packages/ekp/_resources" in posix or posix.endswith("site-packages/ekp/_resources"), posix
+print("resource_root", root)
 
 with tempfile.TemporaryDirectory() as tmp:
     tmp_path = Path(tmp)
@@ -114,6 +198,9 @@ with tempfile.TemporaryDirectory() as tmp:
         if "installed_assembly_ok" not in proc.stdout:
             print(proc.stderr, file=sys.stderr)
             return 1
+        if repo_root.as_posix() in proc.stdout.replace("\\", "/"):
+            print("resource_root resolved to repository checkout", file=sys.stderr)
+            return 1
 
         detect_script = tmp_path / "smoke_detect.py"
         detect_script.write_text(
@@ -126,7 +213,7 @@ from pathlib import Path
 
 ekp = sys.argv[1]
 
-def write_symfony(root: Path):
+def write_symfony(root):
     root.joinpath("composer.json").write_text(
         '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
         encoding="utf-8",
@@ -135,7 +222,7 @@ def write_symfony(root: Path):
     root.joinpath("config").mkdir(exist_ok=True)
     root.joinpath("config/bundles.php").write_text("<?php", encoding="utf-8")
 
-def write_flutter(root: Path):
+def write_flutter(root):
     root.joinpath("lib").mkdir(exist_ok=True)
     root.joinpath("lib/main.dart").write_text("void main() {}", encoding="utf-8")
     root.joinpath("pubspec.yaml").write_text(
@@ -199,8 +286,9 @@ import tempfile
 from pathlib import Path
 
 ekp = sys.argv[1]
+expected_version = sys.argv[2]
 
-def write_symfony(root: Path):
+def write_symfony(root):
     root.joinpath("composer.json").write_text(
         '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
         encoding="utf-8",
@@ -209,7 +297,7 @@ def write_symfony(root: Path):
     root.joinpath("config").mkdir(exist_ok=True)
     root.joinpath("config/bundles.php").write_text("<?php", encoding="utf-8")
 
-def write_flutter(root: Path):
+def write_flutter(root):
     root.joinpath("lib").mkdir(exist_ok=True)
     root.joinpath("lib/main.dart").write_text("void main() {}", encoding="utf-8")
     root.joinpath("pubspec.yaml").write_text(
@@ -217,7 +305,7 @@ def write_flutter(root: Path):
         encoding="utf-8",
     )
 
-def count_rules(root: Path) -> int:
+def count_rules(root):
     rules = root / ".cursor" / "rules"
     return len(list(rules.glob("*.mdc"))) if rules.is_dir() else 0
 
@@ -228,6 +316,7 @@ with tempfile.TemporaryDirectory() as symfony_dir:
     assert proc.returncode == 0, proc.stderr + proc.stdout
     manifest = json.loads((symfony_root / ".ekp" / "install.json").read_text(encoding="utf-8"))
     assert manifest["profile"] == "cursor-symfony", manifest
+    assert manifest["ekp_version"] == expected_version, manifest
     assert count_rules(symfony_root) == 83, count_rules(symfony_root)
     assert len(manifest["managed_files"]) == 83, manifest
     proc = subprocess.run([ekp, "install", "--yes", "--path", str(symfony_root)], capture_output=True, text=True)
@@ -271,7 +360,6 @@ with tempfile.TemporaryDirectory() as collision_dir:
         text=True,
     )
     assert assembly_probe.returncode == 0, assembly_probe.stderr
-    # Placeholder collision file using a known EKP-style name from dry-run output
     rules_dir = collision_root / ".cursor" / "rules"
     rules_dir.mkdir(parents=True, exist_ok=True)
     rules_dir.joinpath("00-ekp-orchestrator.mdc").write_text("user", encoding="utf-8")
@@ -358,7 +446,7 @@ with tempfile.TemporaryDirectory() as mismatch_dir:
         )
 
         proc = subprocess.run(
-            [str(python), str(install_script), str(ekp)],
+            [str(python), str(install_script), str(ekp), installed_version],
             capture_output=True,
             text=True,
             cwd=str(tmp_path),
@@ -383,6 +471,85 @@ with tempfile.TemporaryDirectory() as mismatch_dir:
         ):
             if marker not in proc.stdout:
                 return 1
+
+        fixture = tmp_path / "lifecycle-fixture"
+        fixture.mkdir()
+        write_symfony(fixture)
+
+        proc = run_ekp(ekp, ["install", "--yes"], fixture)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        manifest = load_manifest(fixture)
+        assert manifest["profile"] == "cursor-symfony", manifest
+        assert manifest["ekp_version"] == installed_version, manifest
+        assert len(manifest["managed_files"]) == 83, len(manifest["managed_files"])
+        assert count_rules(fixture) == 83
+        payload = load_status(ekp, fixture)
+        assert payload["state"] == "healthy", payload
+        print("lifecycle_fresh_install_ok")
+
+        manifest_bytes = (fixture / ".ekp" / "install.json").read_bytes()
+        proc = run_ekp(ekp, ["update", "--yes"], fixture)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        after_manifest = load_manifest(fixture)
+        assert after_manifest["profile"] == "cursor-symfony", after_manifest
+        assert after_manifest["ekp_version"] == installed_version, after_manifest
+        assert len(after_manifest["managed_files"]) == 83
+        assert (fixture / ".ekp" / "install.json").read_bytes() == manifest_bytes
+        payload = load_status(ekp, fixture)
+        assert payload["state"] == "healthy", payload
+        print("lifecycle_same_version_update_ok")
+
+        repair_root = tmp_path / "lifecycle-repair"
+        repair_root.mkdir()
+        write_symfony(repair_root)
+        proc = run_ekp(ekp, ["install", "--yes"], repair_root)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        repair_manifest = load_manifest(repair_root)
+        installed_at = repair_manifest["installed_at"]
+        deleted = next((repair_root / ".cursor" / "rules").glob("*.mdc"))
+        deleted_name = deleted.name
+        deleted.unlink()
+        proc = run_ekp(ekp, ["update", "--yes"], repair_root)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        restored = repair_root / ".cursor" / "rules" / deleted_name
+        assert restored.is_file(), restored
+        after_repair = load_manifest(repair_root)
+        assert after_repair["ekp_version"] == installed_version, after_repair
+        assert after_repair["installed_at"] == installed_at, after_repair
+        assert after_repair["profile"] == "cursor-symfony", after_repair
+        payload = load_status(ekp, repair_root)
+        assert payload["state"] == "healthy", payload
+        print("lifecycle_same_version_repair_ok")
+
+        user_rule = fixture / ".cursor" / "rules" / "user-rule.mdc"
+        user_rule.write_text("sentinel-user-rule\n", encoding="utf-8")
+        before_update_dry = file_inventory(fixture)
+        proc = run_ekp(ekp, ["update", "--dry-run"], fixture)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert file_inventory(fixture) == before_update_dry
+        before_uninstall_dry = file_inventory(fixture)
+        proc = run_ekp(ekp, ["uninstall", "--dry-run"], fixture)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert file_inventory(fixture) == before_uninstall_dry
+        print("lifecycle_dry_run_ok")
+
+        proc = run_ekp(ekp, ["uninstall", "--yes"], fixture)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert not (fixture / ".ekp" / "install.json").exists()
+        remaining = list((fixture / ".cursor" / "rules").glob("*.mdc"))
+        assert remaining == [user_rule] or remaining[0].name == "user-rule.mdc", remaining
+        assert user_rule.read_text(encoding="utf-8") == "sentinel-user-rule\n"
+        assert (fixture / ".cursor" / "rules").is_dir()
+        payload = load_status(ekp, fixture)
+        assert payload["state"] == "not_installed", payload
+        print("lifecycle_uninstall_ok")
+
+        proc = run_ekp(ekp, ["uninstall", "--yes"], fixture)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        combined = (proc.stdout + proc.stderr).lower()
+        assert "not installed" in combined, proc.stdout + proc.stderr
+        assert user_rule.read_text(encoding="utf-8") == "sentinel-user-rule\n"
+        print("lifecycle_uninstall_idempotent_ok")
 
     print("Packaging smoke test passed.")
     return 0
