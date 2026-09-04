@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "engineering-knowledge-pack"
-version = "0.17.0"
+version = "0.18.0.dev0"
 description = "Engineering Knowledge Pack — tool-agnostic engineering knowledge with AI adapters"
 readme = "README.md"
 license = { text = "MIT" }
@@ -27,6 +27,7 @@ packages = ["src/ekp"]
 [tool.hatch.build.targets.wheel.force-include]
 "knowledge" = "ekp/_resources/knowledge"
 "profiles" = "ekp/_resources/profiles"
+"components" = "ekp/_resources/components"
 "schema" = "ekp/_resources/schema"
 "scripts/adapters" = "ekp/_resources/scripts/adapters"
 "scripts/assemble" = "ekp/_resources/scripts/assemble"

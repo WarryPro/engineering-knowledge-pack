@@ -1,0 +1,12 @@
+id: core
+layer: L0
+requires: []
+selectable: true
+legacy_profile: cursor-core
+knowledge:
+  - knowledge/engineering/engineering-principles.md
+  - knowledge/ai/ai-assisted-development.md
+  - knowledge/engineering/refactoring.md
+  - knowledge/testing/testing.md
+  - knowledge/engineering/error-handling.md
+  - knowledge/architecture/layering-and-boundaries.md

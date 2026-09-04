@@ -1,0 +1,8 @@
+id: flutter
+layer: L2
+requires:
+  - core
+selectable: true
+legacy_profile: cursor-flutter
+knowledge:
+  - knowledge/flutter/flutter-architecture.md

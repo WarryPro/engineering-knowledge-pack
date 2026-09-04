@@ -1,0 +1,8 @@
+id: typescript
+layer: L1
+requires:
+  - core
+selectable: true
+legacy_profile: cursor-typescript
+knowledge:
+  - knowledge/typescript/typescript-fundamentals.md

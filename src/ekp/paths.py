@@ -11,7 +11,7 @@ def get_ekp_root():
     """
     Return the read-only EKP resource root.
 
-    The root contains ``knowledge/``, ``profiles/``, ``schema/``, and
+    The root contains ``knowledge/``, ``profiles/``, ``components/``, ``schema/``, and
     ``scripts/`` — the same layout as a development repository checkout.
     """
     if (_BUNDLED_ROOT / "knowledge").is_dir() and (_BUNDLED_ROOT / "profiles").is_dir():

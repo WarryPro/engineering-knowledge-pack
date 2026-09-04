@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/engineering-knowledge-pack/schema/component.schema.json",
+  "title": "EKP Technology Component",
+  "description": "Canonical technology-component definition for project composition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "layer", "requires", "knowledge", "selectable"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Component identifier; must match filename stem"
+    },
+    "layer": {
+      "type": "string",
+      "enum": ["L0", "L1", "L2", "L3"],
+      "description": "Technology layer rank"
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "uniqueItems": true,
+      "description": "Direct dependency component ids"
+    },
+    "knowledge": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^knowledge/.+\\.md$"
+      },
+      "uniqueItems": true,
+      "description": "Direct canonical knowledge contributions owned by this component"
+    },
+    "selectable": {
+      "type": "boolean",
+      "description": "Whether the component may be requested as project intent"
+    },
+    "legacy_profile": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$",
+      "description": "Optional historical cursor-* packaging profile for parity/compatibility only"
+    }
+  }
+}

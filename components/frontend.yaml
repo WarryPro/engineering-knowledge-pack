@@ -1,0 +1,9 @@
+id: frontend
+layer: L2
+requires:
+  - typescript
+selectable: true
+legacy_profile: cursor-frontend
+knowledge:
+  - knowledge/frontend/frontend-architecture.md
+  - knowledge/frontend/frontend-styling-and-markup.md

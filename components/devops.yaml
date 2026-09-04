@@ -1,0 +1,8 @@
+id: devops
+layer: L3
+requires:
+  - core
+selectable: true
+legacy_profile: cursor-devops
+knowledge:
+  - knowledge/devops/devops-fundamentals.md

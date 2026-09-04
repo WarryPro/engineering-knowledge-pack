@@ -1,0 +1,8 @@
+id: nativescript
+layer: L2
+requires:
+  - typescript
+selectable: true
+legacy_profile: cursor-nativescript
+knowledge:
+  - knowledge/nativescript/nativescript-architecture.md

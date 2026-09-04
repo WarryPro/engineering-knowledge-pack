@@ -1,0 +1,8 @@
+id: symfony
+layer: L2
+requires:
+  - php
+selectable: true
+legacy_profile: cursor-symfony
+knowledge:
+  - knowledge/symfony/symfony-architecture.md
