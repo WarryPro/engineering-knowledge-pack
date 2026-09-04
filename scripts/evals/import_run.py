@@ -171,9 +171,20 @@ def import_run(
             "seed": execution.get("seed", None),
             "seed_supported": execution.get("seed_supported", None),
             "max_output": execution.get("max_output", None),
+            "reasoning_effort": execution.get("reasoning_effort", None),
         }
     if not isinstance(sampling, dict):
         raise ImportRunError("sampling must be an object")
+
+    # Preserve explicit null; do not invent provider defaults.
+    if "reasoning_effort" in sampling:
+        reasoning_effort = sampling.get("reasoning_effort")
+    elif "reasoning_effort" in execution:
+        reasoning_effort = execution.get("reasoning_effort")
+    else:
+        reasoning_effort = None
+    if isinstance(reasoning_effort, str) and reasoning_effort.strip() == "":
+        raise ImportRunError("sampling.reasoning_effort must not be an empty string")
 
     run_id = build_run_id(
         request["scenario_id"],
@@ -203,6 +214,7 @@ def import_run(
             "seed": sampling.get("seed", None),
             "seed_supported": sampling.get("seed_supported", None),
             "max_output": sampling.get("max_output", None),
+            "reasoning_effort": reasoning_effort,
         },
         "tools_enabled": False,
         "session_isolation": "fresh",

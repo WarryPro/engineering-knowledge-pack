@@ -36,7 +36,14 @@ PAIR_COMPAT_FIELDS = (
     "prompt_sha256",
 )
 
-SAMPLING_FIELDS = ("temperature", "top_p", "seed", "seed_supported", "max_output")
+SAMPLING_FIELDS = (
+    "temperature",
+    "top_p",
+    "seed",
+    "seed_supported",
+    "max_output",
+    "reasoning_effort",
+)
 
 MANDATORY_LIMITATIONS = (
     "unequal context size between baseline and treatment",

@@ -80,7 +80,7 @@
     "sampling": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["temperature", "top_p", "seed", "seed_supported", "max_output"],
+      "required": ["temperature", "top_p", "seed", "seed_supported", "max_output", "reasoning_effort"],
       "properties": {
         "temperature": {
           "type": ["number", "null"]
@@ -97,6 +97,11 @@
         "max_output": {
           "type": ["integer", "null"],
           "minimum": 1
+        },
+        "reasoning_effort": {
+          "description": "Provider reasoning-effort setting when exposed; null when not applicable/unavailable. Empty string forbidden.",
+          "type": ["string", "null"],
+          "minLength": 1
         }
       }
     },

@@ -64,6 +64,7 @@ def write_run_bundle(
             "seed": None,
             "seed_supported": False,
             "max_output": 1024,
+            "reasoning_effort": None,
         },
         "tools_enabled": False,
         "session_isolation": "fresh",

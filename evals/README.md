@@ -24,6 +24,8 @@ v0.17 may claim evidence about **EKP's profile-selected engineering knowledge**.
 
 Baseline and treatment share: model/configuration, sampling settings, shared system instruction, task, fixture, project files, fresh session, output limits, and **no external tools**.
 
+Evidence-grade run metadata records `sampling.reasoning_effort` when the selected model/provider exposes reasoning control (`string` = explicit configured value; `null` = not applicable/unavailable). Pairing requires exact equality of reasoning effort (and other sampling fields) across baseline and treatment. This is configuration capture only — not a claim about any reference model run or evidence result.
+
 The only intended independent variable is whether selection-equivalent EKP evaluation context is present.
 
 ## Treatment contract (selection-equivalent)

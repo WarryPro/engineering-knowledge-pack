@@ -195,6 +195,65 @@ class BlindPairingTests(unittest.TestCase):
                 group_runs_into_pairs(load_runs_from_dir(runs))
             self.assertIn("sampling", str(ctx.exception))
 
+    def test_reasoning_effort_mismatch_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            runs = root / "runs"
+            write_run_bundle(
+                runs,
+                scenario_id="synth-alpha",
+                replicate_index=1,
+                baseline_text="Synthetic baseline.\n",
+                treatment_text="Synthetic treatment.\n",
+            )
+            for path in runs.rglob("run.json"):
+                data = json.loads(path.read_text(encoding="utf-8"))
+                if data["condition"] == "baseline":
+                    data["sampling"]["reasoning_effort"] = "medium"
+                else:
+                    data["sampling"]["reasoning_effort"] = "high"
+                path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            with self.assertRaises(ScoringError) as ctx:
+                group_runs_into_pairs(load_runs_from_dir(runs))
+            msg = str(ctx.exception)
+            self.assertIn("sampling", msg)
+            # Mismatch is detected via SAMPLING_FIELDS (includes reasoning_effort).
+            base = None
+            treat = None
+            for path in runs.rglob("run.json"):
+                data = json.loads(path.read_text(encoding="utf-8"))
+                if data["condition"] == "baseline":
+                    base = data["sampling"]["reasoning_effort"]
+                else:
+                    treat = data["sampling"]["reasoning_effort"]
+            self.assertEqual(base, "medium")
+            self.assertEqual(treat, "high")
+            self.assertNotEqual(base, treat)
+
+    def test_reasoning_effort_match_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            runs = root / "runs"
+            write_run_bundle(
+                runs,
+                scenario_id="synth-alpha",
+                replicate_index=1,
+                baseline_text="Synthetic baseline.\n",
+                treatment_text="Synthetic treatment.\n",
+            )
+            for path in runs.rglob("run.json"):
+                data = json.loads(path.read_text(encoding="utf-8"))
+                data["sampling"]["reasoning_effort"] = "medium"
+                path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+            pairs = group_runs_into_pairs(load_runs_from_dir(runs))
+            self.assertEqual(len(pairs), 1)
+            self.assertEqual(
+                pairs[0]["baseline"]["run"]["sampling"]["reasoning_effort"], "medium"
+            )
+            self.assertEqual(
+                pairs[0]["treatment"]["run"]["sampling"]["reasoning_effort"], "medium"
+            )
+
     def test_fixed_salt_deterministic_and_different_salt_can_change(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

@@ -82,6 +82,31 @@ class SchemaContractTests(unittest.TestCase):
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         )
 
+    def test_run_sampling_reasoning_effort_required(self):
+        run = make_run()
+        del run["sampling"]["reasoning_effort"]
+        errors = validate_against(self.validators["run"], run, "run")
+        self.assertTrue(errors)
+        self.assertTrue(any("reasoning_effort" in e for e in errors))
+
+    def test_run_sampling_reasoning_effort_null_valid(self):
+        run = make_run()
+        run["sampling"]["reasoning_effort"] = None
+        errors = validate_against(self.validators["run"], run, "run")
+        self.assertEqual(errors, [])
+
+    def test_run_sampling_reasoning_effort_string_valid(self):
+        run = make_run()
+        run["sampling"]["reasoning_effort"] = "medium"
+        errors = validate_against(self.validators["run"], run, "run")
+        self.assertEqual(errors, [])
+
+    def test_run_sampling_reasoning_effort_empty_string_rejected(self):
+        run = make_run()
+        run["sampling"]["reasoning_effort"] = ""
+        errors = validate_against(self.validators["run"], run, "run")
+        self.assertTrue(errors)
+
 
 class IsolatedInventoryCountingTests(unittest.TestCase):
     """Inventory counts are local to synthetic trees — never the live evals/scenarios set."""

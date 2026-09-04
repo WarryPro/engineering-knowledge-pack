@@ -31,6 +31,7 @@ def _execution(**overrides):
             "seed": None,
             "seed_supported": False,
             "max_output": 512,
+            "reasoning_effort": None,
         },
     }
     data.update(overrides)
@@ -168,6 +169,107 @@ class ImportRunTests(unittest.TestCase):
             run2 = import_run(packages / "baseline", r2, _execution(), root / "o2")
             self.assertNotEqual(run1["response_sha256"], run2["response_sha256"])
             self.assertNotEqual(run1["run_id"], run2["run_id"])
+
+    def test_reasoning_effort_preserved_from_sampling(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            packages = self._prepare_one(root)
+            response = root / "resp.txt"
+            response.write_bytes(b"synthetic-medium\n")
+            execution = _execution(
+                sampling={
+                    "temperature": 0.0,
+                    "top_p": None,
+                    "seed": None,
+                    "seed_supported": False,
+                    "max_output": 512,
+                    "reasoning_effort": "medium",
+                }
+            )
+            run = import_run(packages / "baseline", response, execution, root / "out")
+            self.assertEqual(run["sampling"]["reasoning_effort"], "medium")
+            stored = json.loads((root / "out" / "run.json").read_text(encoding="utf-8"))
+            self.assertEqual(stored["sampling"]["reasoning_effort"], "medium")
+
+    def test_reasoning_effort_from_flattened_execution(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            packages = self._prepare_one(root)
+            response = root / "resp.txt"
+            response.write_bytes(b"synthetic-flat\n")
+            execution = {
+                "provider": "synthetic",
+                "model_config_id": "synthetic-model-a",
+                "model_id_observed": "synthetic-model-a",
+                "executed_at": "2026-09-04T00:00:00Z",
+                "replicate_index": 1,
+                "temperature": 0.0,
+                "top_p": None,
+                "seed": None,
+                "seed_supported": False,
+                "max_output": 512,
+                "reasoning_effort": "medium",
+            }
+            run = import_run(packages / "baseline", response, execution, root / "out")
+            self.assertEqual(run["sampling"]["reasoning_effort"], "medium")
+
+    def test_reasoning_effort_null_not_inferred_to_medium(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            packages = self._prepare_one(root)
+            response = root / "resp.txt"
+            response.write_bytes(b"synthetic-null\n")
+            run = import_run(
+                packages / "baseline",
+                response,
+                _execution(),  # sampling.reasoning_effort = null
+                root / "out-null",
+            )
+            self.assertIsNone(run["sampling"]["reasoning_effort"])
+            self.assertNotEqual(run["sampling"]["reasoning_effort"], "medium")
+
+            flat = {
+                "provider": "synthetic",
+                "model_config_id": "synthetic-model-a",
+                "model_id_observed": "synthetic-model-a",
+                "executed_at": "2026-09-04T00:00:00Z",
+                "replicate_index": 2,
+                "temperature": 0.0,
+                "top_p": None,
+                "seed": None,
+                "seed_supported": False,
+                "max_output": 512,
+                # no reasoning_effort key — provider without reasoning control
+            }
+            run_flat = import_run(
+                packages / "baseline", response, flat, root / "out-absent"
+            )
+            self.assertIsNone(run_flat["sampling"]["reasoning_effort"])
+            self.assertNotEqual(run_flat["sampling"]["reasoning_effort"], "medium")
+
+    def test_reasoning_effort_empty_string_rejected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            packages = self._prepare_one(root)
+            response = root / "resp.txt"
+            response.write_text("ok\n", encoding="utf-8")
+            with self.assertRaises(ImportRunError) as ctx:
+                import_run(
+                    packages / "baseline",
+                    response,
+                    _execution(
+                        sampling={
+                            "temperature": 0.0,
+                            "top_p": None,
+                            "seed": None,
+                            "seed_supported": False,
+                            "max_output": 512,
+                            "reasoning_effort": "",
+                        }
+                    ),
+                    root / "out",
+                )
+            self.assertIn("reasoning_effort", str(ctx.exception))
 
 
 if __name__ == "__main__":
