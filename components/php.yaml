@@ -1,0 +1,8 @@
+id: php
+layer: L1
+requires:
+  - core
+selectable: true
+legacy_profile: cursor-php
+knowledge:
+  - knowledge/php/php-fundamentals.md
