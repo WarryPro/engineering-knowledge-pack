@@ -2,7 +2,9 @@
 
 Repository evidence infrastructure for the **Evaluation MVP (`v0.17`)**.
 
-This tree is **not** part of the Consumer CLI. There is no `ekp eval` command. Evaluation assets and tooling stay in the repository (`evals/**`, `scripts/evals/**`) and are **not** shipped in the installed Consumer wheel.
+**v0.17 completes the offline Evaluation MVP (L0).** L1 real-model evidence is optional future work and is not required for EKP installation, operation, or `v1.0`.
+
+This tree is **not** part of the Consumer CLI. There is no `ekp eval` command. Evaluation assets and tooling stay in the repository (`evals/**`, `scripts/evals/**`) and are **not** shipped in the installed Consumer wheel. Evaluation is optional product-validation tooling, not a runtime/product dependency.
 
 ## Purpose
 
@@ -18,7 +20,7 @@ Structural validation and Consumer lifecycle safety are necessary but not suffic
 | Profile-**selected** engineering knowledge | Dumping all canonical documents into context |
 | Human blind rubric scoring | Copilot / Antigravity / Claude runtime delivery |
 
-v0.17 may claim evidence about **EKP's profile-selected engineering knowledge**. It must **not** claim it measured Cursor integration effectiveness or the effect of dumping all documentation into context.
+v0.17 provides offline infrastructure that *can* support knowledge-effect evaluation of **EKP's profile-selected engineering knowledge**. It must **not** be read as proof that EKP improves AI responses, nor as a measurement of Cursor integration effectiveness or of dumping all documentation into context.
 
 ## Fair baseline
 
@@ -118,7 +120,7 @@ Operator-private artifacts (`operator-private/mapping.json`, blinding salt) must
 
 Dual-rater evidence mode requires two distinct aliases (for example `rater-01` / `rater-02`) and `--require-raters 2` before consensus. Disputed is a legitimate final state (pairwise disagreement or critical-failure set disagreement). Absolute dimension disagreements alone do not force dispute.
 
-AT implements this pipeline against **synthetic test data only**. It does **not** create `evals/evidence/**`, real model responses, or a published reference evidence pack (that remains AU).
+AT implements this pipeline against **synthetic test data only**. It does **not** create `evals/evidence/**`, real model responses, or a published reference evidence pack. Real-model public evidence (L1) remains optional/deferred and is not part of the `v0.17.0` release.
 
 Example synthetic flow:
 
@@ -127,7 +129,7 @@ python scripts/evals/blind.py --runs <runs-dir> --output <blind-dir> --salt <hex
 python scripts/evals/score_import.py --score <sheet.yaml> --mapping <mapping.json> --output <scores-dir>
 python scripts/evals/consensus.py --mapping <mapping.json> --scores <scores-dir> --output <consensus-dir> --require-raters 2
 python scripts/evals/report.py --consensus <consensus-dir>/consensus --output <report-dir> \
-  --evaluation-id <id> --ekp-version 0.17.0.dev0 --ekp-commit <sha> --model-config-id <id>
+  --evaluation-id <id> --ekp-version 0.17.0 --ekp-commit <sha> --model-config-id <id>
 ```
 
 ## Shared system instruction
@@ -171,11 +173,11 @@ Default evidence protocol:
 
 That yields **24 blind pairs per rater**. With **2 independent raters**, about **48 pair ratings**. Rough human cost: ~8–15 minutes per pair → about **6.4–12 rater-hours** (order-of-magnitude only).
 
-Smoke runs may use fewer replicates or scenarios. Release evidence uses the three-replicate protocol unless a later authorization changes it.
+Smoke runs may use fewer replicates or scenarios. Optional L1 evidence protocols may use the three-replicate protocol when operators choose to run real-model evidence later.
 
 ## Blind dual-rater model
 
-Release evidence uses **two independent blind raters**. Each scores Response A/B with absolute dimension scores (0–3), critical failures, pairwise preference (`A` / `B` / `tie`), and a reason.
+Optional L1 evidence uses **two independent blind raters**. Each scores Response A/B with absolute dimension scores (0–3), critical failures, pairwise preference (`A` / `B` / `tie`), and a reason.
 
 Score sheets must **not** contain condition labels (`baseline` / `treatment`).
 
@@ -231,10 +233,10 @@ Treatment adds tokens. Apparent gains may partly reflect instruction volume. Rep
 
 | Level | Meaning |
 |-------|---------|
-| **L0** | Evaluation infrastructure exists (schemas, tooling, scenarios, offline validation) |
-| **L1** | Public paired real-model evidence with inspectable responses and blind human scoring |
+| **L0** | Evaluation infrastructure exists (schemas, tooling, scenarios, offline validation, blind scoring/reporting) — **COMPLETE in `v0.17.0`** |
+| **L1** | Public paired real-model evidence with inspectable responses and blind human scoring — **DEFERRED / OPTIONAL** |
 
-This foundation alone is **L0 in progress**. It does **not** authorize improvement claims.
+`v0.17.0` completes **L0**. It does **not** authorize improvement claims. L1 is optional future work for adoption/marketing/research and is not required for EKP installation, operation, or `v1.0`.
 
 ## CI
 

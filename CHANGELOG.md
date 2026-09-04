@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-09-04
+
+### Added
+
+- Offline Evaluation MVP (L0) — repository-only evaluation infrastructure under `evals/**` and `scripts/evals/**`
+- Eight representative engineering scenarios (version `1.0.0`) with prompts, fixtures, and human rubrics
+- Deterministic selection-equivalent treatment context renderer (renderer v2), including blind-safe / identity-neutral presentation
+- Provider-neutral response capture / run import tooling
+- Blind dual-rater scoring pipeline and deterministic reporting (synthetic offline validation)
+- Evaluation schemas, offline validator, and CI gates for evaluation tooling
+
+### Validation
+
+- Evaluation tooling integrated into offline CI (`scripts/evals/tests`, `scripts/evals/validate.py`, `scripts/evals/prepare.py`)
+- Python 3.9 compatibility retained for evaluation writers and CI
+- Historical EKP suite: 238/238 PASS; Consumer CLI suite: 160 tests (Windows: 151 passed / 9 skipped); 15/15 profile `--verify` PASS
+
+### Scope
+
+- No real-model evidence pack and no public L1 improvement claims in this release
+- Evaluation tooling remains repository-only and is not shipped in the Consumer wheel (`eval_hits = 0`)
+- Consumer CLI behavior unchanged (`version`, `detect`, `install`, `status`, `update`, `uninstall`); no `ekp eval`
+- Optional future work: real-model public evidence (L1) for adoption/research — not required for installation, operation, or `v1.0`
+
+### Compatibility
+
+- No knowledge, profile, or Consumer lifecycle semantic changes; all 15 profiles and Cursor rule counts unchanged
+- Ownership manifest `schema_version = 1` unchanged; public `v0.16.0` projects remain updatable via `ekp update`
+
 ## [0.16.0] - 2026-09-03
 
 ### Added

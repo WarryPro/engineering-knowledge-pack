@@ -6,13 +6,13 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 
 ## Using EKP in a consumer project
 
-Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. In v0.16.0, automatic Consumer CLI deployment and lifecycle management target Cursor. You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
+Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. In v0.16.0+, automatic Consumer CLI deployment and lifecycle management target Cursor. You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
 ```
 
-Alternative: install into a virtual environment with `pip install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`.
+Alternative: install into a virtual environment with `pip install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0`.
 
 ### Basic usage
 
@@ -58,7 +58,7 @@ Upgrading the CLI/package and synchronizing a project are separate steps:
 
 ```bash
 # upgrade or reinstall a newer Git tag on your machine
-pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0
+pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
 
 # then synchronize an existing managed project
 cd my-project
@@ -211,7 +211,8 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.16.0`
+- **Latest published release:** `v0.16.0` (publication of `v0.17.0` is a separate authorization)
+- **v0.17.0 (release candidate on staging):** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack; Consumer lifecycle unchanged
 - **v0.16.0:** Consumer Lifecycle — `ekp update` and `ekp uninstall`; safe cross-version project synchronization; transactional rollback; manifest CAS; 160 Consumer CLI tests; Ubuntu + Windows lifecycle packaging smoke; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`
 - **v0.15.0:** Consumer CLI (`ekp version`, `detect`, `install`, `status`); Cursor-only consumer installation; project detection and profile resolution; ownership manifest and safe deployment; Windows + Ubuntu validation; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0`
 - **v0.14.0:** Flutter L2 technology vertical — `EKP-FL01`–`FL09` engineering knowledge; profile `cursor-flutter` (`includes: [cursor-core]`, `outputs: [cursor]` only); 75 Cursor rules (65 inherited core + 10 Flutter); no TypeScript/frontend/NativeScript inheritance; 15 profiles; 15th CI `--verify` gate; `ekp-flutter` and Copilot Flutter routing deferred
@@ -253,6 +254,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
 | Phase 6 — Consumer productization | **Substantially operational (`v0.16.0`)** | Package; `ekp` CLI (`version`, `detect`, `install`, `status`, `update`, `uninstall`); safe Cursor lifecycle; Windows + Ubuntu CI; 160 Consumer CLI tests; remote acquisition / PyPI / non-Cursor Consumer lifecycle still deferred |
+| Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics
 

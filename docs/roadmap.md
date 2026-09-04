@@ -15,6 +15,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); `ekp-flutter` deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot stack profiles complete (`ekp-php` through `ekp-nativescript` in `v0.6.0`–`v0.13.0`); Antigravity + Claude in `v0.4.0`/`v0.5.0` (`ekp-core` pilot only); `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
 | Phase 6 — Consumer productization | **Substantially operational (`v0.16.0`)** | Package; Consumer CLI lifecycle (`update` / `uninstall`); safe Cursor project management; Windows + Ubuntu validation; remote acquisition / PyPI / non-Cursor Consumer lifecycle deferred |
+| Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; 8 scenarios; blind scoring/reporting tooling; L1 real-model public evidence optional/deferred |
 
 ---
 
@@ -302,23 +303,25 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 
 ---
 
-## Next initiative — Evaluation MVP (`v0.17`)
+## Evaluation MVP (`v0.17.0`)
 
-**Status:** Planned (roadmap only; not implemented in `v0.16.0`)
+**Status:** Complete in `v0.17.0` — offline Evaluation MVP (L0)
 
-After Consumer Lifecycle, the next primary product initiative is an **Evaluation MVP**. EKP's core claim is that it improves AI engineering decisions; structural correctness and safety validation are necessary but not sufficient evidence of that claim.
+EKP ships optional product-validation tooling so maintainers can prepare fair baseline/treatment packages, import provider-neutral responses, run blind dual-rater scoring, and emit deterministic reports. Evaluation is **not** a Consumer CLI dependency and is **not** required to install or operate EKP.
 
-**Evaluation MVP is required before `v1.0`.**
+**Delivered (L0 — offline infrastructure):**
 
-Planned shape:
+- [x] Vendor-neutral scenarios (8 active, version `1.0.0`)
+- [x] Baseline vs treatment preparation (selection-equivalent renderer v2)
+- [x] Human-readable rubrics and blind scoring/reporting pipeline
+- [x] Offline schemas, validator, and CI gates
+- [x] Provider-neutral response import (no provider SDK in CI)
 
-- Vendor-neutral scenarios
-- Baseline vs EKP comparison
-- Human-readable rubrics
-- 5–10 initial scenarios
-- Evidence rather than fake precision
+**Optional / deferred (L1):**
 
-Do not treat this section as an implementation authorization. No `evals/` tree is created by the `v0.16.0` release preparation.
+- [ ] Real-model public evidence packs for adoption, marketing, or research
+
+L1 real-model evidence is **not** a gate for `v0.17`, `v1.0`, or normal EKP usage. Earlier planning text that treated Evaluation L1 as mandatory before `v1.0` is superseded by this product decision.
 
 ---
 
