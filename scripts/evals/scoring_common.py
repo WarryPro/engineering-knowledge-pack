@@ -75,7 +75,9 @@ class ScoringError(Exception):
 
 def write_text(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8", newline="\n")
+    # Python 3.9: Path.write_text has no newline=; open() preserves LF.
+    with path.open("w", encoding="utf-8", newline="\n") as handle:
+        handle.write(text)
 
 
 def write_bytes(path: Path, data: bytes) -> None:
