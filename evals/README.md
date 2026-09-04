@@ -101,6 +101,35 @@ Local tooling tests:
 python -m unittest discover -s scripts/evals/tests -v
 ```
 
+## Blind scoring and reporting (AT)
+
+Offline tooling under `scripts/evals/` (no provider calls):
+
+```text
+imported condition-labelled runs
+→ blind.py          (pair validation, salt/HMAC A/B assignment, rater packages)
+→ human score sheets
+→ score_import.py   (schema + binding + CF/preference checks; byte-preserving)
+→ consensus.py      (condition reveal; improved/tied/regressed/disputed)
+→ report.py         (deterministic report.md + report-summary.json)
+```
+
+Operator-private artifacts (`operator-private/mapping.json`, blinding salt) must stay hidden from raters during scoring. Rater packages contain participant/system/rubric/responses/templates only — never condition labels, context hashes, or EKP commit/version metadata.
+
+Dual-rater evidence mode requires two distinct aliases (for example `rater-01` / `rater-02`) and `--require-raters 2` before consensus. Disputed is a legitimate final state (pairwise disagreement or critical-failure set disagreement). Absolute dimension disagreements alone do not force dispute.
+
+AT implements this pipeline against **synthetic test data only**. It does **not** create `evals/evidence/**`, real model responses, or a published reference evidence pack (that remains AU).
+
+Example synthetic flow:
+
+```bash
+python scripts/evals/blind.py --runs <runs-dir> --output <blind-dir> --salt <hex-for-tests>
+python scripts/evals/score_import.py --score <sheet.yaml> --mapping <mapping.json> --output <scores-dir>
+python scripts/evals/consensus.py --mapping <mapping.json> --scores <scores-dir> --output <consensus-dir> --require-raters 2
+python scripts/evals/report.py --consensus <consensus-dir>/consensus --output <report-dir> \
+  --evaluation-id <id> --ekp-version 0.17.0.dev0 --ekp-commit <sha> --model-config-id <id>
+```
+
 ## Shared system instruction
 
 Both conditions receive the exact same file: [`shared/system_instruction.md`](shared/system_instruction.md).
