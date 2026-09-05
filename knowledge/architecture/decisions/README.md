@@ -43,6 +43,7 @@ domain: architecture
 | [adr-0008](adr-0008-profile-composition-includes.md) | Profile composition (`includes`) | Accepted |
 | [adr-0009](adr-0009-adapter-dispatch-architecture.md) | Adapter dispatch architecture | Accepted |
 | [adr-0010](adr-0010-project-composition-and-assistant-separation.md) | Project composition and assistant separation | Accepted |
+| [adr-0011](adr-0011-consumer-deployer-abstraction.md) | Consumer deployer abstraction | Accepted |
 
 ## When to write an ADR
 
