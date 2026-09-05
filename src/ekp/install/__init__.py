@@ -8,7 +8,6 @@ from ekp.install.errors import (
     EXIT_SUCCESS,
     InstallError,
 )
-from ekp.install.service import InstallRequest, InstallResult, InstallService
 
 __all__ = [
     "EXIT_ASSEMBLY",
@@ -21,3 +20,16 @@ __all__ = [
     "InstallResult",
     "InstallService",
 ]
+
+
+def __getattr__(name):
+    if name in ("InstallRequest", "InstallResult", "InstallService"):
+        from ekp.install.service import InstallRequest, InstallResult, InstallService
+
+        mapping = {
+            "InstallRequest": InstallRequest,
+            "InstallResult": InstallResult,
+            "InstallService": InstallService,
+        }
+        return mapping[name]
+    raise AttributeError("module {!r} has no attribute {!r}".format(__name__, name))

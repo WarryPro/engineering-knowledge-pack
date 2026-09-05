@@ -18,6 +18,17 @@ def render_human(report: DetectionReport) -> str:
             for evidence in item.evidence:
                 lines.append("    - {}".format(evidence))
 
+    lines.extend(["", "Project composition:"])
+    if report.proposed_components:
+        lines.append("  requested:")
+        for component_id in report.proposed_components:
+            lines.append("    {}".format(component_id))
+        lines.append("  resolved:")
+        for component_id in report.resolved_components:
+            lines.append("    {}".format(component_id))
+    else:
+        lines.append("  (none - select components interactively or explicitly)")
+
     lines.extend(["", "AI tool signals:"])
     if not report.tool_signals:
         lines.append("  (none detected)")
@@ -31,17 +42,19 @@ def render_human(report: DetectionReport) -> str:
             for evidence in signal.evidence:
                 lines.append("    - {}".format(evidence))
 
-    lines.extend(["", "Recommendation:"])
+    lines.extend(["", "Legacy profile compatibility:"])
     if report.recommended_profile:
         lines.append("  {}".format(report.recommended_profile))
     elif report.ambiguous:
-        lines.append("  (ambiguous)")
+        lines.append("  (ambiguous - no single historical profile)")
         for candidate in report.candidate_profiles:
             lines.append("  candidate: {}".format(candidate))
         if report.reason:
             lines.append("  reason: {}".format(report.reason))
+    elif report.proposed_components:
+        lines.append("  (no single profile required for composed project)")
     else:
-        lines.append("  (none — interactive selection required)")
+        lines.append("  (none - interactive selection required)")
 
     if report.additional_concerns:
         lines.extend(["", "Additional concerns:"])
@@ -82,6 +95,8 @@ def report_to_dict(report: DetectionReport) -> Dict[str, Any]:
         "ambiguous": report.ambiguous,
         "reason": report.reason,
         "diagnostics": list(report.diagnostics),
+        "proposed_components": list(report.proposed_components),
+        "resolved_components": list(report.resolved_components),
     }
 
 
