@@ -253,6 +253,59 @@ print("installed_project_config_ok", digest)
             print(proc.stderr, file=sys.stderr)
             return 1
 
+        composition_script = tmp_path / "smoke_composition_assembly.py"
+        composition_script.write_text(
+            """
+import tempfile
+from pathlib import Path
+from ekp.assembly import AssemblyService, CompositionAssemblyRequest
+from ekp.composition import PROJECT_COMPOSITION_PROFILE
+from ekp.paths import get_ekp_root
+
+root = get_ekp_root()
+assert root.name == "_resources", root
+
+with tempfile.TemporaryDirectory() as tmp:
+    tmp_path = Path(tmp)
+    result = AssemblyService().assemble_composition(
+        CompositionAssemblyRequest(
+            components=["symfony", "frontend"],
+            outputs=["cursor"],
+            verify=True,
+            clean=True,
+            resource_root=root,
+            workspace_dir=tmp_path / "workspace",
+            output_root=tmp_path / "output",
+        )
+    )
+    assert result.profile == PROJECT_COMPOSITION_PROFILE, result.profile
+    assert result.composition is not None
+    assert list(result.composition.resolved_components) == [
+        "core", "php", "symfony", "typescript", "frontend"
+    ], result.composition.resolved_components
+    mdc = list((result.bundle_path / "cursor").glob("*.mdc"))
+    assert result.rules_count == len(mdc) and result.rules_count > 83, result.rules_count
+    assert (result.bundle_path / "assemble-manifest.json").is_file()
+print("installed_composition_assembly_ok", result.rules_count)
+""",
+            encoding="utf-8",
+        )
+
+        proc = subprocess.run(
+            [str(python), str(composition_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        if "installed_composition_assembly_ok" not in proc.stdout:
+            print(proc.stderr, file=sys.stderr)
+            return 1
+
         detect_script = tmp_path / "smoke_detect.py"
         detect_script.write_text(
             """
