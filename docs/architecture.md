@@ -13,33 +13,55 @@ knowledge/
     ↓ deploy          →  consumer project (Consumer CLI or manual copy — see deployment.md)
 ```
 
-### Consumer CLI deployment layer (`v0.16.0`)
+### Consumer CLI deployment layer (`v0.18` composition)
 
-For application developers using Cursor, the Consumer CLI deploys and manages assembled output in a project:
+For application developers using Cursor, the Consumer CLI composes technology components and deploys assembled Cursor rules:
 
 ```
-Canonical knowledge (knowledge/, profiles/, schema/)
+Detection
+  → Component Proposal
+  → Composition (dependency closure)
+  → ProjectConfig (.ekp/project.yaml intent)
+  → Assembly (canonical knowledge union)
+  → Adapter (Cursor)
+  → Deployment (.cursor/rules/)
+  → Manifest / Lifecycle (.ekp/install.json)
+```
+
+```
+Canonical knowledge (knowledge/, components/, schema/)
       ↓
-Validator / profile resolver
+Component registry + resolve_composition
       ↓
-Adapters / AssemblyService
+AssemblyService (composed knowledge paths)
       ↓
-temporary generated bundle
+Cursor adapter
       ↓
 Consumer CLI
-├── detect / profile resolver
-├── install
-├── status
+├── detect / component proposal
+├── install (composition default; --profile legacy)
+├── status (incl. CONFIGURATION_DRIFT)
 └── lifecycle
-    ├── update
-    └── uninstall
+    ├── update (bound to project.yaml hash; no redetect)
+    └── uninstall (preserves project.yaml)
       ↓
-safe deployment (.cursor/rules/ + .ekp/install.json)
+safe deployment (.cursor/rules/ + .ekp/project.yaml + .ekp/install.json)
       ↓
 consumer project
 ```
 
-Key concepts:
+**Boundaries (ADR-0010):**
+
+| Artifact | Role |
+|----------|------|
+| `components/*.yaml` | Composition source of truth (requires + direct knowledge) |
+| `.ekp/project.yaml` | User/project requested intent |
+| `.ekp/install.json` | Operational ownership (`mode`, `configuration_sha256`) |
+| `cursor-*` / `ekp-*` profiles | Compatibility / packaging presets — not the default Consumer composition graph |
+
+Stack ≠ assistant: components never encode Cursor/Copilot/Claude/Antigravity. v0.18 managed assistant remains Cursor only.
+
+Key lifecycle concepts:
 
 - **ManifestSnapshot** — ownership parse and fingerprint from one byte read
 - **LifecyclePlan** — planned CREATE / WRITE / DELETE / NOOP operations bound to a manifest snapshot
@@ -54,10 +76,9 @@ running installed package version
   = update target version
 ```
 
-There is no remote version resolver in `v0.16.0`. Same-version resource drift inside one package is treated as an internal consistency failure.
+There is no remote version resolver in v0.18. Same-version resource drift inside one package is treated as an internal consistency failure. Package acquisition ≠ project update.
 
 Manual assembly (contributor path) stops at `dist/<profile>/` for copy-based deployment. See [`deployment.md`](deployment.md).
-
 ```
 ┌─────────────────────────────────────────────────────────┐
 │                     knowledge/                          │

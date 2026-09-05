@@ -6,85 +6,107 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 
 ## Using EKP in a consumer project
 
-Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. In v0.16.0+, automatic Consumer CLI deployment and lifecycle management target Cursor. You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
+Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **v0.18 Consumer managed deployment targets Cursor only.** You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
+
+Published install (latest released tag):
 
 ```bash
 pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
 ```
 
-Alternative: install into a virtual environment with `pip install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0`.
+v0.18 Project Composition Engine is on the feature / integration path (`0.18.0.dev0`); use a checked-out feature build or wait for the published `v0.18.0` tag. Alternative: `pip install` from a local checkout or Git ref into a virtual environment.
 
-### Basic usage
+### Composition model (v0.18)
+
+Default Consumer installs compose **technology components**, not combinatorial profiles:
+
+```text
+components
+  → dependency closure
+  → canonical knowledge
+  → Cursor adapter
+  → .cursor/rules + .ekp/install.json
+```
+
+Example: `symfony` + `frontend` resolves to `core` + `php` + `symfony` + `typescript` + `frontend` (110 Cursor rules). No `cursor-symfony-frontend` profile is required.
+
+### Existing project
 
 ```bash
 cd my-project
 ekp detect
 ekp install
+# or non-interactive when detection is unambiguous:
+ekp install --yes
 ekp status
 ekp update
 ekp uninstall
 ```
 
-- `ekp update` synchronizes the project's existing managed EKP files to the resources bundled with the currently running package.
-- `ekp uninstall` removes only EKP-owned managed files recorded in `.ekp/install.json`.
+Detection proposes selectable components from stack markers. Install persists **requested** components only in `.ekp/project.yaml`; dependencies are derived at assemble/install time. `ekp update` synchronizes managed files from the running package using that intent — it does **not** rewrite `project.yaml` or redetect a new stack. `ekp uninstall` removes managed files and `.ekp/install.json` but **preserves** `project.yaml` when present.
 
-Explicit profile:
+### Empty / new project
 
-```bash
-ekp install --profile cursor-symfony
-```
-
-Non-interactive:
+Interactive (selector lists selectable components):
 
 ```bash
-ekp install --profile cursor-flutter --yes
+mkdir my-project && cd my-project
+ekp install
 ```
 
-Preview without writing files:
+Explicit non-interactive components (repeatable `--component`):
 
 ```bash
-ekp install --profile cursor-flutter --dry-run
+ekp install --component symfony --component frontend --yes
 ```
 
-Scoped directory:
+`ekp install --yes` on a truly empty project **fails** (no guessing). There is no auto-created composition without detection evidence or an explicit `--component` / interactive choice.
+
+### Project configuration
+
+`.ekp/project.yaml` stores user/project intent:
+
+```yaml
+schema_version: 1
+components:
+  - symfony
+  - frontend
+assistants:
+  - cursor
+```
+
+- Stores **requested** components only; dependencies are derived
+- User/project-owned — update does not rewrite it; uninstall preserves it
+- Operational ownership and hashes live in `.ekp/install.json` (`mode=composition`, `configuration_sha256`)
+
+Semantic changes to requested components yield `CONFIGURATION_DRIFT`; `ekp update` refuses silent reconfiguration (safe reconfiguration is planned for later releases).
+
+### Legacy profiles (still supported)
+
+Explicit packaging presets remain available:
 
 ```bash
-ekp install --path ./backend
+ekp install --profile cursor-symfony --yes
 ```
+
+Legacy mode writes historical `install.json` shape (`mode` absent / `legacy-profile`) and does **not** create an EKP `project.yaml`. `--profile` and `--component` are mutually exclusive. Existing v0.17 profile installs stay on the legacy-profile lifecycle until you choose otherwise; v0.18 update does not auto-migrate them to composition.
+
+Other flags: `--path`, `--dry-run`, `--yes` (confirmation only — not a safety bypass).
 
 ### Package upgrade vs project update
 
-Upgrading the CLI/package and synchronizing a project are separate steps:
-
 ```bash
-# upgrade or reinstall a newer Git tag on your machine
+# upgrade the package on your machine (acquisition)
 pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
 
-# then synchronize an existing managed project
-cd my-project
-ekp update
-```
-
-`ekp update` uses the resources bundled with the currently running package. It does not contact GitHub or download releases.
-
-### Update an existing project
-
-```bash
-# after installing a newer EKP package
+# then synchronize an existing managed project (project update)
 cd my-project
 ekp status
 ekp update --dry-run
-ekp update
-ekp status
-```
-
-Non-interactive:
-
-```bash
 ekp update --yes
 ```
 
-`--yes` skips confirmation only; it does not bypass ownership or safety checks.
+`ekp update` uses resources bundled with the currently running package. It does not contact GitHub or download releases.
 
 ### Uninstall managed files
 
@@ -96,28 +118,19 @@ ekp uninstall
 - Only managed files recorded by EKP are removed
 - Modified owned files block uninstall
 - Unmanaged Cursor rules survive
-- Conservative directory cleanup may intentionally leave harmless empty `.cursor` / `.ekp` directories when ownership was not proven
-
-### Empty project
-
-```bash
-mkdir my-project
-cd my-project
-ekp install
-```
-
-If no stack is detected, interactive mode asks for the intended stack. Non-interactive mode requires `--profile`. EKP does not auto-detect a profile in an empty directory.
+- `project.yaml` is preserved when present
+- Conservative directory cleanup may leave empty `.cursor` / `.ekp` directories when ownership was not proven
 
 ### Safety
 
-- EKP-managed files are tracked in `.ekp/install.json`
-- Existing unmanaged Cursor rule collisions are preserved and block install
+- Composition and legacy installs track ownership in `.ekp/install.json`
+- Unmanaged Cursor rule collisions, symlinked `.cursor`/`.ekp`, and invalid config block unsafe writes
 - `--yes` skips confirmation prompts, not safety checks
-- `--dry-run` shows the installation or lifecycle plan without writing files
+- `--dry-run` shows the plan without writing files
 
-### Current limitation
+### Current Consumer limitation
 
-**Consumer CLI v0.16.0 deploys and manages Cursor only.** Copilot, Antigravity, and Claude adapters still exist in this repository and are generated through the manual assemble pipeline where supported — adapter existence is not the same as Consumer CLI deployment support.
+**v0.18 Consumer managed deployment = Cursor only.** Repository adapters for Copilot, Claude, and Antigravity still exist for the manual assemble pipeline; they are **not** managed through the Consumer install/update/uninstall lifecycle yet (planned for v0.19).
 
 See [`docs/deployment.md`](docs/deployment.md) for the full Consumer CLI path vs manual adapter deployment.
 
@@ -211,9 +224,10 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.16.0` (publication of `v0.17.0` is a separate authorization)
-- **v0.17.0 (release candidate on staging):** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack; Consumer lifecycle unchanged
-- **v0.16.0:** Consumer Lifecycle — `ekp update` and `ekp uninstall`; safe cross-version project synchronization; transactional rollback; manifest CAS; 160 Consumer CLI tests; Ubuntu + Windows lifecycle packaging smoke; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`
+- **Latest published release:** `v0.17.0`
+- **v0.18.0 (in progress — not published):** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle; version remains `0.18.0.dev0` until release authorization
+- **v0.17.0:** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack
+- **v0.16.0:** Consumer Lifecycle — `ekp update` and `ekp uninstall`; safe cross-version project synchronization; transactional rollback; manifest CAS; Ubuntu + Windows lifecycle packaging smoke; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`
 - **v0.15.0:** Consumer CLI (`ekp version`, `detect`, `install`, `status`); Cursor-only consumer installation; project detection and profile resolution; ownership manifest and safe deployment; Windows + Ubuntu validation; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0`
 - **v0.14.0:** Flutter L2 technology vertical — `EKP-FL01`–`FL09` engineering knowledge; profile `cursor-flutter` (`includes: [cursor-core]`, `outputs: [cursor]` only); 75 Cursor rules (65 inherited core + 10 Flutter); no TypeScript/frontend/NativeScript inheritance; 15 profiles; 15th CI `--verify` gate; `ekp-flutter` and Copilot Flutter routing deferred
 - **v0.13.0:** Sixth stack-specific multi-adapter profile `ekp-nativescript` (`includes: [cursor-nativescript]`, `outputs: [cursor, copilot]`); adds Copilot `nativescript` PATH_GROUP; Cursor output byte-identical to `cursor-nativescript` (84 rules); Copilot emits NativeScript, TypeScript, and testing instruction groups; completes Phase 5 stack multi-adapter profiles
@@ -253,7 +267,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Substantially operational (`v0.16.0`)** | Package; `ekp` CLI (`version`, `detect`, `install`, `status`, `update`, `uninstall`); safe Cursor lifecycle; Windows + Ubuntu CI; 160 Consumer CLI tests; remote acquisition / PyPI / non-Cursor Consumer lifecycle still deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.18` composition (integration in progress)** | Package; composition + legacy Cursor lifecycle; Windows + Ubuntu CI; remote acquisition / PyPI / multi-assistant Consumer lifecycle deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics
@@ -265,7 +279,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Namespaces | 24 |
 | Profiles | 15 total — 8 operational Cursor (`cursor-core` + 7 stack) + 6 stack `ekp-*` (Cursor + Copilot) + `ekp-core` packaging pilot |
 | CI `--verify` gates | 15 profiles |
-| Consumer CLI tests | 160 (Windows + Ubuntu CI; 9 expected Unix-only skips on Windows) |
+| Consumer CLI tests | See current `src/ekp/tests` suite (Windows + Ubuntu CI; expected Unix-only symlink skips on Windows) |
 | Graph depth | max 2 |
 | Adapter-ready | 100% |
 | `cursor-core` bundle | 65 rules (frozen) |

@@ -6,7 +6,7 @@ This guide has **two paths**:
 
 | Path | Audience | Adapters |
 |------|----------|----------|
-| **A — Consumer CLI** (recommended for Cursor) | Application developers | Cursor only (`v0.16.0`) |
+| **A — Consumer CLI** (recommended for Cursor) | Application developers | Cursor only (`v0.18` composition + legacy profiles) |
 | **B — Manual assembly** | Contributors and advanced/manual deployment | Cursor, Copilot, Antigravity, Claude (per profile) |
 
 Related:
@@ -24,48 +24,55 @@ Related:
 ### Install the package (machine)
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
 ```
 
-This command pins the published `v0.16.0` release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for consumer installs. Package acquisition is separate from project synchronization: installing or upgrading the CLI does not rewrite project files by itself.
+Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself.
 
-### Deploy into a project
+### Deploy into a project (composition default)
 
 ```bash
 cd <project>
-ekp detect          # optional — inspect detected stack and recommended profile
-ekp install         # interactive or auto-detected profile
+ekp detect          # optional — inspect technologies and proposed components
+ekp install         # composition from detection or interactive components
+ekp install --component symfony --component frontend --yes
 ekp status          # read-only installation health
 ```
 
 | Flag | Purpose |
 |------|---------|
 | `--path <dir>` | Target project directory (default: current directory) |
-| `--profile <name>` | Explicit Cursor profile (bypasses auto-detection) |
+| `--component <id>` | Explicit technology component (repeatable; composition mode) |
+| `--profile <name>` | Explicit Cursor profile preset (legacy compatibility; mutually exclusive with `--component`) |
 | `--yes` | Skip confirmation prompts (does not bypass safety checks) |
 | `--dry-run` | Show plan without writing files |
 
-Supported Consumer CLI profiles: `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`, `cursor-nativescript`, `cursor-flutter`.
+Legacy presets remain: `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`, `cursor-nativescript`, `cursor-flutter`.
 
 ### What gets written
 
+Composition install:
+
 ```
-<project>/.cursor/rules/*.mdc    # Cursor rules for the selected profile
-<project>/.ekp/install.json      # ownership manifest (EKP-managed files)
+<project>/.cursor/rules/*.mdc    # Cursor rules for the resolved component closure
+<project>/.ekp/project.yaml      # requested intent (components + assistants)
+<project>/.ekp/install.json      # ownership manifest (mode=composition, configuration_sha256)
 ```
+
+Legacy `--profile` install writes rules + `install.json` only (no EKP-created `project.yaml`).
 
 ### Ownership warning
 
 Manual copying into `.cursor/rules/` (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
 
-### Project lifecycle (`v0.16.0`)
+### Project lifecycle (`v0.18`)
 
 Typical flow:
 
 ```text
 machine/package installation
     ↓
-project install
+project install (project.yaml intent + install.json binding)
     ↓
 status
     ↓
@@ -74,6 +81,7 @@ package upgrade (new Git tag / reinstall)
 project update (`ekp update`)
     ↓
 uninstall (`ekp uninstall`) when removing EKP ownership
+         (project.yaml preserved if present)
 ```
 
 #### `ekp update`
@@ -82,9 +90,10 @@ Synchronizes an existing managed project to the resources bundled with the **cur
 
 User-facing contract:
 
-- `manifest.profile` is authoritative
-- update does **not** redetect profile, change profile, merge profiles, or download the latest release
-- same-version missing managed files can be repaired
+- **Composition:** `project.yaml` + `configuration_sha256` bind intent; update does **not** redetect components or rewrite config
+- **Legacy-profile:** `manifest.profile` remains authoritative; update does not redetect or switch profile
+- configuration drift (yaml hash ≠ bound hash) → status `CONFIGURATION_DRIFT` and update **refuses** silent reconfiguration
+- same-version missing managed files can be repaired when healthy/bound
 - modified owned files are conflicts
 - new unmanaged collisions are conflicts
 - `--dry-run` previews without mutation; `--yes` skips confirmation only
@@ -98,15 +107,17 @@ Removes EKP-owned managed files using the ownership manifest:
 - missing owned files are tolerated
 - unmanaged content is ignored
 - ownership manifest is removed last
+- **`.ekp/project.yaml` is preserved** when present (config-only project → `NOT_INSTALLED`)
 - conservative directory cleanup may leave empty `.cursor` / `.ekp` directories when ownership was not proven
 
-#### Not supported in `v0.16.0`
+#### Not supported in `v0.18`
 
 - remote package/release acquisition from inside `ekp update`
-- profile replacement / automatic profile switching
-- non-Cursor Consumer lifecycle
+- automatic reconfiguration / `ekp configure`
+- multi-assistant Consumer lifecycle (Copilot / Claude / Antigravity)
+- monorepo orchestration
 - PyPI publication as the distribution channel
-
+- combinatorial profiles such as `cursor-symfony-frontend`
 ---
 
 ## Path B — Manual assembly

@@ -26,7 +26,7 @@ def main(argv=None):
 
     detect_parser = subparsers.add_parser(
         "detect",
-        help="Detect project technologies and recommend an existing Cursor profile",
+        help="Detect project technologies and propose components (or a legacy Cursor profile)",
     )
     detect_parser.add_argument(
         "--path",

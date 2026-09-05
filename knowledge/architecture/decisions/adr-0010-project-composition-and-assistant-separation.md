@@ -51,7 +51,7 @@ Optional `legacy_profile` exists only for compatibility testing, parity verifica
 
 Existing profile support remains in v0.18. No deprecation removal timeline in this release.
 
-### Future project configuration (not implemented in AW-A)
+### Project configuration and Consumer contracts (v0.18)
 
 ```yaml
 schema_version: 1
@@ -62,7 +62,7 @@ assistants: [cursor]
 - `.ekp/project.yaml` = user/project intent (not EKP-managed uninstall target)
 - `.ekp/install.json` = operational ownership (`schema_version = 1`; no schema 2 for v0.18)
 
-Composed installs will use operational fields conceptually:
+Composed installs use operational fields:
 
 ```text
 profile = project-composition
@@ -76,13 +76,13 @@ For `mode = composition`, configuration drift (yaml hash ≠ `configuration_sha2
 
 v0.18 Consumer accepts only `cursor` as a managed assistant in project config. Copilot/Claude/Antigravity remain contributor adapters until v0.19.
 
-### Future CLI / detection contracts (not implemented in AW-A)
+### CLI / detection contracts (v0.18)
 
 - Repeatable `--component` for composed install; mutually exclusive with `--profile`
 - Empty detection + `--yes` without `--component`/`--profile` → FAIL (no guessing)
-- Detection reduction to minimal requested intent uses the component graph (retire duplicate `SPECIALIZATIONS` tables)
+- Detection reduction to minimal requested intent uses the component graph (no duplicate `SPECIALIZATIONS` / `TECHNOLOGY_TO_PROFILE` tables)
 - Tool signals = evidence, not consent
-
+- Default Consumer install is composition; `--profile` remains explicit legacy/compatibility
 ## Rationale
 
 - Avoids combinatorial profile explosion
@@ -121,7 +121,6 @@ Rejected for v0.18 — schema 1 remains; intent lives in `project.yaml`; additiv
 ### Negative
 
 - Temporary dual representation: components + historical profiles (parity tested)
-- Install/update integration deferred to later v0.18 phases
 - Contributors must keep component direct knowledge and profile packaging aligned until profiles are further thinned
 
 ### Neutral
@@ -132,7 +131,7 @@ Rejected for v0.18 — schema 1 remains; intent lives in `project.yaml`; additiv
 
 - New components land under `components/` with `schema/component.schema.json`
 - No assistant ids in component metadata
-- Consumer install/lifecycle unchanged until later authorized phases
+- v0.18 Consumer lifecycle deploys Cursor only; multi-assistant Consumer lifecycle is v0.19
 - ADR index updated when this ADR is accepted
 
 ## Related
