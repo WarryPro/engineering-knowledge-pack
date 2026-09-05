@@ -15,6 +15,7 @@ class StatusState(str, Enum):
     MODIFIED = "modified"
     INCOMPLETE = "incomplete"
     VERSION_MISMATCH = "version_mismatch"
+    CONFIGURATION_DRIFT = "configuration_drift"
     INVALID = "invalid"
 
 
@@ -50,6 +51,14 @@ class StatusResult:
     missing_paths: List[str] = field(default_factory=list)
     unsafe_paths: List[str] = field(default_factory=list)
     error_message: Optional[str] = None
+    # Composition-aware optional fields (absent / unused for legacy installs).
+    mode: Optional[str] = None
+    configuration_sha256: Optional[str] = None
+    current_configuration_sha256: Optional[str] = None
+    requested_components: List[str] = field(default_factory=list)
+    resolved_components: List[str] = field(default_factory=list)
+    assistants: List[str] = field(default_factory=list)
+    configuration_drift: Optional[bool] = None
 
     @property
     def exit_code(self) -> int:

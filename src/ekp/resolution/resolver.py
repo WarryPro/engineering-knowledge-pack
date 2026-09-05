@@ -12,28 +12,9 @@ from ekp.resolution.composition_proposal import (
     resolve_detected_components,
 )
 
-# Temporary legacy-profile shim for v0.17-compatible install selection.
-# Composition proposal does NOT use these tables — ComponentRegistry owns
-# composition facts via reduce_requested_components / resolve_composition.
-TECHNOLOGY_TO_PROFILE = {
-    "nativescript": "cursor-nativescript",
-    "flutter": "cursor-flutter",
-    "symfony": "cursor-symfony",
-    "frontend": "cursor-frontend",
-    "typescript": "cursor-typescript",
-    "php": "cursor-php",
-    "devops": "cursor-devops",
-}
-
-# Legacy single-profile specialization collapse only (not composition identity).
-SPECIALIZATIONS = {
-    "symfony": {"php"},
-    "frontend": {"typescript"},
-    "nativescript": {"typescript"},
-}
-
-# Display / legacy candidate ordering only — not composition identity.
-PRIMARY_ORDER = (
+# Display-only candidate ordering for legacy single-profile recommendation.
+# Not composition identity / dependency SoT (ComponentRegistry owns that).
+_LEGACY_PRIMARY_DISPLAY_ORDER = (
     "nativescript",
     "flutter",
     "symfony",
@@ -46,7 +27,10 @@ PRIMARY_ORDER = (
 MIN_PRIMARY_CONFIDENCE = {"high", "medium"}
 
 
-def resolve_profile(technologies: Iterable[DetectionResult]) -> Tuple[
+def resolve_profile(
+    technologies: Iterable[DetectionResult],
+    registry: Optional[ComponentRegistry] = None,
+) -> Tuple[
     Optional[str],
     List[str],
     List[str],
@@ -62,7 +46,13 @@ def resolve_profile(technologies: Iterable[DetectionResult]) -> Tuple[
 
     Multi-primary stacks remain ambiguous for legacy single-profile install.
     Composition fields are populated separately and treat multi-stack as valid.
+
+    Dependency collapse uses ComponentRegistry.requires (not a duplicated table).
     """
+    loaded = registry
+    if loaded is None:
+        loaded = ComponentRegistry.load(get_ekp_root())
+
     by_tech: Dict[str, DetectionResult] = {}
     for item in technologies:
         existing = by_tech.get(item.technology)
@@ -80,25 +70,37 @@ def resolve_profile(technologies: Iterable[DetectionResult]) -> Tuple[
     if not active:
         return None, [], [], False, None
 
-    for primary, subsumed in SPECIALIZATIONS.items():
-        if primary in active:
-            active -= subsumed
+    # Collapse implied dependencies using the component graph.
+    for tech in list(active):
+        if not loaded.has(tech):
+            continue
+        for required in loaded.get(tech).requires:
+            active.discard(required)
 
     additional: List[str] = []
     if "devops" in active and len(active) > 1:
+        # Legacy display: devops co-presence is an additional concern, not a
+        # competing primary profile. Composition treats devops as first-class.
         active.remove("devops")
         additional.append("devops")
 
-    ordered_active = [tech for tech in PRIMARY_ORDER if tech in active]
+    ordered_active = [
+        tech for tech in _LEGACY_PRIMARY_DISPLAY_ORDER if tech in active
+    ]
+    for tech in sorted(active):
+        if tech not in ordered_active:
+            ordered_active.append(tech)
 
     if len(ordered_active) == 0:
         return None, [], additional, False, None
 
     if len(ordered_active) == 1:
-        profile = _legacy_profile_for_technology(ordered_active[0])
+        profile = _legacy_profile_for_technology(ordered_active[0], loaded)
         return profile, [profile], additional, False, None
 
-    candidates = [_legacy_profile_for_technology(tech) for tech in ordered_active]
+    candidates = [
+        _legacy_profile_for_technology(tech, loaded) for tech in ordered_active
+    ]
     reason = "multiple independent primary stacks"
     return None, candidates, additional, True, reason
 
@@ -108,14 +110,6 @@ def apply_resolution(
     registry: Optional[ComponentRegistry] = None,
 ) -> DetectionReport:
     """Populate legacy profile fields and composition-aware proposal fields."""
-    (
-        report.recommended_profile,
-        report.candidate_profiles,
-        report.additional_concerns,
-        report.ambiguous,
-        report.reason,
-    ) = resolve_profile(report.technologies)
-
     loaded = registry
     if loaded is None:
         try:
@@ -126,7 +120,22 @@ def apply_resolution(
             )
             report.proposed_components = []
             report.resolved_components = []
+            (
+                report.recommended_profile,
+                report.candidate_profiles,
+                report.additional_concerns,
+                report.ambiguous,
+                report.reason,
+            ) = None, [], [], False, None
             return report
+
+    (
+        report.recommended_profile,
+        report.candidate_profiles,
+        report.additional_concerns,
+        report.ambiguous,
+        report.reason,
+    ) = resolve_profile(report.technologies, loaded)
 
     composition, proposal_diagnostics = resolve_detected_components(
         report.technologies, loaded
@@ -138,11 +147,28 @@ def apply_resolution(
     return report
 
 
-def _legacy_profile_for_technology(technology: str) -> str:
-    """Map a technology id to a cursor-* profile for legacy install compatibility."""
-    # Prefer TECHNOLOGY_TO_PROFILE shim (mirrors Component.legacy_profile today).
-    return TECHNOLOGY_TO_PROFILE[technology]
+def _legacy_profile_for_technology(
+    technology: str, registry: ComponentRegistry
+) -> str:
+    """Map a technology id to a cursor-* profile via Component.legacy_profile."""
+    if not registry.has(technology):
+        raise KeyError(technology)
+    profile = registry.get(technology).legacy_profile
+    if not profile:
+        raise KeyError(technology)
+    return profile
 
 
 def _confidence_rank(confidence: str) -> int:
     return {"high": 3, "medium": 2, "low": 1}.get(confidence, 0)
+
+
+# Backward-compatible names for any external imports (no longer SoT tables).
+def __getattr__(name: str):
+    if name in ("TECHNOLOGY_TO_PROFILE", "SPECIALIZATIONS", "PRIMARY_ORDER"):
+        raise AttributeError(
+            "ekp.resolution.resolver.{} was removed; use ComponentRegistry "
+            "(legacy_profile / requires) as the composition source of truth. "
+            "Legacy profile recommendation uses resolve_profile().".format(name)
+        )
+    raise AttributeError("module {!r} has no attribute {!r}".format(__name__, name))

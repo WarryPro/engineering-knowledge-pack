@@ -52,7 +52,14 @@ def main(argv=None):
     )
     install_parser.add_argument(
         "--profile",
-        help="Explicit Cursor profile to install (bypasses auto-detection)",
+        help="Explicit Cursor profile preset (legacy compatibility; mutually exclusive with --component)",
+    )
+    install_parser.add_argument(
+        "--component",
+        action="append",
+        dest="components",
+        metavar="ID",
+        help="Project technology component to install (repeatable; mutually exclusive with --profile)",
     )
     install_parser.add_argument(
         "--yes",
@@ -149,6 +156,7 @@ def main(argv=None):
                 InstallRequest(
                     path=args.path,
                     profile=args.profile,
+                    components=args.components,
                     assume_yes=args.yes,
                     dry_run=args.dry_run,
                 )

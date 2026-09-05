@@ -556,12 +556,14 @@ with tempfile.TemporaryDirectory() as symfony_dir:
     proc = subprocess.run([ekp, "install", "--yes", "--path", str(symfony_root)], capture_output=True, text=True)
     assert proc.returncode == 0, proc.stderr + proc.stdout
     manifest = json.loads((symfony_root / ".ekp" / "install.json").read_text(encoding="utf-8"))
-    assert manifest["profile"] == "cursor-symfony", manifest
+    assert manifest["profile"] == "project-composition", manifest
+    assert manifest["mode"] == "composition", manifest
     assert manifest["ekp_version"] == expected_version, manifest
     assert count_rules(symfony_root) == 83, count_rules(symfony_root)
     assert len(manifest["managed_files"]) == 83, manifest
+    assert (symfony_root / ".ekp" / "project.yaml").is_file()
     proc = subprocess.run([ekp, "install", "--yes", "--path", str(symfony_root)], capture_output=True, text=True)
-    assert proc.returncode == 0, proc.stderr + proc.stdout
+    assert proc.returncode == 2, proc.stderr + proc.stdout
     assert count_rules(symfony_root) == 83
     print("installed_install_symfony_ok")
 
@@ -571,7 +573,8 @@ with tempfile.TemporaryDirectory() as flutter_dir:
     proc = subprocess.run([ekp, "install", "--yes", "--path", str(flutter_root)], capture_output=True, text=True)
     assert proc.returncode == 0, proc.stderr + proc.stdout
     manifest = json.loads((flutter_root / ".ekp" / "install.json").read_text(encoding="utf-8"))
-    assert manifest["profile"] == "cursor-flutter", manifest
+    assert manifest["profile"] == "project-composition", manifest
+    assert manifest["mode"] == "composition", manifest
     assert count_rules(flutter_root) == 75, count_rules(flutter_root)
     assert len(manifest["managed_files"]) == 75, manifest
     assert not (flutter_root / ".github").exists()
@@ -588,8 +591,9 @@ with tempfile.TemporaryDirectory() as empty_dir:
     manifest = json.loads((empty_root / ".ekp" / "install.json").read_text(encoding="utf-8"))
     assert len(manifest["managed_files"]) == 65, manifest
     proc = subprocess.run([ekp, "install", "--yes", "--path", empty_dir], capture_output=True, text=True)
-    assert proc.returncode == 2, proc.stdout
-    assert not (empty_root / ".cursor").joinpath("rules").exists() or count_rules(empty_root) == 65
+    # Existing legacy install is sticky: reinstall/noop without mode change.
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert count_rules(empty_root) == 65
     print("installed_install_empty_ok")
 
 with tempfile.TemporaryDirectory() as collision_dir:
@@ -633,7 +637,8 @@ with tempfile.TemporaryDirectory() as status_dir:
     payload = json.loads(proc.stdout)
     assert payload["installed"] is True, payload
     assert payload["state"] == "healthy", payload
-    assert payload["profile"] == "cursor-symfony", payload
+    assert payload["profile"] == "project-composition", payload
+    assert payload["mode"] == "composition", payload
     assert payload["managed_files"]["total"] == 83, payload
     assert payload["managed_files"]["intact"] == 83, payload
     print("installed_status_healthy_ok")
@@ -720,22 +725,28 @@ with tempfile.TemporaryDirectory() as mismatch_dir:
         proc = run_ekp(ekp, ["install", "--yes"], fixture)
         assert proc.returncode == 0, proc.stderr + proc.stdout
         manifest = load_manifest(fixture)
-        assert manifest["profile"] == "cursor-symfony", manifest
+        assert manifest["profile"] == "project-composition", manifest
+        assert manifest["mode"] == "composition", manifest
         assert manifest["ekp_version"] == installed_version, manifest
         assert len(manifest["managed_files"]) == 83, len(manifest["managed_files"])
         assert count_rules(fixture) == 83
+        assert (fixture / ".ekp" / "project.yaml").is_file()
         payload = load_status(ekp, fixture)
         assert payload["state"] == "healthy", payload
+        assert payload["mode"] == "composition", payload
         print("lifecycle_fresh_install_ok")
 
         manifest_bytes = (fixture / ".ekp" / "install.json").read_bytes()
+        config_bytes = (fixture / ".ekp" / "project.yaml").read_bytes()
         proc = run_ekp(ekp, ["update", "--yes"], fixture)
         assert proc.returncode == 0, proc.stderr + proc.stdout
         after_manifest = load_manifest(fixture)
-        assert after_manifest["profile"] == "cursor-symfony", after_manifest
+        assert after_manifest["profile"] == "project-composition", after_manifest
+        assert after_manifest["mode"] == "composition", after_manifest
         assert after_manifest["ekp_version"] == installed_version, after_manifest
         assert len(after_manifest["managed_files"]) == 83
         assert (fixture / ".ekp" / "install.json").read_bytes() == manifest_bytes
+        assert (fixture / ".ekp" / "project.yaml").read_bytes() == config_bytes
         payload = load_status(ekp, fixture)
         assert payload["state"] == "healthy", payload
         print("lifecycle_same_version_update_ok")
@@ -757,7 +768,8 @@ with tempfile.TemporaryDirectory() as mismatch_dir:
         after_repair = load_manifest(repair_root)
         assert after_repair["ekp_version"] == installed_version, after_repair
         assert after_repair["installed_at"] == installed_at, after_repair
-        assert after_repair["profile"] == "cursor-symfony", after_repair
+        assert after_repair["profile"] == "project-composition", after_repair
+        assert after_repair["mode"] == "composition", after_repair
         payload = load_status(ekp, repair_root)
         assert payload["state"] == "healthy", payload
         print("lifecycle_same_version_repair_ok")
@@ -777,6 +789,7 @@ with tempfile.TemporaryDirectory() as mismatch_dir:
         proc = run_ekp(ekp, ["uninstall", "--yes"], fixture)
         assert proc.returncode == 0, proc.stderr + proc.stdout
         assert not (fixture / ".ekp" / "install.json").exists()
+        assert (fixture / ".ekp" / "project.yaml").read_bytes() == config_bytes
         remaining = list((fixture / ".cursor" / "rules").glob("*.mdc"))
         assert remaining == [user_rule] or remaining[0].name == "user-rule.mdc", remaining
         assert user_rule.read_text(encoding="utf-8") == "sentinel-user-rule\n"
@@ -791,6 +804,76 @@ with tempfile.TemporaryDirectory() as mismatch_dir:
         assert "not installed" in combined, proc.stdout + proc.stderr
         assert user_rule.read_text(encoding="utf-8") == "sentinel-user-rule\n"
         print("lifecycle_uninstall_idempotent_ok")
+
+        # Public Symfony + Frontend composition lifecycle (installed wheel).
+        sf_fe = tmp_path / "public-sf-fe"
+        sf_fe.mkdir()
+        write_symfony(sf_fe)
+        (sf_fe / "package.json").write_text(
+            '{"dependencies":{"react":"^18.0.0","typescript":"^5.0.0"}}',
+            encoding="utf-8",
+        )
+        (sf_fe / "tsconfig.json").write_text("{}", encoding="utf-8")
+        (sf_fe / "src" / "components").mkdir(parents=True, exist_ok=True)
+        proc = run_ekp(ekp, ["detect", "--json"], sf_fe)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        detect_payload = json.loads(proc.stdout)
+        assert detect_payload["proposed_components"] == ["frontend", "symfony"], detect_payload
+        assert detect_payload["resolved_components"] == [
+            "core",
+            "php",
+            "symfony",
+            "typescript",
+            "frontend",
+        ], detect_payload
+        proc = run_ekp(ekp, ["install", "--yes"], sf_fe)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert count_rules(sf_fe) == 110
+        status_payload = load_status(ekp, sf_fe)
+        assert status_payload["state"] == "healthy", status_payload
+        assert status_payload["mode"] == "composition", status_payload
+        sf_fe_config = (sf_fe / ".ekp" / "project.yaml").read_bytes()
+        proc = run_ekp(ekp, ["update", "--dry-run"], sf_fe)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        proc = run_ekp(ekp, ["update", "--yes"], sf_fe)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        proc = run_ekp(ekp, ["uninstall", "--yes"], sf_fe)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert (sf_fe / ".ekp" / "project.yaml").read_bytes() == sf_fe_config
+        assert load_status(ekp, sf_fe)["state"] == "not_installed"
+        print("installed_wheel_public_composition_lifecycle_ok")
+
+        empty_comp = tmp_path / "empty-components"
+        empty_comp.mkdir()
+        proc = run_ekp(
+            ekp,
+            [
+                "install",
+                "--component",
+                "symfony",
+                "--component",
+                "frontend",
+                "--yes",
+            ],
+            empty_comp,
+        )
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert count_rules(empty_comp) == 110
+        assert load_status(ekp, empty_comp)["state"] == "healthy"
+        print("installed_wheel_empty_component_smoke_ok")
+
+        legacy = tmp_path / "legacy-profile"
+        legacy.mkdir()
+        write_symfony(legacy)
+        proc = run_ekp(ekp, ["install", "--profile", "cursor-symfony", "--yes"], legacy)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        legacy_manifest = load_manifest(legacy)
+        assert legacy_manifest["profile"] == "cursor-symfony", legacy_manifest
+        assert "mode" not in legacy_manifest
+        assert count_rules(legacy) == 83
+        assert not (legacy / ".ekp" / "project.yaml").exists()
+        assert load_status(ekp, legacy)["state"] == "healthy"
+        print("installed_wheel_legacy_profile_smoke_ok")
 
     print("Packaging smoke test passed.")
     return 0

@@ -265,8 +265,10 @@ class InstallServiceTests(unittest.TestCase):
             )
             self.assertEqual(result.exit_code, 0)
             manifest = ManifestStore(root).load()
-            self.assertEqual(manifest.profile, "cursor-flutter")
+            self.assertEqual(manifest.profile, "project-composition")
+            self.assertEqual(manifest.mode, "composition")
             self.assertEqual(len(manifest.managed_files), 75)
+            self.assertTrue((root / ".ekp" / "project.yaml").is_file())
 
     def test_collision_via_service(self):
         with tempfile.TemporaryDirectory() as tmp:

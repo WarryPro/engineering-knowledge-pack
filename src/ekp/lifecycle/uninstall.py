@@ -131,6 +131,12 @@ class UninstallService:
 
 
 def validate_lifecycle_manifest(manifest: InstallManifest) -> None:
+    from ekp.composition import PROJECT_COMPOSITION_PROFILE
+    from ekp.install.manifest import (
+        INSTALL_MODE_COMPOSITION,
+        INSTALL_MODE_LEGACY_PROFILE,
+    )
+
     if manifest.install_root != ".":
         raise InstallConflictError(
             "Unsupported install_root in ownership manifest: {}".format(manifest.install_root)
@@ -140,6 +146,23 @@ def validate_lifecycle_manifest(manifest: InstallManifest) -> None:
     if adapter_set != SUPPORTED_LIFECYCLE_ADAPTERS:
         raise InstallConflictError(
             "Lifecycle operations support Cursor-only Consumer CLI installations."
+        )
+
+    mode = manifest.effective_mode
+    if mode == INSTALL_MODE_COMPOSITION:
+        if manifest.profile != PROJECT_COMPOSITION_PROFILE:
+            raise InstallConflictError(
+                "Composition lifecycle requires profile {!r}, found {!r}".format(
+                    PROJECT_COMPOSITION_PROFILE, manifest.profile
+                )
+            )
+        if not manifest.configuration_sha256:
+            raise InstallConflictError(
+                "Composition ownership manifest is missing configuration_sha256"
+            )
+    elif mode != INSTALL_MODE_LEGACY_PROFILE:
+        raise InstallConflictError(
+            "Unsupported EKP install mode for lifecycle: {!r}".format(manifest.mode)
         )
 
     seen_paths = set()

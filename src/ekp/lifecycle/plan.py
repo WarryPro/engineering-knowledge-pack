@@ -49,6 +49,8 @@ class LifecyclePlan:
     new_manifest: Optional[InstallManifest] = None
     bundle_path: Optional[Path] = None
     dry_run: bool = False
+    # Composition update: revalidate project.yaml semantic hash before/at commit.
+    expected_configuration_sha256: Optional[str] = None
 
     @property
     def has_conflicts(self) -> bool:
