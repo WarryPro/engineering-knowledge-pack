@@ -78,11 +78,7 @@ class CompositionInstallResult:
 
 
 class CompositionInstallService:
-    """
-    Persist a composed EKP installation programmatically.
-
-    Public CLI activation and lifecycle integration are deferred to AW-E2.
-    """
+    """Persist a composed EKP installation (Consumer + programmatic)."""
 
     def __init__(
         self,

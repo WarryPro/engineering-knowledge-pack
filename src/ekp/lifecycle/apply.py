@@ -122,6 +122,7 @@ class TransactionApplier:
 
         try:
             self._create_directories(plan, created_directories)
+            self._revalidate_composition_config(plan)
             for operation in plan.operations:
                 if operation.kind == LifecycleOpKind.NOOP:
                     continue
@@ -135,10 +136,14 @@ class TransactionApplier:
             if plan.commit_manifest and plan.new_manifest is not None:
                 # Same-version repair leaves commit_manifest false, so recreated
                 # directories are not recorded in the ownership manifest.
+                self._revalidate_composition_config(plan)
                 manifest = self._finalize_new_manifest(plan, created_directories)
                 ManifestStore(plan.project_root).replace(
                     manifest, expected_sha256=plan.manifest_sha256
                 )
+            else:
+                # Same-version repair: still refuse if intent drifted mid-transaction.
+                self._revalidate_composition_config(plan)
 
             shutil.rmtree(backup_root, ignore_errors=True)
             return UpdateApplyResult(warnings=[])
@@ -361,7 +366,33 @@ class TransactionApplier:
             install_root=manifest.install_root,
             managed_files=list(manifest.managed_files),
             created_directories=merged,
+            mode=manifest.mode,
+            configuration_sha256=manifest.configuration_sha256,
         )
+
+    def _revalidate_composition_config(self, plan: LifecyclePlan) -> None:
+        expected = plan.expected_configuration_sha256
+        if not expected:
+            return
+        from ekp.composition import ComponentRegistry
+        from ekp.config.models import ProjectConfigError
+        from ekp.config.project import ProjectConfigStore
+        from ekp.paths import get_ekp_root
+
+        try:
+            registry = ComponentRegistry.load(get_ekp_root())
+            snapshot = ProjectConfigStore(
+                plan.project_root, registry=registry
+            ).load_snapshot()
+        except ProjectConfigError as exc:
+            raise InstallConflictError(
+                "Project configuration became invalid during update: {}".format(exc)
+            ) from exc
+        if snapshot is None or snapshot.configuration_sha256 != expected:
+            raise InstallConflictError(
+                "Project configuration changed during update; "
+                "refusing to commit a composition ownership update."
+            )
 
     def _rollback_update(
         self,

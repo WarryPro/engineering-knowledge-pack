@@ -32,8 +32,10 @@ class InstallCliTests(unittest.TestCase):
                 code = main(["install", "--path", str(root), "--yes"])
             self.assertEqual(code, 0)
             manifest = ManifestStore(root).load()
-            self.assertEqual(manifest.profile, "cursor-symfony")
+            self.assertEqual(manifest.profile, "project-composition")
+            self.assertEqual(manifest.mode, "composition")
             self.assertEqual(len(manifest.managed_files), 83)
+            self.assertTrue((root / ".ekp" / "project.yaml").is_file())
 
     def test_dry_run_stdout(self):
         with tempfile.TemporaryDirectory() as tmp:

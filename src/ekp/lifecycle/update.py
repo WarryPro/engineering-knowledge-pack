@@ -6,7 +6,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Set, Tuple
 
-from ekp.assembly import AssemblyRequest, AssemblyService
+from ekp.assembly import AssemblyRequest, AssemblyService, CompositionAssemblyRequest
+from ekp.composition import ComponentRegistry
+from ekp.config.models import ProjectConfigError
+from ekp.config.project import ProjectConfigStore
 from ekp.install.cursor_deploy import CURSOR_ADAPTER, CursorDeployService, sha256_file
 from ekp.install.errors import (
     InstallAssemblyError,
@@ -15,7 +18,13 @@ from ekp.install.errors import (
     InstallFilesystemError,
     InstallSelectionError,
 )
-from ekp.install.manifest import InstallManifest, ManagedFile, ManifestSnapshot, ManifestStore
+from ekp.install.manifest import (
+    INSTALL_MODE_COMPOSITION,
+    InstallManifest,
+    ManagedFile,
+    ManifestSnapshot,
+    ManifestStore,
+)
 from ekp.install.paths import check_symlink_boundary, relative_posix_path, resolve_under_root
 from ekp.lifecycle.apply import (
     LifecycleConflictError,
@@ -30,10 +39,17 @@ from ekp.lifecycle.render import (
     render_update_success,
 )
 from ekp.lifecycle.uninstall import validate_lifecycle_manifest
+from ekp.paths import get_ekp_root
 from ekp.resolution.catalog import validate_profile_name
 from ekp.version import get_version
 
 BundleInventory = Dict[str, Tuple[Path, str]]
+
+_COMPOSITION_DRIFT_MESSAGE = (
+    "Project configuration has changed since EKP was installed.\n\n"
+    "Automatic reconfiguration is not supported in v0.18.\n"
+    "Restore the installed configuration or use the future reconfiguration workflow."
+)
 
 
 class UpdateCancelled(Exception):
@@ -110,6 +126,17 @@ class UpdateService:
         except InstallConflictError as exc:
             return UpdateResult(exit_code=exc.exit_code, message=exc.message)
 
+        mode = snapshot.manifest.effective_mode
+        if mode == INSTALL_MODE_COMPOSITION:
+            return self._update_composition(project_root, snapshot, request)
+        return self._update_legacy(project_root, snapshot, request)
+
+    def _update_legacy(
+        self,
+        project_root: Path,
+        snapshot: ManifestSnapshot,
+        request: UpdateRequest,
+    ) -> UpdateResult:
         running_version = get_version()
         profile = snapshot.manifest.profile
 
@@ -139,37 +166,132 @@ class UpdateService:
                 bundle_path=assembly_result.bundle_path,
                 dry_run=request.dry_run,
             )
-
-            if plan.has_conflicts:
-                return UpdateResult(
-                    exit_code=InstallConflictError.exit_code,
-                    message=render_update_conflict_message(plan),
-                )
-
-            if request.dry_run:
-                return UpdateResult(exit_code=0, message=render_update_dry_run(plan))
-
-            if not request.assume_yes and not _is_complete_noop(plan):
-                self.output_fn(render_update_confirmation(plan))
-                answer = self.input_fn("").strip().lower()
-                if answer not in ("", "y", "yes"):
-                    raise UpdateCancelled()
-
-            try:
-                self.applier.apply_update(plan)
-            except LifecycleConflictError as exc:
-                return UpdateResult(exit_code=exc.exit_code, message=exc.message)
-            except LifecycleRollbackError as exc:
-                return UpdateResult(exit_code=exc.exit_code, message=exc.message)
-            except InstallFilesystemError as exc:
-                return UpdateResult(exit_code=exc.exit_code, message=exc.message)
-
-            return UpdateResult(exit_code=0, message=render_update_success(plan))
+            return self._finish_update(plan, request)
         except InstallAssemblyError as exc:
             return UpdateResult(exit_code=exc.exit_code, message=exc.message)
         finally:
             if assembly_result is not None and assembly_result._temp_ctx is not None:
                 assembly_result._temp_ctx.cleanup()
+
+    def _update_composition(
+        self,
+        project_root: Path,
+        snapshot: ManifestSnapshot,
+        request: UpdateRequest,
+    ) -> UpdateResult:
+        running_version = get_version()
+        registry = ComponentRegistry.load(get_ekp_root())
+        expected_hash = snapshot.manifest.configuration_sha256
+
+        try:
+            store = ProjectConfigStore(project_root, registry=registry)
+            if not store.exists():
+                return UpdateResult(
+                    exit_code=InstallSelectionError.exit_code,
+                    message=(
+                        "Composition update requires .ekp/project.yaml.\n"
+                        "The project configuration file is missing."
+                    ),
+                )
+            config_snapshot = store.load_snapshot()
+            if config_snapshot is None:
+                return UpdateResult(
+                    exit_code=InstallSelectionError.exit_code,
+                    message=(
+                        "Composition update requires .ekp/project.yaml.\n"
+                        "The project configuration file is missing."
+                    ),
+                )
+        except ProjectConfigError as exc:
+            return UpdateResult(
+                exit_code=InstallSelectionError.exit_code,
+                message="Invalid project configuration: {}".format(exc),
+            )
+
+        if config_snapshot.configuration_sha256 != expected_hash:
+            return UpdateResult(
+                exit_code=InstallConflictError.exit_code,
+                message=_COMPOSITION_DRIFT_MESSAGE,
+            )
+
+        try:
+            reloaded = store.load_snapshot()
+            if reloaded is None or reloaded.configuration_sha256 != expected_hash:
+                return UpdateResult(
+                    exit_code=InstallConflictError.exit_code,
+                    message=_COMPOSITION_DRIFT_MESSAGE,
+                )
+            config = reloaded.config
+        except ProjectConfigError as exc:
+            return UpdateResult(
+                exit_code=InstallSelectionError.exit_code,
+                message="Invalid project configuration: {}".format(exc),
+            )
+
+        assistants = list(config.assistants) or ["cursor"]
+        if assistants != ["cursor"]:
+            return UpdateResult(
+                exit_code=InstallSelectionError.exit_code,
+                message="Composition update supports only assistants=['cursor'] in v0.18.",
+            )
+
+        assembly_result = None
+        try:
+            assembly_result = self.assembly.assemble_composition(
+                CompositionAssemblyRequest(
+                    components=list(config.components),
+                    outputs=assistants,
+                    verify=True,
+                    clean=True,
+                )
+            )
+            inventory = self._inventory_to_map(
+                self.deploy.inventory_bundle(assembly_result.bundle_path)
+            )
+            plan = build_update_plan(
+                project_root=project_root,
+                snapshot=snapshot,
+                running_version=running_version,
+                inventory=inventory,
+                bundle_path=assembly_result.bundle_path,
+                dry_run=request.dry_run,
+                expected_configuration_sha256=expected_hash,
+            )
+            return self._finish_update(plan, request)
+        except InstallAssemblyError as exc:
+            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+        finally:
+            if assembly_result is not None and assembly_result._temp_ctx is not None:
+                assembly_result._temp_ctx.cleanup()
+
+    def _finish_update(self, plan: LifecyclePlan, request: UpdateRequest) -> UpdateResult:
+        if plan.has_conflicts:
+            return UpdateResult(
+                exit_code=InstallConflictError.exit_code,
+                message=render_update_conflict_message(plan),
+            )
+
+        if request.dry_run:
+            return UpdateResult(exit_code=0, message=render_update_dry_run(plan))
+
+        if not request.assume_yes and not _is_complete_noop(plan):
+            self.output_fn(render_update_confirmation(plan))
+            answer = self.input_fn("").strip().lower()
+            if answer not in ("", "y", "yes"):
+                raise UpdateCancelled()
+
+        try:
+            self.applier.apply_update(plan)
+        except LifecycleConflictError as exc:
+            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+        except LifecycleRollbackError as exc:
+            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+        except InstallFilesystemError as exc:
+            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+        except InstallConflictError as exc:
+            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+
+        return UpdateResult(exit_code=0, message=render_update_success(plan))
 
     @staticmethod
     def _inventory_to_map(
@@ -195,6 +317,7 @@ def build_update_plan(
     bundle_path: Path,
     *,
     dry_run: bool = False,
+    expected_configuration_sha256: Optional[str] = None,
 ) -> LifecyclePlan:
     project_root = project_root.resolve()
     manifest = snapshot.manifest
@@ -293,6 +416,7 @@ def build_update_plan(
         new_manifest=new_manifest,
         bundle_path=bundle_path,
         dry_run=dry_run,
+        expected_configuration_sha256=expected_configuration_sha256,
     )
 
 
@@ -446,4 +570,6 @@ def _build_new_manifest(
         install_root=manifest.install_root,
         managed_files=managed_files,
         created_directories=created_directories,
+        mode=manifest.mode,
+        configuration_sha256=manifest.configuration_sha256,
     )

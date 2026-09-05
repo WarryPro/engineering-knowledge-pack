@@ -145,3 +145,78 @@ def render_success(plan: InstallPlan, *, noop: bool = False) -> str:
         "Target:  .cursor/rules/\n"
         "Manifest: .ekp/install.json".format(plan.profile, plan.rules_count)
     )
+
+
+def render_composition_dry_run(plan) -> str:
+    from ekp.composition import PROJECT_COMPOSITION_PROFILE
+    from ekp.install.intent import MODE_COMPOSITION
+
+    intent = plan.intent
+    composition = intent.composition
+    lines = [
+        "EKP composition installation plan",
+        "",
+        "Mode:                {}".format(MODE_COMPOSITION),
+        "Profile:             {}".format(PROJECT_COMPOSITION_PROFILE),
+        "Configuration:       {}".format(plan.config_action),
+        "configuration_sha256: {}".format(plan.configuration_sha256),
+        "",
+        "Requested components:",
+    ]
+    for item in intent.components:
+        lines.append("  {}".format(item))
+    lines.append("")
+    lines.append("Resolved components:")
+    if composition is not None:
+        for item in composition.resolved_components:
+            lines.append("  {}".format(item))
+    lines.append("")
+    lines.append("Assistants:")
+    for item in intent.assistants:
+        lines.append("  {}".format(item))
+    lines.append("")
+    lines.append("Cursor rules: {}".format(plan.rules_count))
+    lines.append("Would write:  .ekp/project.yaml" if plan.config_action == "create" else "Would reuse:  .ekp/project.yaml")
+    lines.append("Would write:  .ekp/install.json")
+    lines.append("")
+    lines.append("Conflicts: {}".format(len(plan.conflicts) + len(plan.cursor_plan.conflicts)))
+    lines.append("Dry run — no files written.")
+    return "\n".join(lines)
+
+
+def render_composition_confirmation(plan) -> str:
+    intent = plan.intent
+    composition = intent.composition
+    lines = [
+        "EKP composition installation",
+        "",
+        "Requested components:",
+    ]
+    for item in intent.components:
+        lines.append("  {}".format(item))
+    lines.append("")
+    lines.append("Resolved components:")
+    if composition is not None:
+        for item in composition.resolved_components:
+            lines.append("  {}".format(item))
+    lines.append("")
+    lines.append("Assistant:")
+    for item in intent.assistants:
+        lines.append("  {}".format(item))
+    lines.append("")
+    lines.append("Cursor rules: {}".format(plan.rules_count))
+    lines.append("Config:       {}".format(plan.config_action))
+    lines.append("")
+    lines.append("Continue? [Y/n]")
+    return "\n".join(lines)
+
+
+def render_composition_success(plan) -> str:
+    return (
+        "EKP composition install complete.\n\n"
+        "Mode:     composition\n"
+        "Profile:  project-composition\n"
+        "Rules:    {}\n"
+        "Config:   {}\n"
+        "Manifest: .ekp/install.json".format(plan.rules_count, plan.config_action)
+    )
