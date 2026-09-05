@@ -205,21 +205,64 @@ with tempfile.TemporaryDirectory() as tmp:
         deploy_script = tmp_path / "smoke_deploy_infra.py"
         deploy_script.write_text(
             """
+import tempfile
+from pathlib import Path
+from ekp.assembly import AssemblyService, CompositionAssemblyRequest
 from ekp.install.deploy import (
+    AntigravityDeployer,
+    ClaudeDeployer,
+    CopilotDeployer,
     CursorDeployer,
     DeployRegistry,
     SharedDeploymentEngine,
     build_default_deploy_registry,
 )
 from ekp.install.cursor_deploy import CursorDeployService
+from ekp.paths import get_ekp_root
 
 registry = build_default_deploy_registry()
 assert isinstance(registry, DeployRegistry)
-assert registry.supported_assistants() == ("cursor",)
+assert registry.supported_assistants() == ("antigravity", "claude", "copilot", "cursor")
 assert isinstance(registry.get("cursor"), CursorDeployer)
+assert isinstance(registry.get("copilot"), CopilotDeployer)
+assert isinstance(registry.get("claude"), ClaudeDeployer)
+assert isinstance(registry.get("antigravity"), AntigravityDeployer)
 assert SharedDeploymentEngine is not None
 assert CursorDeployService is not None
-print("installed_deploy_infra_ok")
+
+root = get_ekp_root()
+engine = SharedDeploymentEngine()
+with tempfile.TemporaryDirectory() as tmp:
+    tmp_path = Path(tmp)
+    result = AssemblyService().assemble_composition(
+        CompositionAssemblyRequest(
+            components=["core"],
+            outputs=["cursor", "copilot", "claude", "antigravity"],
+            verify=True,
+            resource_root=root,
+            workspace_dir=tmp_path / "workspace",
+            output_root=tmp_path / "output",
+        )
+    )
+    desired = []
+    for assistant_id in ("cursor", "copilot", "claude", "antigravity"):
+        desired.extend(registry.get(assistant_id).collect_desired_files(result.bundle_path))
+    desired = engine.normalize_desired_files(desired)
+    paths = [item.relative_path for item in desired]
+    assert len(paths) == len(set(paths)), "cross-assistant target collision"
+    namespaces = {
+        "cursor": any(p.startswith(".cursor/rules/") for p in paths),
+        "copilot": any(p.startswith(".github/") for p in paths),
+        "claude": any(p == "CLAUDE.md" or p.startswith(".claude/") for p in paths),
+        "antigravity": any(p.startswith(".agents/rules/") for p in paths),
+    }
+    assert all(namespaces.values()), namespaces
+    project = tmp_path / "project"
+    project.mkdir()
+    ops, conflicts = engine.plan_first_install(project, desired)
+    assert conflicts == [], conflicts
+    assert not (project / ".ekp").exists()
+print("installed_deploy_infra_ok", len(desired))
 """,
             encoding="utf-8",
         )

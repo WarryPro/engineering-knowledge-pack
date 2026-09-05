@@ -6,7 +6,10 @@ import unittest
 from pathlib import Path
 from typing import List
 
+from ekp.install.deploy.antigravity import AntigravityDeployer
 from ekp.install.deploy.base import Deployer
+from ekp.install.deploy.claude import ClaudeDeployer
+from ekp.install.deploy.copilot import CopilotDeployer
 from ekp.install.deploy.cursor import CursorDeployer
 from ekp.install.deploy.models import DesiredManagedFile
 from ekp.install.deploy.registry import DeployRegistry, build_default_deploy_registry
@@ -32,18 +35,21 @@ class DeployRegistryTests(unittest.TestCase):
         self.assertIs(registry.get("cursor"), deployer)
         self.assertTrue(registry.is_supported("cursor"))
 
-    def test_default_registry_cursor_only(self):
+    def test_default_registry_all_four(self):
         registry = build_default_deploy_registry()
-        self.assertEqual(registry.supported_assistants(), ("cursor",))
+        self.assertEqual(
+            registry.supported_assistants(),
+            ("antigravity", "claude", "copilot", "cursor"),
+        )
         self.assertIsInstance(registry.get("cursor"), CursorDeployer)
-        self.assertFalse(registry.is_supported("copilot"))
-        self.assertFalse(registry.is_supported("claude"))
-        self.assertFalse(registry.is_supported("antigravity"))
+        self.assertIsInstance(registry.get("copilot"), CopilotDeployer)
+        self.assertIsInstance(registry.get("claude"), ClaudeDeployer)
+        self.assertIsInstance(registry.get("antigravity"), AntigravityDeployer)
 
     def test_unknown_assistant_fails(self):
         registry = build_default_deploy_registry()
         with self.assertRaises(KeyError):
-            registry.get("copilot")
+            registry.get("assistant-x")
 
     def test_duplicate_registration_fails(self):
         registry = DeployRegistry()
