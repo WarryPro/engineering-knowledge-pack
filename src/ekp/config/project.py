@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Sequence, Tuple
 
 import yaml
 from jsonschema import Draft202012Validator
@@ -12,7 +12,6 @@ from jsonschema import Draft202012Validator
 from ekp.composition import ComponentRegistry, CompositionError
 from ekp.config.models import (
     PROJECT_CONFIG_RELATIVE,
-    SUPPORTED_PROJECT_ASSISTANTS,
     SUPPORTED_PROJECT_SCHEMA_VERSION,
     ProjectConfig,
     ProjectConfigError,
@@ -22,6 +21,18 @@ from ekp.config.normalization import configuration_sha256, normalize_project_con
 from ekp.install.atomic import ExclusiveTempFile, exclusive_create_from_temp
 from ekp.install.paths import check_symlink_boundary, resolve_under_root
 from ekp.paths import get_ekp_root
+
+
+def _production_supported_assistants() -> Tuple[str, ...]:
+    """
+    Lazy capability lookup from DeployRegistry (authoritative Consumer SoT).
+
+    Dependency direction: config.project → install.deploy.registry (lazy).
+    Deploy modules do not import config validation, avoiding an import cycle.
+    """
+    from ekp.install.deploy.registry import build_default_deploy_registry
+
+    return build_default_deploy_registry().supported_assistants()
 
 
 def _load_project_config_schema(resource_root: Optional[Path] = None) -> dict:
@@ -56,11 +67,13 @@ def validate_project_config_payload(
     registry: ComponentRegistry,
     *,
     schema: Optional[dict] = None,
+    supported_assistants: Optional[Sequence[str]] = None,
 ) -> ProjectConfig:
     """
     Structurally and semantically validate a project-config mapping.
 
-    Raises ProjectConfigError for ordinary invalid configuration.
+    ``supported_assistants`` defaults to DeployRegistry production capability
+    (injected when provided). Raises ProjectConfigError for invalid configuration.
     """
     if not isinstance(payload, dict):
         raise ProjectConfigError("project config root must be a mapping/object")
@@ -83,6 +96,8 @@ def validate_project_config_payload(
 
     components = tuple(str(item) for item in payload["components"])
     assistants = tuple(str(item) for item in payload["assistants"])
+    if not assistants:
+        raise ProjectConfigError("project config requires at least one assistant")
 
     for component_id in components:
         if not registry.has(component_id):
@@ -104,7 +119,10 @@ def validate_project_config_payload(
     except CompositionError as exc:
         raise ProjectConfigError(str(exc)) from exc
 
-    supported = set(SUPPORTED_PROJECT_ASSISTANTS)
+    if supported_assistants is None:
+        supported = set(_production_supported_assistants())
+    else:
+        supported = set(str(item) for item in supported_assistants)
     for assistant_id in assistants:
         if assistant_id not in supported:
             raise ProjectConfigError(

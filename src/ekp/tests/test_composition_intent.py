@@ -492,6 +492,78 @@ class InstallIntentTests(unittest.TestCase):
             self.assertFalse((root / ".ekp" / "install.json").exists())
             self.assertFalse((root / ".cursor").exists())
 
+    def test_default_assistants_are_cursor(self):
+        intent = build_composition_intent(["core"], self.registry)
+        self.assertEqual(intent.assistants, ("cursor",))
+
+    def test_explicit_assistants_canonical_and_deduped(self):
+        intent = build_composition_intent(
+            ["core"],
+            self.registry,
+            assistants=["cursor", "copilot", "cursor", "claude"],
+        )
+        self.assertEqual(intent.assistants, ("claude", "copilot", "cursor"))
+
+    def test_explicit_copilot_only(self):
+        intent = build_composition_intent(
+            ["core"], self.registry, assistants=["copilot"]
+        )
+        self.assertEqual(intent.assistants, ("copilot",))
+
+    def test_explicit_all_four(self):
+        intent = build_composition_intent(
+            ["core"],
+            self.registry,
+            assistants=["cursor", "copilot", "claude", "antigravity"],
+        )
+        self.assertEqual(
+            intent.assistants, ("antigravity", "claude", "copilot", "cursor")
+        )
+
+    def test_unknown_assistant_rejected(self):
+        with self.assertRaises(InstallSelectionError):
+            build_composition_intent(
+                ["core"], self.registry, assistants=["made-up-ai"]
+            )
+
+    def test_profile_plus_explicit_assistants_rejected(self):
+        with self.assertRaises(InstallSelectionError):
+            select_install_intent(
+                DetectionReport(path="."),
+                explicit_profile="cursor-symfony",
+                explicit_assistants=["copilot"],
+                registry=self.registry,
+            )
+
+    def test_components_plus_assistants_valid(self):
+        intent = select_install_intent(
+            DetectionReport(path="."),
+            explicit_components=["symfony", "frontend"],
+            explicit_assistants=["claude", "copilot"],
+            registry=self.registry,
+        )
+        self.assertEqual(intent.mode, MODE_COMPOSITION)
+        self.assertEqual(intent.assistants, ("claude", "copilot"))
+        self.assertEqual(intent.components, ("frontend", "symfony"))
+
+    def test_assistant_order_equivalence(self):
+        a = build_composition_intent(
+            ["symfony", "frontend"],
+            self.registry,
+            assistants=["cursor", "copilot", "claude"],
+        )
+        b = build_composition_intent(
+            ["frontend", "symfony"],
+            self.registry,
+            assistants=["claude", "cursor", "copilot"],
+        )
+        self.assertEqual(a.assistants, b.assistants)
+        self.assertEqual(a.configuration_sha256, b.configuration_sha256)
+        self.assertEqual(
+            intent_to_project_config(a).assistants,
+            intent_to_project_config(b).assistants,
+        )
+
 
 class LegacyResolverShimTests(unittest.TestCase):
     """Legacy profile tables remain for install compatibility only."""

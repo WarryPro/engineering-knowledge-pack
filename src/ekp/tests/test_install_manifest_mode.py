@@ -184,6 +184,73 @@ class ManifestModeTests(unittest.TestCase):
         manifest = InstallManifest.from_dict(payload)
         self.assertEqual(manifest.effective_mode, INSTALL_MODE_LEGACY_PROFILE)
 
+    def test_copilot_only_composition_structurally_valid(self):
+        manifest = InstallManifest.from_dict(
+            _legacy_payload(
+                profile=PROJECT_COMPOSITION_PROFILE,
+                mode=INSTALL_MODE_COMPOSITION,
+                configuration_sha256=_composition_hash(),
+                adapters=["copilot"],
+            )
+        )
+        self.assertEqual(manifest.adapters, ["copilot"])
+
+    def test_claude_only_composition_structurally_valid(self):
+        manifest = InstallManifest.from_dict(
+            _legacy_payload(
+                profile=PROJECT_COMPOSITION_PROFILE,
+                mode=INSTALL_MODE_COMPOSITION,
+                configuration_sha256=_composition_hash(),
+                adapters=["claude"],
+            )
+        )
+        self.assertEqual(manifest.adapters, ["claude"])
+
+    def test_antigravity_only_composition_structurally_valid(self):
+        manifest = InstallManifest.from_dict(
+            _legacy_payload(
+                profile=PROJECT_COMPOSITION_PROFILE,
+                mode=INSTALL_MODE_COMPOSITION,
+                configuration_sha256=_composition_hash(),
+                adapters=["antigravity"],
+            )
+        )
+        self.assertEqual(manifest.adapters, ["antigravity"])
+
+    def test_all_four_composition_structurally_valid(self):
+        adapters = ["antigravity", "claude", "copilot", "cursor"]
+        manifest = InstallManifest.from_dict(
+            _legacy_payload(
+                profile=PROJECT_COMPOSITION_PROFILE,
+                mode=INSTALL_MODE_COMPOSITION,
+                configuration_sha256=_composition_hash(),
+                adapters=adapters,
+            )
+        )
+        self.assertEqual(manifest.adapters, adapters)
+
+    def test_empty_adapters_invalid(self):
+        with self.assertRaises(InstallConflictError):
+            InstallManifest.from_dict(
+                _legacy_payload(
+                    profile=PROJECT_COMPOSITION_PROFILE,
+                    mode=INSTALL_MODE_COMPOSITION,
+                    configuration_sha256=_composition_hash(),
+                    adapters=[],
+                )
+            )
+
+    def test_duplicate_adapters_invalid(self):
+        with self.assertRaises(InstallConflictError):
+            InstallManifest.from_dict(
+                _legacy_payload(
+                    profile=PROJECT_COMPOSITION_PROFILE,
+                    mode=INSTALL_MODE_COMPOSITION,
+                    configuration_sha256=_composition_hash(),
+                    adapters=["cursor", "cursor"],
+                )
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

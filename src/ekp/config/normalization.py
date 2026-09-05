@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Sequence
 
 from ekp.composition import ComponentRegistry, reduce_requested_components
 from ekp.config.models import (
-    SUPPORTED_PROJECT_ASSISTANTS,
     SUPPORTED_PROJECT_SCHEMA_VERSION,
     ProjectConfig,
     ProjectConfigError,

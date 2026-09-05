@@ -180,9 +180,13 @@ def _validate_manifest_mode_invariants(manifest: InstallManifest) -> None:
             raise InstallConflictError(
                 "Composition install manifest has invalid configuration_sha256"
             )
-        if "cursor" not in manifest.adapters:
+        if not manifest.adapters:
             raise InstallConflictError(
-                "Composition install manifest must include the cursor adapter"
+                "Composition install manifest requires a non-empty adapters list"
+            )
+        if len(manifest.adapters) != len(set(manifest.adapters)):
+            raise InstallConflictError(
+                "Composition install manifest adapters must be unique"
             )
 
 

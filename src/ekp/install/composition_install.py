@@ -1,10 +1,10 @@
-"""Internal composition install service (AW-E1 — no public CLI activation)."""
+"""Internal composition install service (multi-assistant capable; public CLI Cursor-only)."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, List, Optional
+from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from ekp.assembly import AssemblyService, CompositionAssemblyRequest
 from ekp.composition import PROJECT_COMPOSITION_PROFILE, ComponentRegistry
@@ -16,6 +16,9 @@ from ekp.config.models import (
 from ekp.config.normalization import configuration_sha256
 from ekp.config.project import ProjectConfigStore, render_project_config_yaml
 from ekp.install.cursor_deploy import AppliedManagedFiles, CursorDeployService
+from ekp.install.deploy.engine import SharedDeploymentEngine
+from ekp.install.deploy.models import DesiredManagedFile
+from ekp.install.deploy.registry import DeployRegistry, build_default_deploy_registry
 from ekp.install.errors import (
     EXIT_SUCCESS,
     InstallConflictError,
@@ -27,6 +30,7 @@ from ekp.install.intent import (
     MODE_COMPOSITION,
     InstallIntent,
     intent_to_project_config,
+    validate_composition_assistants,
 )
 from ekp.install.manifest import (
     INSTALL_MODE_COMPOSITION,
@@ -43,27 +47,49 @@ from ekp.version import get_version
 CONFIG_ACTION_CREATE = "create"
 CONFIG_ACTION_REUSE = "reuse"
 
+_ASSISTANT_SYMLINK_ROOTS = {
+    "cursor": (".cursor", ".cursor/rules"),
+    "copilot": (".github", ".github/instructions"),
+    "claude": (".claude", ".claude/skills", "CLAUDE.md"),
+    "antigravity": (".agents", ".agents/rules"),
+}
+
 
 @dataclass
 class CompositionInstallPlan:
-    """Composition-specific install plan wrapping Cursor file deployment."""
+    """Composition install plan over a generic shared deployment plan."""
 
     project_root: Path
     intent: InstallIntent
     project_config: ProjectConfig
     configuration_sha256: str
     config_action: str
-    cursor_plan: InstallPlan
+    deployment_plan: InstallPlan
+    assistant_counts: Dict[str, int] = field(default_factory=dict)
     conflicts: List[str] = field(default_factory=list)
     dry_run: bool = False
 
     @property
+    def cursor_plan(self) -> InstallPlan:
+        """Compatibility alias — canonical field is ``deployment_plan``."""
+        return self.deployment_plan
+
+    @property
     def has_conflicts(self) -> bool:
-        return bool(self.conflicts) or self.cursor_plan.has_conflicts
+        return bool(self.conflicts) or self.deployment_plan.has_conflicts
 
     @property
     def rules_count(self) -> int:
-        return self.cursor_plan.rules_count
+        """Cursor-managed file count (public Cursor messaging compatibility)."""
+        return int(self.assistant_counts.get("cursor", 0))
+
+    @property
+    def managed_file_count(self) -> int:
+        return sum(self.assistant_counts.values())
+
+    @property
+    def assistants(self) -> Tuple[str, ...]:
+        return tuple(self.intent.assistants)
 
 
 @dataclass
@@ -86,11 +112,15 @@ class CompositionInstallService:
         deploy_service: Optional[CursorDeployService] = None,
         registry: Optional[ComponentRegistry] = None,
         resource_root: Optional[Path] = None,
+        deploy_registry: Optional[DeployRegistry] = None,
+        deployment_engine: Optional[SharedDeploymentEngine] = None,
     ):
         self.assembly_service = assembly_service or AssemblyService()
         self.deploy_service = deploy_service or CursorDeployService()
         self._registry = registry
         self._resource_root = Path(resource_root) if resource_root is not None else None
+        self._deploy_registry = deploy_registry
+        self._engine = deployment_engine or SharedDeploymentEngine()
         # Test hooks (None in production): called during apply after named steps.
         self._after_config_hook: Optional[Callable[[CompositionInstallPlan], None]] = None
         self._after_managed_files_hook: Optional[
@@ -101,6 +131,9 @@ class CompositionInstallService:
         if self._registry is not None:
             return self._registry
         return ComponentRegistry.load(self._resource_root or get_ekp_root())
+
+    def _deploy_registry_or_default(self) -> DeployRegistry:
+        return self._deploy_registry or build_default_deploy_registry()
 
     def install(
         self,
@@ -132,7 +165,7 @@ class CompositionInstallService:
         assembly_result = self.assembly_service.assemble_composition(
             CompositionAssemblyRequest(
                 components=list(intent.components),
-                outputs=["cursor"],
+                outputs=list(intent.assistants),
                 verify=True,
                 clean=True,
                 resource_root=resource_root,
@@ -165,9 +198,7 @@ class CompositionInstallService:
             manifest = self._apply(plan, registry=registry)
             return CompositionInstallResult(
                 exit_code=EXIT_SUCCESS,
-                message="Composition install completed ({} Cursor rules).".format(
-                    plan.rules_count
-                ),
+                message=self._render_success(plan),
                 intent=intent,
                 plan=plan,
                 manifest=manifest,
@@ -192,11 +223,39 @@ class CompositionInstallService:
             raise InstallSelectionError(
                 "composition intent is missing configuration_sha256"
             )
-        assistants = tuple(intent.assistants) or ("cursor",)
-        if assistants != ("cursor",):
+        assistants = validate_composition_assistants(
+            intent.assistants,
+            deploy_registry=self._deploy_registry_or_default(),
+        )
+        if tuple(intent.assistants) != assistants:
             raise InstallSelectionError(
-                "AW-E1 composition install supports only assistants=['cursor']"
+                "composition intent assistants must be canonical: expected {}, found {}".format(
+                    list(assistants), list(intent.assistants)
+                )
             )
+
+    def _collect_desired_files(
+        self, bundle_path: Path, assistants: Sequence[str]
+    ) -> List[DesiredManagedFile]:
+        deploy_registry = self._deploy_registry_or_default()
+        desired: List[DesiredManagedFile] = []
+        for assistant_id in assistants:
+            deployer = deploy_registry.get(assistant_id)
+            desired.extend(deployer.collect_desired_files(bundle_path))
+        return self._engine.normalize_desired_files(desired)
+
+    def _assistant_symlink_paths(self, assistants: Sequence[str]) -> List[str]:
+        paths: List[str] = [".ekp", PROJECT_CONFIG_RELATIVE]
+        for assistant_id in assistants:
+            paths.extend(_ASSISTANT_SYMLINK_ROOTS.get(assistant_id, ()))
+        # Deterministic unique order
+        seen = set()
+        ordered: List[str] = []
+        for item in paths:
+            if item not in seen:
+                seen.add(item)
+                ordered.append(item)
+        return ordered
 
     def _build_plan(
         self,
@@ -211,7 +270,7 @@ class CompositionInstallService:
         registry = registry or self._registry_or_load()
         conflicts: List[str] = []
 
-        for relative in (".cursor", ".cursor/rules", ".ekp", PROJECT_CONFIG_RELATIVE):
+        for relative in self._assistant_symlink_paths(intent.assistants):
             message = check_symlink_boundary(project_root, relative)
             if message:
                 conflicts.append(message)
@@ -233,24 +292,54 @@ class CompositionInstallService:
                 conflicts.append(
                     "project config semantic hash does not match install intent"
                 )
+            if set(project_config.assistants) != set(intent.assistants):
+                conflicts.append(
+                    "Existing project config assistants differ from install intent "
+                    "(automatic reconfiguration is not supported)."
+                )
 
         if assembly_result is None or assembly_result.bundle_path is None:
             raise InstallFilesystemError("Composition assembly did not produce a bundle")
 
-        cursor_plan = self.deploy_service.build_plan(
+        try:
+            desired = self._collect_desired_files(
+                assembly_result.bundle_path, intent.assistants
+            )
+        except InstallError:
+            raise
+        except Exception as exc:
+            raise InstallFilesystemError(
+                "Failed to collect managed files from assembled bundle: {}".format(exc)
+            ) from exc
+
+        assistant_counts: Dict[str, int] = {assistant: 0 for assistant in intent.assistants}
+        for item in desired:
+            assistant_counts[item.adapter] = assistant_counts.get(item.adapter, 0) + 1
+
+        operations, deploy_conflicts = self._engine.plan_first_install(
+            project_root, desired
+        )
+        conflicts.extend(deploy_conflicts)
+        directories = self._engine.directories_to_create(project_root, operations)
+
+        deployment_plan = InstallPlan(
             project_root=project_root,
-            bundle_path=assembly_result.bundle_path,
             profile=PROJECT_COMPOSITION_PROFILE,
             ekp_version=get_version(),
-            existing_manifest=None,
+            adapter="+".join(intent.assistants),
+            bundle_path=assembly_result.bundle_path,
+            rules_count=len(desired),
+            operations=operations,
+            conflicts=list(deploy_conflicts),
+            directories_to_create=directories,
             additional_concerns=list(intent.additional_concerns),
             dry_run=dry_run,
         )
 
-        for op in cursor_plan.operations:
+        for op in deployment_plan.operations:
             if op.relative_path == PROJECT_CONFIG_RELATIVE:
                 conflicts.append(
-                    "Cursor plan must not manage {}".format(PROJECT_CONFIG_RELATIVE)
+                    "Deployment plan must not manage {}".format(PROJECT_CONFIG_RELATIVE)
                 )
 
         return CompositionInstallPlan(
@@ -261,7 +350,8 @@ class CompositionInstallService:
             else intent_to_project_config(intent),
             configuration_sha256=digest,
             config_action=config_action,
-            cursor_plan=cursor_plan,
+            deployment_plan=deployment_plan,
+            assistant_counts=assistant_counts,
             conflicts=conflicts,
             dry_run=dry_run,
         )
@@ -342,7 +432,7 @@ class CompositionInstallService:
                 self._revalidate_reuse(store, registry, plan.configuration_sha256)
 
             applied = self.deploy_service.apply_managed_files(
-                plan.cursor_plan,
+                plan.deployment_plan,
                 extra_directories=(
                     [".ekp"] if plan.config_action == CONFIG_ACTION_CREATE else None
                 ),
@@ -360,6 +450,10 @@ class CompositionInstallService:
                 raise InstallConflictError(
                     "project config semantic hash drifted before ownership manifest commit"
                 )
+            if set(snapshot.config.assistants) != set(plan.intent.assistants):
+                raise InstallConflictError(
+                    "project config assistants drifted before ownership manifest commit"
+                )
 
             if ManifestStore(plan.project_root).exists():
                 raise InstallConflictError(
@@ -370,11 +464,24 @@ class CompositionInstallService:
             if created_ekp_dir and ".ekp" not in created_dirs:
                 created_dirs.append(".ekp")
 
+            adapters = list(plan.intent.assistants)
+            if set(adapters) != set(item.adapter for item in applied.managed_files):
+                # Allow managed_files to only include selected adapters; set must match.
+                managed_adapters = sorted(
+                    set(item.adapter for item in applied.managed_files)
+                )
+                if managed_adapters != sorted(adapters):
+                    raise InstallConflictError(
+                        "managed file adapters {} do not match intent assistants {}".format(
+                            managed_adapters, adapters
+                        )
+                    )
+
             manifest = InstallManifest(
                 schema_version=1,
-                ekp_version=plan.cursor_plan.ekp_version,
+                ekp_version=plan.deployment_plan.ekp_version,
                 profile=PROJECT_COMPOSITION_PROFILE,
-                adapters=["cursor"],
+                adapters=adapters,
                 installed_at=utc_now_iso(),
                 install_root=".",
                 managed_files=applied.managed_files,
@@ -382,6 +489,10 @@ class CompositionInstallService:
                 mode=INSTALL_MODE_COMPOSITION,
                 configuration_sha256=plan.configuration_sha256,
             )
+            if set(manifest.adapters) != set(plan.intent.assistants):
+                raise InstallConflictError(
+                    "manifest adapters do not match install intent assistants"
+                )
             ManifestStore(plan.project_root).create(manifest)
             return manifest
         except Exception as exc:
@@ -421,7 +532,7 @@ class CompositionInstallService:
         else:
             self._revalidate_reuse(store, registry, plan.configuration_sha256)
 
-        for operation in plan.cursor_plan.files_to_write:
+        for operation in plan.deployment_plan.files_to_write:
             target = resolve_under_root(plan.project_root, operation.relative_path)
             if target.exists() or target.is_symlink():
                 raise InstallConflictError(
@@ -494,7 +605,7 @@ class CompositionInstallService:
         lines = ["Composition install conflicts detected:"]
         for item in plan.conflicts:
             lines.append("  - {}".format(item))
-        for item in plan.cursor_plan.conflicts:
+        for item in plan.deployment_plan.conflicts:
             lines.append("  - {}".format(item))
         return "\n".join(lines)
 
@@ -502,6 +613,10 @@ class CompositionInstallService:
     def _render_dry_run(plan: CompositionInstallPlan) -> str:
         intent = plan.intent
         composition = intent.composition
+        counts = ", ".join(
+            "{}={}".format(name, plan.assistant_counts.get(name, 0))
+            for name in intent.assistants
+        )
         lines = [
             "Composition install dry-run",
             "  mode: {}".format(MODE_COMPOSITION),
@@ -513,10 +628,23 @@ class CompositionInstallService:
                 ",".join(composition.resolved_components) if composition else ""
             ),
             "  assistants: {}".format(",".join(intent.assistants)),
+            "  assistant_counts: {}".format(counts),
+            "  managed_files: {}".format(plan.managed_file_count),
             "  cursor_rules: {}".format(plan.rules_count),
-            "  file_operations: {}".format(len(plan.cursor_plan.files_to_write)),
+            "  file_operations: {}".format(len(plan.deployment_plan.files_to_write)),
         ]
         return "\n".join(lines)
+
+    @staticmethod
+    def _render_success(plan: CompositionInstallPlan) -> str:
+        if plan.assistants == ("cursor",):
+            return "Composition install completed ({} Cursor rules).".format(
+                plan.rules_count
+            )
+        return "Composition install completed ({} managed files; assistants={}).".format(
+            plan.managed_file_count,
+            ",".join(plan.assistants),
+        )
 
 
 def preview_project_config_bytes(config: ProjectConfig) -> bytes:

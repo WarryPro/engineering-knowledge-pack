@@ -51,6 +51,13 @@ class CursorDeployerTests(unittest.TestCase):
             with self.assertRaises(InstallAssemblyError):
                 self.deployer.collect_desired_files(bundle)
 
+    def test_empty_cursor_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp) / "bundle"
+            (bundle / "cursor").mkdir(parents=True)
+            with self.assertRaises(InstallAssemblyError):
+                self.deployer.collect_desired_files(bundle)
+
     def test_unsafe_generated_filename(self):
         with tempfile.TemporaryDirectory() as tmp:
             bundle = Path(tmp) / "bundle"

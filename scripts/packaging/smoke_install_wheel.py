@@ -281,6 +281,67 @@ print("installed_deploy_infra_ok", len(desired))
             print(proc.stderr, file=sys.stderr)
             return 1
 
+        multi_install_script = tmp_path / "smoke_multi_assistant_install.py"
+        multi_install_script.write_text(
+            """
+import tempfile
+from pathlib import Path
+from ekp.composition import ComponentRegistry
+from ekp.config import ProjectConfigStore
+from ekp.install.composition_install import CompositionInstallService
+from ekp.install.intent import build_composition_intent
+from ekp.install.manifest import ManifestStore
+from ekp.paths import get_ekp_root
+
+root = get_ekp_root()
+registry = ComponentRegistry.load(root)
+with tempfile.TemporaryDirectory() as tmp:
+    project = Path(tmp) / "project"
+    project.mkdir()
+    intent = build_composition_intent(
+        ["symfony", "frontend"],
+        registry,
+        assistants=["cursor", "copilot", "claude", "antigravity"],
+    )
+    result = CompositionInstallService(
+        registry=registry,
+        resource_root=root,
+    ).install(project, intent)
+    assert result.exit_code == 0, result.message
+    manifest = ManifestStore(project).load()
+    assert manifest.adapters == ["antigravity", "claude", "copilot", "cursor"]
+    assert len(manifest.managed_files) == 137
+    cfg = ProjectConfigStore(project, registry=registry, resource_root=root).load()
+    assert set(cfg.assistants) == {"antigravity", "claude", "copilot", "cursor"}
+    assert manifest.configuration_sha256 == intent.configuration_sha256
+    # Cleanup transaction artifacts for smoke hygiene
+    for path in sorted(project.rglob("*"), reverse=True):
+        if path.is_file():
+            path.unlink()
+        elif path.is_dir():
+            try:
+                path.rmdir()
+            except OSError:
+                pass
+print("installed_multi_assistant_internal_ok", 137)
+""",
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [str(python), str(multi_install_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        if "installed_multi_assistant_internal_ok" not in proc.stdout:
+            print(proc.stderr, file=sys.stderr)
+            return 1
+
         config_script = tmp_path / "smoke_project_config.py"
         config_script.write_text(
             """

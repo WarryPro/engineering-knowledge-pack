@@ -5,10 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Tuple
 
+from ekp.config.assistants import DEFAULT_PROJECT_ASSISTANT  # noqa: F401 — re-export
 
 PROJECT_CONFIG_RELATIVE = ".ekp/project.yaml"
 SUPPORTED_PROJECT_SCHEMA_VERSION = 1
-SUPPORTED_PROJECT_ASSISTANTS = ("cursor",)
 
 
 class ProjectConfigError(Exception):
