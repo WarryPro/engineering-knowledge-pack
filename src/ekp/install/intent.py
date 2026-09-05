@@ -11,12 +11,15 @@ from ekp.composition import (
     ResolvedComposition,
     resolve_composition,
 )
-from ekp.config.models import (
-    SUPPORTED_PROJECT_ASSISTANTS,
-    ProjectConfig,
+from ekp.config.assistants import (
+    DEFAULT_PROJECT_ASSISTANT,
+    canonicalize_assistants,
+    default_project_assistants,
 )
+from ekp.config.models import ProjectConfig
 from ekp.config.normalization import configuration_sha256
 from ekp.detection.models import DetectionReport
+from ekp.install.deploy.registry import DeployRegistry, build_default_deploy_registry
 from ekp.install.errors import InstallSelectionError
 from ekp.install.selection import validate_explicit_profile
 from ekp.paths import get_ekp_root
@@ -27,15 +30,45 @@ MODE_COMPOSITION = "composition"
 
 @dataclass(frozen=True)
 class InstallIntent:
-    """What a future install wants (no filesystem mutation in AW-D)."""
+    """What an install wants (no filesystem mutation during selection)."""
 
     mode: str
     profile: Optional[str] = None
     components: Tuple[str, ...] = ()
-    assistants: Tuple[str, ...] = SUPPORTED_PROJECT_ASSISTANTS
+    assistants: Tuple[str, ...] = (DEFAULT_PROJECT_ASSISTANT,)
     composition: Optional[ResolvedComposition] = None
     additional_concerns: Tuple[str, ...] = ()
     configuration_sha256: Optional[str] = None
+
+
+def _deploy_registry_or_default(
+    deploy_registry: Optional[DeployRegistry],
+) -> DeployRegistry:
+    return deploy_registry or build_default_deploy_registry()
+
+
+def validate_composition_assistants(
+    assistants: Optional[Sequence[str]] = None,
+    deploy_registry: Optional[DeployRegistry] = None,
+) -> Tuple[str, ...]:
+    """
+    Validate, dedupe, and canonicalize composition assistants via DeployRegistry.
+
+    ``None`` defaults to Cursor. Explicit empty selection is invalid.
+    """
+    registry = _deploy_registry_or_default(deploy_registry)
+    if assistants is None:
+        selected = default_project_assistants()
+    else:
+        selected = canonicalize_assistants(assistants)
+        if not selected:
+            raise InstallSelectionError("assistants must not be empty")
+    for assistant_id in selected:
+        if not registry.is_supported(assistant_id):
+            raise InstallSelectionError(
+                "Unsupported Consumer assistant: {!r}".format(assistant_id)
+            )
+    return selected
 
 
 def intent_to_project_config(intent: InstallIntent) -> ProjectConfig:
@@ -46,10 +79,11 @@ def intent_to_project_config(intent: InstallIntent) -> ProjectConfig:
         )
     if not intent.components:
         raise InstallSelectionError("composition intent has no requested components")
+    assistants = tuple(intent.assistants) or default_project_assistants()
     return ProjectConfig(
         schema_version=1,
         components=tuple(intent.components),
-        assistants=tuple(intent.assistants) or SUPPORTED_PROJECT_ASSISTANTS,
+        assistants=assistants,
     )
 
 
@@ -57,8 +91,9 @@ def build_composition_intent(
     requested_components: Sequence[str],
     registry: ComponentRegistry,
     *,
-    assistants: Sequence[str] = SUPPORTED_PROJECT_ASSISTANTS,
+    assistants: Optional[Sequence[str]] = None,
     additional_concerns: Sequence[str] = (),
+    deploy_registry: Optional[DeployRegistry] = None,
 ) -> InstallIntent:
     """Validate selectable components and build a composition InstallIntent."""
     if not requested_components:
@@ -87,11 +122,16 @@ def build_composition_intent(
     except CompositionError as exc:
         raise InstallSelectionError(str(exc)) from exc
 
+    selected_assistants = validate_composition_assistants(
+        assistants,
+        deploy_registry=deploy_registry,
+    )
+
     intent = InstallIntent(
         mode=MODE_COMPOSITION,
         profile=None,
         components=composition.requested_components,
-        assistants=tuple(assistants) or SUPPORTED_PROJECT_ASSISTANTS,
+        assistants=selected_assistants,
         composition=composition,
         additional_concerns=tuple(additional_concerns),
     )
@@ -120,7 +160,7 @@ def build_legacy_profile_intent(
         mode=MODE_LEGACY_PROFILE,
         profile=validated,
         components=(),
-        assistants=SUPPORTED_PROJECT_ASSISTANTS,
+        assistants=default_project_assistants(),
         composition=None,
         additional_concerns=tuple(additional_concerns),
         configuration_sha256=None,
@@ -132,21 +172,29 @@ def select_install_intent(
     *,
     explicit_profile: Optional[str] = None,
     explicit_components: Optional[Sequence[str]] = None,
+    explicit_assistants: Optional[Sequence[str]] = None,
     assume_yes: bool = False,
     registry: Optional[ComponentRegistry] = None,
+    deploy_registry: Optional[DeployRegistry] = None,
     resource_root=None,
     input_fn: Callable[[str], str] = input,
     output_fn: Callable[[str], None] = print,
 ) -> InstallIntent:
     """
-    Resolve install intent without writing project.yaml / install.json / Cursor files.
+    Resolve install intent without writing project.yaml / install.json / adapter files.
 
-    Mutual exclusion: explicit profile and explicit components cannot combine.
+    Mutual exclusion: explicit profile cannot combine with components or assistants.
+    Public CLI does not pass ``explicit_assistants`` (defaults remain Cursor-only).
     """
     if explicit_profile and explicit_components:
         raise InstallSelectionError(
             "Cannot combine --profile with explicit components.\n"
             "Choose either a legacy profile or a component composition."
+        )
+    if explicit_profile and explicit_assistants is not None:
+        raise InstallSelectionError(
+            "Cannot combine --profile with explicit assistants.\n"
+            "Legacy profile installs remain Cursor-only."
         )
 
     loaded = registry or ComponentRegistry.load(resource_root or get_ekp_root())
@@ -162,30 +210,38 @@ def select_install_intent(
         return build_composition_intent(
             explicit_components,
             loaded,
+            assistants=explicit_assistants,
             additional_concerns=report.additional_concerns,
+            deploy_registry=deploy_registry,
         )
 
     if report.proposed_components:
-        # Medium/high detections produce a deterministic composition proposal.
-        # Multi-component proposals are valid (not install ambiguity).
+        # Tool signals never expand assistants; default remains Cursor.
         return build_composition_intent(
             report.proposed_components,
             loaded,
+            assistants=explicit_assistants,
             additional_concerns=report.additional_concerns,
+            deploy_registry=deploy_registry,
         )
 
-    # No automatic composition proposal (empty or low-confidence only).
     if assume_yes:
         raise InstallSelectionError(
             "No supported technology composition detected.\n\n"
             "For non-interactive installation specify an explicit profile or components."
         )
 
+    if explicit_assistants is not None and not report.proposed_components:
+        # Assistants without components still require interactive/component selection.
+        pass
+
     return _prompt_empty_components(
         loaded,
         input_fn=input_fn,
         output_fn=output_fn,
         additional_concerns=report.additional_concerns,
+        explicit_assistants=explicit_assistants,
+        deploy_registry=deploy_registry,
     )
 
 
@@ -204,6 +260,8 @@ def _prompt_empty_components(
     input_fn: Callable[[str], str],
     output_fn: Callable[[str], None],
     additional_concerns: Sequence[str] = (),
+    explicit_assistants: Optional[Sequence[str]] = None,
+    deploy_registry: Optional[DeployRegistry] = None,
 ) -> InstallIntent:
     selectable = [
         component
@@ -238,5 +296,7 @@ def _prompt_empty_components(
         return build_composition_intent(
             chosen,
             registry,
+            assistants=explicit_assistants,
             additional_concerns=additional_concerns,
+            deploy_registry=deploy_registry,
         )

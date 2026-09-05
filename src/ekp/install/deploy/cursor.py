@@ -50,4 +50,10 @@ class CursorDeployer(Deployer):
                     sha256=sha256_file(source),
                 )
             )
+        if not items:
+            raise InstallAssemblyError(
+                "Assembled cursor output has no deployable .mdc files: {}".format(
+                    cursor_dir
+                )
+            )
         return items

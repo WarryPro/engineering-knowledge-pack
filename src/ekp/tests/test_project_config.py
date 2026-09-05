@@ -14,8 +14,8 @@ from jsonschema import Draft202012Validator
 
 from ekp.composition import Component, ComponentRegistry
 from ekp.config import (
+    DEFAULT_PROJECT_ASSISTANT,
     PROJECT_CONFIG_RELATIVE,
-    SUPPORTED_PROJECT_ASSISTANTS,
     ProjectConfig,
     ProjectConfigError,
     ProjectConfigStore,
@@ -208,38 +208,48 @@ class ProjectConfigSemanticTests(unittest.TestCase):
         )
         self.assertEqual(config.assistants, ("cursor",))
 
-    def test_copilot_rejected(self):
-        with self.assertRaises(ProjectConfigError) as ctx:
-            self._validate(
-                {
-                    "schema_version": 1,
-                    "components": ["core"],
-                    "assistants": ["copilot"],
-                }
-            )
-        self.assertIn("unsupported assistant", str(ctx.exception))
+    def test_copilot_assistant_accepted(self):
+        config = self._validate(
+            {
+                "schema_version": 1,
+                "components": ["core"],
+                "assistants": ["copilot"],
+            }
+        )
+        self.assertEqual(config.assistants, ("copilot",))
 
-    def test_claude_rejected(self):
-        with self.assertRaises(ProjectConfigError) as ctx:
-            self._validate(
-                {
-                    "schema_version": 1,
-                    "components": ["core"],
-                    "assistants": ["claude"],
-                }
-            )
-        self.assertIn("unsupported assistant", str(ctx.exception))
+    def test_claude_assistant_accepted(self):
+        config = self._validate(
+            {
+                "schema_version": 1,
+                "components": ["core"],
+                "assistants": ["claude"],
+            }
+        )
+        self.assertEqual(config.assistants, ("claude",))
 
-    def test_antigravity_rejected(self):
-        with self.assertRaises(ProjectConfigError) as ctx:
-            self._validate(
-                {
-                    "schema_version": 1,
-                    "components": ["core"],
-                    "assistants": ["antigravity"],
-                }
-            )
-        self.assertIn("unsupported assistant", str(ctx.exception))
+    def test_antigravity_assistant_accepted(self):
+        config = self._validate(
+            {
+                "schema_version": 1,
+                "components": ["core"],
+                "assistants": ["antigravity"],
+            }
+        )
+        self.assertEqual(config.assistants, ("antigravity",))
+
+    def test_all_four_assistants_accepted(self):
+        config = self._validate(
+            {
+                "schema_version": 1,
+                "components": ["core"],
+                "assistants": ["cursor", "copilot", "claude", "antigravity"],
+            }
+        )
+        self.assertEqual(
+            set(config.assistants),
+            {"antigravity", "claude", "copilot", "cursor"},
+        )
 
     def test_unknown_assistant_rejected(self):
         with self.assertRaises(ProjectConfigError) as ctx:
@@ -252,8 +262,29 @@ class ProjectConfigSemanticTests(unittest.TestCase):
             )
         self.assertIn("unsupported assistant", str(ctx.exception))
 
-    def test_supported_assistants_constant(self):
-        self.assertEqual(SUPPORTED_PROJECT_ASSISTANTS, ("cursor",))
+    def test_default_project_assistant_constant(self):
+        self.assertEqual(DEFAULT_PROJECT_ASSISTANT, "cursor")
+
+    def test_assistant_order_same_hash(self):
+        a = self._validate(
+            {
+                "schema_version": 1,
+                "components": ["symfony"],
+                "assistants": ["cursor", "copilot"],
+            }
+        )
+        b = self._validate(
+            {
+                "schema_version": 1,
+                "components": ["symfony"],
+                "assistants": ["copilot", "cursor"],
+            }
+        )
+        registry = self.registry
+        self.assertEqual(
+            configuration_sha256(a, registry),
+            configuration_sha256(b, registry),
+        )
 
 
 class ProjectConfigNormalizationTests(unittest.TestCase):

@@ -141,20 +141,25 @@ class UpdatePlanMatrixTests(unittest.TestCase):
             project = Path(tmp) / "project"
             project.mkdir()
             digest = _write_file(project, ".cursor/rules/a.mdc", "gone\n")
-            bundle = _make_bundle(Path(tmp), {})
+            # Non-empty cursor inventory required (empty-output hardening).
+            bundle = _make_bundle(Path(tmp), {"keeper.mdc": "keep\n"})
             snapshot = _save_manifest(project, {".cursor/rules/a.mdc": digest})
             plan = self._plan(project, snapshot, bundle)
-            self.assertEqual(plan.operations[0].kind, LifecycleOpKind.DELETE)
+            kinds = [op.kind for op in plan.operations]
+            self.assertIn(LifecycleOpKind.DELETE, kinds)
 
     def test_old_only_missing_is_noop(self):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp) / "project"
             project.mkdir()
-            bundle = _make_bundle(Path(tmp), {})
+            bundle = _make_bundle(Path(tmp), {"keeper.mdc": "keep\n"})
             digest = hashlib.sha256(b"gone\n").hexdigest()
             snapshot = _save_manifest(project, {".cursor/rules/a.mdc": digest})
             plan = self._plan(project, snapshot, bundle)
-            self.assertEqual(plan.operations[0].kind, LifecycleOpKind.NOOP)
+            kinds = {
+                op.relative_path: op.kind for op in plan.operations
+            }
+            self.assertEqual(kinds[".cursor/rules/a.mdc"], LifecycleOpKind.NOOP)
 
     def test_same_version_inventory_drift_is_exit_4(self):
         with tempfile.TemporaryDirectory() as tmp:
