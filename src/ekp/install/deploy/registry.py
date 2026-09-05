@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from typing import Dict, Tuple
 
+from ekp.install.deploy.antigravity import AntigravityDeployer
 from ekp.install.deploy.base import Deployer
+from ekp.install.deploy.claude import ClaudeDeployer
+from ekp.install.deploy.copilot import CopilotDeployer
 from ekp.install.deploy.cursor import CursorDeployer
 
 
@@ -40,7 +43,10 @@ class DeployRegistry:
 
 
 def build_default_deploy_registry() -> DeployRegistry:
-    """Production registry: Cursor only in AX-A."""
+    """Production registry: all four managed deployers (public CLI still Cursor-only)."""
     registry = DeployRegistry()
     registry.register(CursorDeployer())
+    registry.register(CopilotDeployer())
+    registry.register(ClaudeDeployer())
+    registry.register(AntigravityDeployer())
     return registry
