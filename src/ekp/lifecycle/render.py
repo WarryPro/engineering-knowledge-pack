@@ -67,6 +67,12 @@ def render_update_conflict_message(plan: LifecyclePlan) -> str:
     return "\n".join(lines)
 
 
+def _assistants_line(plan: LifecyclePlan) -> Optional[str]:
+    if len(plan.adapters) <= 1:
+        return None
+    return "Assistants: {}".format(", ".join(plan.adapters))
+
+
 def render_update_dry_run(plan: LifecyclePlan) -> str:
     lines = [
         "EKP update plan",
@@ -74,12 +80,19 @@ def render_update_dry_run(plan: LifecyclePlan) -> str:
         "Installed version: {}".format(plan.old_version),
         "Running version:   {}".format(plan.new_version),
         "Profile:           {}".format(plan.profile),
-        "Create:            {}".format(plan.create_count),
-        "Write:             {}".format(plan.write_count),
-        "Delete:            {}".format(plan.delete_count),
-        "No-op:             {}".format(plan.noop_count),
-        "",
     ]
+    assistants = _assistants_line(plan)
+    if assistants:
+        lines.append(assistants)
+    lines.extend(
+        [
+            "Create:            {}".format(plan.create_count),
+            "Write:             {}".format(plan.write_count),
+            "Delete:            {}".format(plan.delete_count),
+            "No-op:             {}".format(plan.noop_count),
+            "",
+        ]
+    )
     if plan.commit_manifest:
         lines.append(
             "Deployment manifest will be migrated to {}.".format(plan.new_version)
@@ -101,13 +114,20 @@ def render_update_confirmation(plan: LifecyclePlan) -> str:
         "Installed version: {}".format(plan.old_version),
         "Running version:   {}".format(plan.new_version),
         "Profile:           {}".format(plan.profile),
-        "",
-        "Create: {}".format(plan.create_count),
-        "Write:  {}".format(plan.write_count),
-        "Delete: {}".format(plan.delete_count),
-        "No-op:  {}".format(plan.noop_count),
-        "",
     ]
+    assistants = _assistants_line(plan)
+    if assistants:
+        lines.append(assistants)
+    lines.extend(
+        [
+            "",
+            "Create: {}".format(plan.create_count),
+            "Write:  {}".format(plan.write_count),
+            "Delete: {}".format(plan.delete_count),
+            "No-op:  {}".format(plan.noop_count),
+            "",
+        ]
+    )
     if plan.commit_manifest:
         lines.append(
             "Deployment manifest will be migrated to {}.".format(plan.new_version)
@@ -124,6 +144,9 @@ def render_update_success(plan: LifecyclePlan) -> str:
         "Profile: {}".format(plan.profile),
         "Version: {}".format(plan.new_version),
     ]
+    assistants = _assistants_line(plan)
+    if assistants:
+        lines.append(assistants)
     if plan.create_count or plan.write_count or plan.delete_count:
         lines.append(
             "Changed: {} create, {} write, {} delete".format(
@@ -143,11 +166,18 @@ def render_uninstall_dry_run(plan: LifecyclePlan) -> str:
         "",
         "Installed version: {}".format(plan.old_version),
         "Profile:           {}".format(plan.profile),
-        "Managed files:     {}".format(len(plan.operations)),
-        "Delete:            {}".format(plan.delete_count),
-        "Missing:           {}".format(plan.missing_count),
-        "",
     ]
+    assistants = _assistants_line(plan)
+    if assistants:
+        lines.append(assistants)
+    lines.extend(
+        [
+            "Managed files:     {}".format(len(plan.operations)),
+            "Delete:            {}".format(plan.delete_count),
+            "Missing:           {}".format(plan.missing_count),
+            "",
+        ]
+    )
     if plan.directories_to_remove:
         lines.append("Directories:")
         for item in plan.directories_to_remove:
@@ -172,10 +202,17 @@ def render_uninstall_confirmation(plan: LifecyclePlan) -> str:
         "",
         "Installed version: {}".format(plan.old_version),
         "Profile:           {}".format(plan.profile),
-        "Managed files:     {}".format(len(plan.operations)),
-        "Delete:            {}".format(plan.delete_count),
-        "Missing:           {}".format(plan.missing_count),
     ]
+    assistants = _assistants_line(plan)
+    if assistants:
+        lines.append(assistants)
+    lines.extend(
+        [
+            "Managed files:     {}".format(len(plan.operations)),
+            "Delete:            {}".format(plan.delete_count),
+            "Missing:           {}".format(plan.missing_count),
+        ]
+    )
     if plan.directories_to_remove:
         lines.append("Directories:       {}".format(", ".join(plan.directories_to_remove)))
     lines.append("")
@@ -188,8 +225,11 @@ def render_uninstall_success(plan: LifecyclePlan, *, warnings: Optional[List[str
         "EKP uninstall complete.",
         "",
         "Profile: {}".format(plan.profile),
-        "Removed: {} managed file(s)".format(plan.delete_count),
     ]
+    assistants = _assistants_line(plan)
+    if assistants:
+        lines.append(assistants)
+    lines.append("Removed: {} managed file(s)".format(plan.delete_count))
     if warnings:
         lines.append("")
         for item in warnings:

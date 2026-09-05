@@ -14,6 +14,7 @@ from unittest import mock
 from ekp.assembly import AssemblyRequest, AssemblyResult, AssemblyService
 from ekp.cli import main
 from ekp.install.cursor_deploy import CursorDeployService, sha256_file
+from ekp.install.deploy.models import DesiredManagedFile
 from ekp.install.errors import InstallAssemblyError, InstallConflictError, InstallFilesystemError
 from ekp.install.manifest import InstallManifest, ManagedFile, ManifestSnapshot, ManifestStore
 from ekp.install.service import InstallRequest, InstallService
@@ -36,12 +37,22 @@ def _make_bundle(root: Path, files: dict) -> Path:
     return bundle
 
 
-def _inventory_map(bundle: Path):
+def _desired_from_bundle(bundle: Path):
     deploy = CursorDeployService()
-    return {
-        relative: (source, digest)
+    return [
+        DesiredManagedFile(
+            relative_path=relative,
+            adapter="cursor",
+            source_path=source,
+            sha256=digest,
+        )
         for relative, source, digest in deploy.inventory_bundle(bundle)
-    }
+    ]
+
+
+# Back-compat alias for lifecycle safety imports during AX-D transition.
+_inventory_map = _desired_from_bundle
+
 
 
 def _write_file(project: Path, relative: str, content: str) -> str:
@@ -83,7 +94,7 @@ class UpdatePlanMatrixTests(unittest.TestCase):
             project_root=project,
             snapshot=snapshot,
             running_version=running_version,
-            inventory=_inventory_map(bundle),
+            desired=_desired_from_bundle(bundle),
             bundle_path=bundle,
         )
 
@@ -309,7 +320,7 @@ class UpdateServiceIntegrationTests(unittest.TestCase):
                 project_root=project,
                 snapshot=snapshot,
                 running_version=get_version(),
-                inventory=_inventory_map(bundle),
+                desired=_desired_from_bundle(bundle),
                 bundle_path=bundle,
             )
             TransactionApplier().apply_update(plan)
@@ -427,7 +438,7 @@ class UpdateApplySafetyTests(unittest.TestCase):
             project_root=project,
             snapshot=snapshot,
             running_version=running,
-            inventory=_inventory_map(bundle),
+            desired=_desired_from_bundle(bundle),
             bundle_path=bundle,
         )
         return project, plan
@@ -603,7 +614,7 @@ class UpdateApplySafetyTests(unittest.TestCase):
                 project_root=project,
                 snapshot=snapshot,
                 running_version="0.16.0.dev0",
-                inventory=_inventory_map(bundle),
+                desired=_desired_from_bundle(bundle),
                 bundle_path=bundle,
             )
             calls = {"n": 0}

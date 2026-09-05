@@ -342,6 +342,163 @@ print("installed_multi_assistant_internal_ok", 137)
             print(proc.stderr, file=sys.stderr)
             return 1
 
+        lifecycle_script = tmp_path / "smoke_multi_assistant_lifecycle.py"
+        lifecycle_script.write_text(
+            """
+import json
+import tempfile
+from pathlib import Path
+from ekp.composition import ComponentRegistry
+from ekp.config import ProjectConfigStore
+from ekp.install.composition_install import CompositionInstallService
+from ekp.install.intent import build_composition_intent
+from ekp.install.manifest import ManifestStore
+from ekp.lifecycle.uninstall import UninstallRequest, UninstallService
+from ekp.lifecycle.update import UpdateRequest, UpdateService
+from ekp.paths import get_ekp_root
+from ekp.status.models import StatusState
+from ekp.status.service import StatusRequest, StatusService
+
+root = get_ekp_root()
+registry = ComponentRegistry.load(root)
+with tempfile.TemporaryDirectory() as tmp:
+    project = Path(tmp) / "project"
+    project.mkdir()
+    (project / "composer.json").write_text(
+        '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
+        encoding="utf-8",
+    )
+    (project / "symfony.lock").write_text("{}", encoding="utf-8")
+    (project / "config").mkdir()
+    (project / "config/bundles.php").write_text("<?php", encoding="utf-8")
+    (project / "package.json").write_text(
+        '{"dependencies":{"react":"^18.0.0","typescript":"^5.0.0"}}',
+        encoding="utf-8",
+    )
+    (project / "tsconfig.json").write_text("{}", encoding="utf-8")
+    (project / "src" / "components").mkdir(parents=True)
+    intent = build_composition_intent(
+        ["symfony", "frontend"],
+        registry,
+        assistants=["cursor", "copilot", "claude", "antigravity"],
+    )
+    result = CompositionInstallService(
+        registry=registry, resource_root=root
+    ).install(project, intent)
+    assert result.exit_code == 0, result.message
+    assert len(ManifestStore(project).load().managed_files) == 137
+    status = StatusService().inspect(StatusRequest(path=str(project)))
+    assert status.state == StatusState.HEALTHY, status.state
+    dry = UpdateService().update(
+        UpdateRequest(path=str(project), assume_yes=True, dry_run=True)
+    )
+    assert dry.exit_code == 0, dry.message
+    upd = UpdateService().update(UpdateRequest(path=str(project), assume_yes=True))
+    assert upd.exit_code == 0, upd.message
+    copilot = project / ".github" / "copilot-instructions.md"
+    assert copilot.is_file()
+    copilot.unlink()
+    status = StatusService().inspect(StatusRequest(path=str(project)))
+    assert status.state == StatusState.INCOMPLETE, status.state
+    upd = UpdateService().update(UpdateRequest(path=str(project), assume_yes=True))
+    assert upd.exit_code == 0, upd.message
+    assert StatusService().inspect(StatusRequest(path=str(project))).state == StatusState.HEALTHY
+    yaml_bytes = (project / ".ekp" / "project.yaml").read_bytes()
+    un = UninstallService().uninstall(UninstallRequest(path=str(project), assume_yes=True))
+    assert un.exit_code == 0, un.message
+    assert not (project / ".ekp" / "install.json").exists()
+    assert (project / ".ekp" / "project.yaml").read_bytes() == yaml_bytes
+    assert StatusService().inspect(StatusRequest(path=str(project))).state == StatusState.NOT_INSTALLED
+print("installed_multi_assistant_lifecycle_ok", 137)
+""",
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [str(python), str(lifecycle_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        if "installed_multi_assistant_lifecycle_ok" not in proc.stdout:
+            print(proc.stderr, file=sys.stderr)
+            return 1
+
+        migration_script = tmp_path / "smoke_v018_migration.py"
+        migration_script.write_text(
+            """
+import json
+import tempfile
+from pathlib import Path
+from ekp.composition import ComponentRegistry
+from ekp.install.composition_install import CompositionInstallService
+from ekp.install.intent import build_composition_intent
+from ekp.install.manifest import ManifestStore
+from ekp.lifecycle.update import UpdateRequest, UpdateService
+from ekp.paths import get_ekp_root
+from ekp.status.models import StatusState
+from ekp.status.service import StatusRequest, StatusService
+from ekp.version import get_version
+
+root = get_ekp_root()
+registry = ComponentRegistry.load(root)
+version = get_version()
+with tempfile.TemporaryDirectory() as tmp:
+    project = Path(tmp) / "project"
+    project.mkdir()
+    (project / "composer.json").write_text(
+        '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
+        encoding="utf-8",
+    )
+    (project / "symfony.lock").write_text("{}", encoding="utf-8")
+    (project / "config").mkdir()
+    (project / "config/bundles.php").write_text("<?php", encoding="utf-8")
+    intent = build_composition_intent(["symfony"], registry, assistants=["cursor"])
+    result = CompositionInstallService(
+        registry=registry, resource_root=root
+    ).install(project, intent)
+    assert result.exit_code == 0, result.message
+    yaml_bytes = (project / ".ekp" / "project.yaml").read_bytes()
+    bound = ManifestStore(project).load().configuration_sha256
+    payload = json.loads((project / ".ekp" / "install.json").read_text(encoding="utf-8"))
+    payload["ekp_version"] = "0.18.0"
+    (project / ".ekp" / "install.json").write_text(
+        json.dumps(payload, indent=2) + "\\n", encoding="utf-8"
+    )
+    status = StatusService().inspect(StatusRequest(path=str(project)))
+    assert status.state == StatusState.VERSION_MISMATCH, status.state
+    upd = UpdateService().update(UpdateRequest(path=str(project), assume_yes=True))
+    assert upd.exit_code == 0, upd.message
+    manifest = ManifestStore(project).load()
+    assert manifest.ekp_version == version
+    assert manifest.adapters == ["cursor"]
+    assert manifest.configuration_sha256 == bound
+    assert (project / ".ekp" / "project.yaml").read_bytes() == yaml_bytes
+    assert not (project / ".github").exists()
+    assert StatusService().inspect(StatusRequest(path=str(project))).state == StatusState.HEALTHY
+print("installed_v018_migration_ok")
+""",
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [str(python), str(migration_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        if "installed_v018_migration_ok" not in proc.stdout:
+            print(proc.stderr, file=sys.stderr)
+            return 1
+
         config_script = tmp_path / "smoke_project_config.py"
         config_script.write_text(
             """

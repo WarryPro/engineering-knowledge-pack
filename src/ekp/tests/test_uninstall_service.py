@@ -196,7 +196,7 @@ class UninstallServiceTests(unittest.TestCase):
             self.assertTrue((project / ".cursor").exists())
             self.assertTrue((project / ".ekp").exists())
 
-    def test_non_cursor_adapter_rejected(self):
+    def test_legacy_multi_adapter_rejected(self):
         manifest = InstallManifest(
             schema_version=1,
             ekp_version="0.15.0",

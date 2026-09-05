@@ -4,13 +4,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, List, Optional, Sequence, Set
 
 from ekp.assembly import AssemblyRequest, AssemblyService, CompositionAssemblyRequest
 from ekp.composition import ComponentRegistry
 from ekp.config.models import ProjectConfigError
 from ekp.config.project import ProjectConfigStore
-from ekp.install.cursor_deploy import CURSOR_ADAPTER, CursorDeployService, sha256_file
+from ekp.install.cursor_deploy import CURSOR_ADAPTER, CursorDeployService
+from ekp.install.deploy.engine import SharedDeploymentEngine
+from ekp.install.deploy.hashing import sha256_file
+from ekp.install.deploy.models import DesiredManagedFile
+from ekp.install.deploy.registry import DeployRegistry, build_default_deploy_registry
 from ekp.install.errors import (
     InstallAssemblyError,
     InstallConflictError,
@@ -31,6 +35,7 @@ from ekp.lifecycle.apply import (
     LifecycleRollbackError,
     TransactionApplier,
 )
+from ekp.lifecycle.boundaries import adapters_from_desired, lifecycle_symlink_check_paths
 from ekp.lifecycle.plan import LifecycleFileOperation, LifecycleOpKind, LifecyclePlan
 from ekp.lifecycle.render import (
     render_update_confirmation,
@@ -43,12 +48,15 @@ from ekp.paths import get_ekp_root
 from ekp.resolution.catalog import validate_profile_name
 from ekp.version import get_version
 
-BundleInventory = Dict[str, Tuple[Path, str]]
-
 _COMPOSITION_DRIFT_MESSAGE = (
     "Project configuration has changed since EKP was installed.\n\n"
-    "Automatic reconfiguration is not supported in v0.18.\n"
+    "Automatic reconfiguration is not supported by `ekp update`.\n"
     "Restore the installed configuration or use the future reconfiguration workflow."
+)
+
+_OWNERSHIP_CORRUPTION_MESSAGE = (
+    "Ownership manifest adapters do not match project configuration assistants "
+    "despite a matching configuration_sha256 (manifest corruption)."
 )
 
 
@@ -79,14 +87,22 @@ class UpdateService:
         applier: Optional[TransactionApplier] = None,
         assembly: Optional[AssemblyService] = None,
         deploy: Optional[CursorDeployService] = None,
+        deploy_registry: Optional[DeployRegistry] = None,
         input_fn: Callable[[str], str] = input,
         output_fn: Callable[[str], None] = print,
     ):
         self.applier = applier or TransactionApplier()
         self.assembly = assembly or AssemblyService()
         self.deploy = deploy or CursorDeployService()
+        self._deploy_registry = deploy_registry
+        self._engine = SharedDeploymentEngine()
         self.input_fn = input_fn
         self.output_fn = output_fn
+
+    def _registry(self) -> DeployRegistry:
+        if self._deploy_registry is None:
+            self._deploy_registry = build_default_deploy_registry()
+        return self._deploy_registry
 
     def update(self, request: UpdateRequest) -> UpdateResult:
         try:
@@ -122,7 +138,9 @@ class UpdateService:
             )
 
         try:
-            validate_lifecycle_manifest(snapshot.manifest)
+            validate_lifecycle_manifest(
+                snapshot.manifest, deploy_registry=self._registry()
+            )
         except InstallConflictError as exc:
             return UpdateResult(exit_code=exc.exit_code, message=exc.message)
 
@@ -155,14 +173,12 @@ class UpdateService:
             assembly_result = self.assembly.assemble(
                 AssemblyRequest(profile=profile, verify=True, clean=True)
             )
-            inventory = self._inventory_to_map(
-                self.deploy.inventory_bundle(assembly_result.bundle_path)
-            )
+            desired = self._legacy_desired_files(assembly_result.bundle_path)
             plan = build_update_plan(
                 project_root=project_root,
                 snapshot=snapshot,
                 running_version=running_version,
-                inventory=inventory,
+                desired=desired,
                 bundle_path=assembly_result.bundle_path,
                 dry_run=request.dry_run,
             )
@@ -228,11 +244,11 @@ class UpdateService:
                 message="Invalid project configuration: {}".format(exc),
             )
 
-        assistants = list(config.assistants) or ["cursor"]
-        if assistants != ["cursor"]:
+        assistants = list(config.assistants)
+        if set(assistants) != set(snapshot.manifest.adapters):
             return UpdateResult(
-                exit_code=InstallSelectionError.exit_code,
-                message="Composition update supports only assistants=['cursor'] in v0.18.",
+                exit_code=InstallConflictError.exit_code,
+                message=_OWNERSHIP_CORRUPTION_MESSAGE,
             )
 
         assembly_result = None
@@ -245,14 +261,14 @@ class UpdateService:
                     clean=True,
                 )
             )
-            inventory = self._inventory_to_map(
-                self.deploy.inventory_bundle(assembly_result.bundle_path)
+            desired = self._composition_desired_files(
+                assembly_result.bundle_path, assistants
             )
             plan = build_update_plan(
                 project_root=project_root,
                 snapshot=snapshot,
                 running_version=running_version,
-                inventory=inventory,
+                desired=desired,
                 bundle_path=assembly_result.bundle_path,
                 dry_run=request.dry_run,
                 expected_configuration_sha256=expected_hash,
@@ -293,11 +309,28 @@ class UpdateService:
 
         return UpdateResult(exit_code=0, message=render_update_success(plan))
 
-    @staticmethod
-    def _inventory_to_map(
-        inventory: List[Tuple[str, Path, str]],
-    ) -> BundleInventory:
-        return {relative: (source, digest) for relative, source, digest in inventory}
+    def _legacy_desired_files(self, bundle_path: Path) -> List[DesiredManagedFile]:
+        inventory = self.deploy.inventory_bundle(bundle_path)
+        desired = [
+            DesiredManagedFile(
+                relative_path=relative,
+                adapter=CURSOR_ADAPTER,
+                source_path=source,
+                sha256=digest,
+            )
+            for relative, source, digest in inventory
+        ]
+        return self._engine.normalize_desired_files(desired)
+
+    def _composition_desired_files(
+        self, bundle_path: Path, assistants: Sequence[str]
+    ) -> List[DesiredManagedFile]:
+        deploy_registry = self._registry()
+        desired: List[DesiredManagedFile] = []
+        for assistant_id in assistants:
+            deployer = deploy_registry.get(assistant_id)
+            desired.extend(deployer.collect_desired_files(bundle_path))
+        return self._engine.normalize_desired_files(desired)
 
 
 def _is_complete_noop(plan: LifecyclePlan) -> bool:
@@ -313,51 +346,69 @@ def build_update_plan(
     project_root: Path,
     snapshot: ManifestSnapshot,
     running_version: str,
-    inventory: BundleInventory,
+    desired: List[DesiredManagedFile],
     bundle_path: Path,
     *,
     dry_run: bool = False,
     expected_configuration_sha256: Optional[str] = None,
 ) -> LifecyclePlan:
+    """Build an assistant-agnostic update plan from adapter-preserving desired state."""
     project_root = project_root.resolve()
     manifest = snapshot.manifest
     old_by_path = manifest.managed_by_path()
-    old_inventory = {path: item.sha256 for path, item in old_by_path.items()}
-    new_by_path = {relative: digest for relative, (_, digest) in inventory.items()}
-    same_version = manifest.ekp_version == running_version
+    new_by_path: Dict[str, DesiredManagedFile] = {
+        item.relative_path: item for item in desired
+    }
 
+    same_version = manifest.ekp_version == running_version
     if same_version:
-        if old_inventory != new_by_path:
+        old_ownership = {
+            path: (item.adapter, item.sha256) for path, item in old_by_path.items()
+        }
+        new_ownership = {
+            path: (item.adapter, item.sha256) for path, item in new_by_path.items()
+        }
+        if old_ownership != new_ownership:
             raise InstallAssemblyError(
                 "Installed bundle content does not match ownership manifest for this version."
             )
 
     conflicts: List[str] = []
     operations: List[LifecycleFileOperation] = []
+    plan_adapters = sorted(
+        set(manifest.adapters) | {item.adapter for item in desired}
+    )
 
-    for relative in (".cursor", ".cursor/rules", ".ekp"):
+    for relative in lifecycle_symlink_check_paths(plan_adapters):
         message = check_symlink_boundary(project_root, relative)
         if message:
             conflicts.append(message)
 
     all_paths = sorted(set(old_by_path) | set(new_by_path))
     for relative in all_paths:
-        old_sha = old_by_path[relative].sha256 if relative in old_by_path else None
-        new_entry = inventory.get(relative)
-        new_sha = new_entry[1] if new_entry else None
-        source_path = new_entry[0] if new_entry else None
+        old_item = old_by_path.get(relative)
+        new_item = new_by_path.get(relative)
+        old_sha = old_item.sha256 if old_item else None
+        new_sha = new_item.sha256 if new_item else None
+        source_path = new_item.source_path if new_item else None
+        if new_item is not None:
+            adapter = new_item.adapter
+        elif old_item is not None:
+            adapter = old_item.adapter
+        else:
+            adapter = CURSOR_ADAPTER
 
         boundary = check_symlink_boundary(project_root, relative)
         if boundary:
             conflicts.append(boundary)
-            operations.append(_noop_operation(relative, old_sha))
+            operations.append(_noop_operation(relative, old_sha, adapter))
             continue
 
         try:
             target = resolve_under_root(project_root, relative)
         except ValueError as exc:
             conflicts.append(str(exc))
-            operations.append(_noop_operation(relative, old_sha))
+            operations.append(_noop_operation(relative, old_sha, adapter))
             continue
 
         disk_exists = target.exists()
@@ -366,11 +417,12 @@ def build_update_plan(
 
         if disk_symlink:
             conflicts.append("Symlink target not managed safely: {}".format(relative))
-            operations.append(_noop_operation(relative, old_sha))
+            operations.append(_noop_operation(relative, old_sha, adapter))
             continue
 
         op = _classify_update_operation(
             relative=relative,
+            adapter=adapter,
             old_sha=old_sha,
             new_sha=new_sha,
             source_path=source_path,
@@ -382,7 +434,7 @@ def build_update_plan(
                 conflicts.append("Unmanaged file blocks update: {}".format(relative))
             else:
                 conflicts.append("Managed file modified by user: {}".format(relative))
-            operations.append(_noop_operation(relative, old_sha))
+            operations.append(_noop_operation(relative, old_sha, adapter))
         else:
             operations.append(op)
 
@@ -395,7 +447,7 @@ def build_update_plan(
         new_manifest = _build_new_manifest(
             manifest=manifest,
             running_version=running_version,
-            inventory=inventory,
+            desired=desired,
             directories_to_create=directories_to_create,
             existing_directories=set(manifest.created_directories),
             project_root=project_root,
@@ -406,7 +458,7 @@ def build_update_plan(
         profile=manifest.profile,
         old_version=manifest.ekp_version,
         new_version=running_version,
-        adapter=CURSOR_ADAPTER,
+        adapters=plan_adapters,
         mode="update",
         operations=operations,
         conflicts=conflicts,
@@ -420,18 +472,21 @@ def build_update_plan(
     )
 
 
-def _noop_operation(relative: str, old_sha: Optional[str]) -> LifecycleFileOperation:
+def _noop_operation(
+    relative: str, old_sha: Optional[str], adapter: str
+) -> LifecycleFileOperation:
     return LifecycleFileOperation(
         relative_path=relative,
         kind=LifecycleOpKind.NOOP,
+        adapter=adapter,
         previous_sha256=old_sha,
-        adapter=CURSOR_ADAPTER,
     )
 
 
 def _classify_update_operation(
     *,
     relative: str,
+    adapter: str,
     old_sha: Optional[str],
     new_sha: Optional[str],
     source_path: Optional[Path],
@@ -444,32 +499,32 @@ def _classify_update_operation(
                 return LifecycleFileOperation(
                     relative_path=relative,
                     kind=LifecycleOpKind.CREATE,
+                    adapter=adapter,
                     previous_sha256=None,
                     expected_sha256=new_sha,
                     source_path=source_path,
-                    adapter=CURSOR_ADAPTER,
                 )
             if disk_sha == old_sha:
-                return _noop_operation(relative, old_sha)
+                return _noop_operation(relative, old_sha, adapter)
             return None
 
         if not disk_exists:
             return LifecycleFileOperation(
                 relative_path=relative,
                 kind=LifecycleOpKind.CREATE,
+                adapter=adapter,
                 previous_sha256=None,
                 expected_sha256=new_sha,
                 source_path=source_path,
-                adapter=CURSOR_ADAPTER,
             )
         if disk_sha == old_sha:
             return LifecycleFileOperation(
                 relative_path=relative,
                 kind=LifecycleOpKind.WRITE,
+                adapter=adapter,
                 previous_sha256=old_sha,
                 expected_sha256=new_sha,
                 source_path=source_path,
-                adapter=CURSOR_ADAPTER,
             )
         return None
 
@@ -478,28 +533,28 @@ def _classify_update_operation(
             return LifecycleFileOperation(
                 relative_path=relative,
                 kind=LifecycleOpKind.CREATE,
+                adapter=adapter,
                 previous_sha256=None,
                 expected_sha256=new_sha,
                 source_path=source_path,
-                adapter=CURSOR_ADAPTER,
             )
         return None
 
     if old_sha is not None and new_sha is None:
         if not disk_exists:
-            return _noop_operation(relative, old_sha)
+            return _noop_operation(relative, old_sha, adapter)
         if disk_sha == old_sha:
             return LifecycleFileOperation(
                 relative_path=relative,
                 kind=LifecycleOpKind.DELETE,
+                adapter=adapter,
                 previous_sha256=old_sha,
                 expected_sha256=None,
                 source_path=None,
-                adapter=CURSOR_ADAPTER,
             )
         return None
 
-    return _noop_operation(relative, old_sha)
+    return _noop_operation(relative, old_sha, adapter)
 
 
 def _directories_to_create(
@@ -533,15 +588,20 @@ def _build_new_manifest(
     *,
     manifest: InstallManifest,
     running_version: str,
-    inventory: BundleInventory,
+    desired: List[DesiredManagedFile],
     directories_to_create: List[str],
     existing_directories: Set[str],
     project_root: Path,
 ) -> InstallManifest:
     managed_files = [
-        ManagedFile(relative_path=relative, adapter=CURSOR_ADAPTER, sha256=digest)
-        for relative, (_, digest) in sorted(inventory.items())
+        ManagedFile(
+            relative_path=item.relative_path,
+            adapter=item.adapter,
+            sha256=item.sha256,
+        )
+        for item in sorted(desired, key=lambda entry: (entry.relative_path, entry.adapter))
     ]
+    adapters = adapters_from_desired(desired)
 
     newly_created = []
     for relative in directories_to_create:
@@ -565,7 +625,7 @@ def _build_new_manifest(
         schema_version=manifest.schema_version,
         ekp_version=running_version,
         profile=manifest.profile,
-        adapters=list(manifest.adapters),
+        adapters=adapters,
         installed_at=manifest.installed_at,
         install_root=manifest.install_root,
         managed_files=managed_files,
