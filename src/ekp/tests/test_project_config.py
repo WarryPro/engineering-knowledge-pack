@@ -354,10 +354,11 @@ class ProjectConfigLoadCreateTests(unittest.TestCase):
             project = Path(tmp)
             ekp = project / ".ekp"
             ekp.mkdir()
-            (ekp / "project.yaml").write_text(
-                "schema_version: 1\ncomponents:\n  - symfony\n  - frontend\nassistants:\n  - cursor\n",
-                encoding="utf-8",
-                newline="\n",
+            (ekp / "project.yaml").write_bytes(
+                (
+                    "schema_version: 1\ncomponents:\n  - symfony\n  - frontend\n"
+                    "assistants:\n  - cursor\n"
+                ).encode("utf-8")
             )
             store = self._store(project)
             config = store.load()
@@ -470,7 +471,7 @@ class ProjectConfigLoadCreateTests(unittest.TestCase):
             )
             (project / ".ekp").mkdir()
             path = project / ".ekp" / "project.yaml"
-            path.write_text(original, encoding="utf-8", newline="\n")
+            path.write_bytes(original.encode("utf-8"))
             before = path.read_bytes()
             with self.assertRaises(ProjectConfigError) as ctx:
                 store.create(
