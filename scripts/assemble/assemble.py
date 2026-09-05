@@ -140,8 +140,9 @@ def verify_bundle(bundle_dir):
         raise AssembleError(str(exc))
 
 
-def assemble(
+def assemble_resolved_profile(
     profile_name,
+    profile,
     clean=False,
     verify=False,
     repo_root=None,
@@ -149,25 +150,17 @@ def assemble(
     bundle_root=None,
     registry=None,
 ):
-    # type: (str, bool, bool, Path, Path, Path, object) -> dict
+    # type: (str, dict, bool, bool, Path, Path, Path, object) -> dict
     """
-    Assemble deployable adapter bundles for a profile.
+    Assemble adapter bundles from an already-resolved profile-like contract.
 
-    Dispatches to registered adapters based on profile ``outputs``.
-    Unimplemented adapters fail before any generation.
-
-    Cursor keeps ``bundle-manifest.json`` at the profile root. Other adapters
-    write ``<adapter>/adapter-manifest.json``. ``assemble-manifest.json``
-    describes the full assembly.
-
-    Returns the Cursor bundle manifest when Cursor was assembled; otherwise
-    the last adapter manifest.
+    ``profile`` must contain the normalized fields consumed by adapters:
+    ``name``, ``description``, ``knowledge``, ``adapter_priorities``, ``outputs``.
     """
+    if not isinstance(profile, dict):
+        raise AssembleError("Resolved profile must be a mapping")
+
     root = repo_root or get_repo_root()
-    profile_path = root / "profiles" / "{}.yaml".format(profile_name)
-    if not profile_path.is_file():
-        raise AssembleError("Profile not found: {}".format(profile_path))
-
     indexes_dir = dist_dir or (root / "dist")
     bundles_dir = bundle_root or indexes_dir
     missing = verify_indexes(indexes_dir)
@@ -178,7 +171,6 @@ def assemble(
             )
         )
 
-    profile = load_profile_by_name(profile_name, repo_root=root)
     adapter_registry = registry or build_default_registry()
     requested = resolve_requested_adapters(profile, adapter_registry)
     bundle_dir = bundles_dir / profile_name
@@ -229,6 +221,40 @@ def assemble(
     if cursor_manifest is not None:
         return cursor_manifest
     return primary_manifest
+
+
+def assemble(
+    profile_name,
+    clean=False,
+    verify=False,
+    repo_root=None,
+    dist_dir=None,
+    bundle_root=None,
+    registry=None,
+):
+    # type: (str, bool, bool, Path, Path, Path, object) -> dict
+    """
+    Assemble deployable adapter bundles for a named profile YAML.
+
+    Loads ``profiles/<profile_name>.yaml``, then delegates to
+    ``assemble_resolved_profile``. Public historical entry point.
+    """
+    root = repo_root or get_repo_root()
+    profile_path = root / "profiles" / "{}.yaml".format(profile_name)
+    if not profile_path.is_file():
+        raise AssembleError("Profile not found: {}".format(profile_path))
+
+    profile = load_profile_by_name(profile_name, repo_root=root)
+    return assemble_resolved_profile(
+        profile_name=profile_name,
+        profile=profile,
+        clean=clean,
+        verify=verify,
+        repo_root=root,
+        dist_dir=dist_dir,
+        bundle_root=bundle_root,
+        registry=registry,
+    )
 
 
 def main(argv=None):
