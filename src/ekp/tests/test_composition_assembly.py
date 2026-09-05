@@ -367,6 +367,8 @@ class AssembleResolvedProfileTests(unittest.TestCase):
     """Prove reusable resolved-profile core accepts in-memory contracts."""
 
     def test_assemble_resolved_profile_with_ephemeral_contract(self):
+        from common.paths import clear_path_context, set_path_context
+
         with tempfile.TemporaryDirectory(prefix="ekp-awc-resolved-") as tmp:
             tmp_path = Path(tmp)
             service = AssemblyService()
@@ -376,29 +378,34 @@ class AssembleResolvedProfileTests(unittest.TestCase):
             workspace.mkdir()
             output.mkdir()
             service._generate_indexes(get_ekp_root(), workspace)
-
-            registry = ComponentRegistry.load()
-            composition = resolve_composition(["core"], registry)
-            profile = build_ephemeral_composition_profile(composition, ["cursor"])
-            manifest = assemble_resolved_profile(
-                profile_name=PROJECT_COMPOSITION_PROFILE,
-                profile=profile,
-                clean=True,
-                verify=True,
-                repo_root=get_ekp_root(),
-                dist_dir=workspace,
-                bundle_root=output,
-            )
-            self.assertEqual(manifest["profile"], PROJECT_COMPOSITION_PROFILE)
-            self.assertEqual(manifest["rules_count"], 65)
-            assemble_manifest = json.loads(
-                (
-                    output / PROJECT_COMPOSITION_PROFILE / "assemble-manifest.json"
-                ).read_text(encoding="utf-8")
-            )
-            self.assertEqual(assemble_manifest["profile"], PROJECT_COMPOSITION_PROFILE)
+            set_path_context(repo_root=get_ekp_root(), dist_dir=workspace)
+            try:
+                registry = ComponentRegistry.load()
+                composition = resolve_composition(["core"], registry)
+                profile = build_ephemeral_composition_profile(composition, ["cursor"])
+                manifest = assemble_resolved_profile(
+                    profile_name=PROJECT_COMPOSITION_PROFILE,
+                    profile=profile,
+                    clean=True,
+                    verify=True,
+                    repo_root=get_ekp_root(),
+                    dist_dir=workspace,
+                    bundle_root=output,
+                )
+                self.assertEqual(manifest["profile"], PROJECT_COMPOSITION_PROFILE)
+                self.assertEqual(manifest["rules_count"], 65)
+                assemble_manifest = json.loads(
+                    (
+                        output / PROJECT_COMPOSITION_PROFILE / "assemble-manifest.json"
+                    ).read_text(encoding="utf-8")
+                )
+                self.assertEqual(assemble_manifest["profile"], PROJECT_COMPOSITION_PROFILE)
+            finally:
+                clear_path_context()
 
     def test_named_assemble_still_loads_profile_yaml(self):
+        from common.paths import clear_path_context, set_path_context
+
         with tempfile.TemporaryDirectory(prefix="ekp-awc-named-") as tmp:
             tmp_path = Path(tmp)
             service = AssemblyService()
@@ -407,18 +414,22 @@ class AssembleResolvedProfileTests(unittest.TestCase):
             workspace.mkdir()
             output.mkdir()
             service._generate_indexes(get_ekp_root(), workspace)
-            manifest = assemble(
-                profile_name="cursor-core",
-                clean=True,
-                verify=True,
-                repo_root=get_ekp_root(),
-                dist_dir=workspace,
-                bundle_root=output,
-            )
-            self.assertEqual(manifest["profile"], "cursor-core")
-            self.assertEqual(manifest["rules_count"], 65)
-            loaded = load_profile_by_name("cursor-core", repo_root=get_ekp_root())
-            self.assertEqual(loaded["adapter_priorities"], ["high"])
+            set_path_context(repo_root=get_ekp_root(), dist_dir=workspace)
+            try:
+                manifest = assemble(
+                    profile_name="cursor-core",
+                    clean=True,
+                    verify=True,
+                    repo_root=get_ekp_root(),
+                    dist_dir=workspace,
+                    bundle_root=output,
+                )
+                self.assertEqual(manifest["profile"], "cursor-core")
+                self.assertEqual(manifest["rules_count"], 65)
+                loaded = load_profile_by_name("cursor-core", repo_root=get_ekp_root())
+                self.assertEqual(loaded["adapter_priorities"], ["high"])
+            finally:
+                clear_path_context()
 
 
 if __name__ == "__main__":
