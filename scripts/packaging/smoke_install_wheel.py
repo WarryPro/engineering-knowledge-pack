@@ -202,6 +202,57 @@ with tempfile.TemporaryDirectory() as tmp:
             print("resource_root resolved to repository checkout", file=sys.stderr)
             return 1
 
+        config_script = tmp_path / "smoke_project_config.py"
+        config_script.write_text(
+            """
+import tempfile
+from pathlib import Path
+from ekp.composition import ComponentRegistry
+from ekp.config import ProjectConfig, ProjectConfigStore, configuration_sha256
+from ekp.paths import get_ekp_root
+
+root = get_ekp_root()
+schema = root / "schema" / "project-config.schema.json"
+assert schema.is_file(), schema
+assert root.name == "_resources", root
+registry = ComponentRegistry.load(root)
+assert registry.has("symfony")
+
+with tempfile.TemporaryDirectory() as tmp:
+    project = Path(tmp)
+    store = ProjectConfigStore(project, registry=registry, resource_root=root)
+    created = store.create(
+        ProjectConfig(
+            schema_version=1,
+            components=("symfony", "frontend"),
+            assistants=("cursor",),
+        )
+    )
+    loaded = store.load()
+    assert loaded == created
+    digest = configuration_sha256(created, registry)
+    assert len(digest) == 64
+    assert store.load_snapshot().configuration_sha256 == digest
+print("installed_project_config_ok", digest)
+""",
+            encoding="utf-8",
+        )
+
+        proc = subprocess.run(
+            [str(python), str(config_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        if "installed_project_config_ok" not in proc.stdout:
+            print(proc.stderr, file=sys.stderr)
+            return 1
+
         detect_script = tmp_path / "smoke_detect.py"
         detect_script.write_text(
             """
