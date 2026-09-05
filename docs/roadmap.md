@@ -14,7 +14,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); `ekp-flutter` deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot stack profiles complete (`ekp-php` through `ekp-nativescript` in `v0.6.0`–`v0.13.0`); Antigravity + Claude in `v0.4.0`/`v0.5.0` (`ekp-core` pilot only); `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.18` composition (integration validation in progress)** | Package; composition + legacy Cursor lifecycle; Windows + Ubuntu validation; remote acquisition / PyPI / multi-assistant Consumer lifecycle deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.18` composition (release candidate / ready for publication)** | Package; composition + legacy Cursor lifecycle; Windows + Ubuntu validation; remote acquisition / PyPI / multi-assistant Consumer lifecycle deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; 8 scenarios; blind scoring/reporting tooling; L1 real-model public evidence optional/deferred |
 
 ---
@@ -272,7 +272,7 @@ Extend the adapter layer to additional AI assistant platforms.
 
 ## Phase 6: Consumer productization
 
-**Status:** Operational through `v0.18` Project Composition Engine (integration validation in progress; release not published)
+**Status:** `v0.18.0` — Project Composition Engine — **release candidate / ready for publication**
 
 Deliver consumer-facing installation and lifecycle management for Cursor without requiring a repository checkout.
 
@@ -292,7 +292,7 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 - [x] Cross-version project migration using the currently running package resources
 - [x] Cross-platform lifecycle validation (Consumer CLI tests; Ubuntu + Windows packaging smoke)
 
-**Deliverables implemented in `v0.18` (not yet published as a release tag):**
+**Deliverables in `v0.18.0` (release candidate):**
 
 - [x] Component registry and dependency closure (`components/`)
 - [x] `.ekp/project.yaml` project intent + composition assembly
@@ -318,12 +318,12 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 
 | Version | Theme |
 |---------|--------|
-| v0.18 | Project Composition Engine — **IMPLEMENTED / integration validation in progress** |
+| v0.18.0 | Project Composition Engine — **release candidate / ready for publication** |
 | v0.19 | Multi-Assistant Consumer Lifecycle |
-| v0.20 | Reconfiguration + Workspaces |
-| v0.21 | Distribution + Product UX |
-| v0.22 | Hardening |
-| v1.0 | Stable |
+| v0.20 | Reconfiguration & Workspaces |
+| v0.21 | Distribution & Product UX |
+| v0.22 | Product Hardening / RC |
+| v1.0.0 | Stable |
 
 Do not expand the Evaluation roadmap here; Evaluation L0 remains complete in `v0.17.0`.
 

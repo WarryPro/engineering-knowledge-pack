@@ -14,7 +14,7 @@ Published install (latest released tag):
 pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
 ```
 
-v0.18 Project Composition Engine is on the feature / integration path (`0.18.0.dev0`); use a checked-out feature build or wait for the published `v0.18.0` tag. Alternative: `pip install` from a local checkout or Git ref into a virtual environment.
+`v0.18.0` is a **release candidate** on `staging` (Project Composition Engine). Until official publication, use a local checkout / staging build, or wait for the published `v0.18.0` tag. Alternative: `pip install` from a local checkout or Git ref into a virtual environment.
 
 ### Composition model (v0.18)
 
@@ -225,7 +225,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 ## Release status
 
 - **Latest published release:** `v0.17.0`
-- **v0.18.0 (in progress — not published):** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle; version remains `0.18.0.dev0` until release authorization
+- **v0.18.0 (release candidate — not yet published):** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle
 - **v0.17.0:** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack
 - **v0.16.0:** Consumer Lifecycle — `ekp update` and `ekp uninstall`; safe cross-version project synchronization; transactional rollback; manifest CAS; Ubuntu + Windows lifecycle packaging smoke; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`
 - **v0.15.0:** Consumer CLI (`ekp version`, `detect`, `install`, `status`); Cursor-only consumer installation; project detection and profile resolution; ownership manifest and safe deployment; Windows + Ubuntu validation; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0`
@@ -267,7 +267,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.18` composition (integration in progress)** | Package; composition + legacy Cursor lifecycle; Windows + Ubuntu CI; remote acquisition / PyPI / multi-assistant Consumer lifecycle deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.18` composition (release candidate)** | Package; composition + legacy Cursor lifecycle; Windows + Ubuntu CI; remote acquisition / PyPI / multi-assistant Consumer lifecycle deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics

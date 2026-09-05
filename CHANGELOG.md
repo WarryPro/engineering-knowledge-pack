@@ -7,22 +7,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-09-05
+
 ### Added
 
-- Project Composition Engine (v0.18 development — `0.18.0.dev0`): technology components, dependency closure, `.ekp/project.yaml` intent, composition-aware detect/install, persistent composition lifecycle (status drift, update without redetect, uninstall preserves config)
-- Repeatable `--component` on `ekp install` (mutually exclusive with `--profile`)
+- **Project Composition Engine** — represent a project's technology stack as independent components, resolve dependency closure, and install/manage the resulting engineering knowledge without combinatorial profiles
+- Technology component registry under `components/` (`core`, `php`, `symfony`, `typescript`, `frontend`, `nativescript`, `flutter`, `devops`)
+- Deterministic dependency closure and component-based assembly
+- `.ekp/project.yaml` project intent (`schema_version: 1`, requested `components`, `assistants`)
+- Repeatable `ekp install --component` (mutually exclusive with `--profile`)
+- Composition-aware detection and component proposal
+- Status configuration drift detection (`CONFIGURATION_DRIFT`)
 - ADR-0010 — project composition and assistant separation
 
-### Changed
+### Lifecycle / Safety
 
-- Default Consumer install path uses component composition; explicit `--profile` remains legacy/compatibility mode
-- Consumer documentation reconciled for composition vs packaging profiles
+- Safe composition install with `mode=composition`, `profile=project-composition`, and `configuration_sha256` binding in `.ekp/install.json`
+- Update reads persisted `project.yaml` intent — no lifecycle redetection
+- Transactional apply with rollback and mid-apply TOCTOU protection for config races
+- Uninstall removes managed files and `install.json` while preserving `project.yaml`
+- Empty-project `--yes` without `--component` / `--profile` refuses (no guessing)
 
 ### Compatibility
 
 - Existing v0.17 profile-based installs remain `legacy-profile`; update does not auto-migrate to composition
+- Explicit `--profile` remains supported as a packaging/preset path
 - Manifest `schema_version = 1` retained with optional composition fields
-- Managed Consumer assistant remains Cursor only (multi-assistant lifecycle deferred)
+
+### Product examples (v0.18.0)
+
+- Symfony → 83 Cursor rules
+- Frontend → 92 Cursor rules
+- Symfony + Frontend → 110 Cursor rules
+- Symfony + Frontend + DevOps → 119 Cursor rules
+- No combinatorial profile required (for example no `cursor-symfony-frontend`)
+
+### Scope
+
+- Consumer managed assistant = **Cursor only**
+- Multi-assistant Consumer lifecycle deferred to v0.19
+- Safe reconfiguration / workspaces deferred to v0.20
+- Evaluation infrastructure unchanged from v0.17 (not a Consumer CLI dependency)
 
 ## [0.17.0] - 2026-09-04
 
