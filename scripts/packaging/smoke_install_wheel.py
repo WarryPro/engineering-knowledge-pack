@@ -202,6 +202,42 @@ with tempfile.TemporaryDirectory() as tmp:
             print("resource_root resolved to repository checkout", file=sys.stderr)
             return 1
 
+        deploy_script = tmp_path / "smoke_deploy_infra.py"
+        deploy_script.write_text(
+            """
+from ekp.install.deploy import (
+    CursorDeployer,
+    DeployRegistry,
+    SharedDeploymentEngine,
+    build_default_deploy_registry,
+)
+from ekp.install.cursor_deploy import CursorDeployService
+
+registry = build_default_deploy_registry()
+assert isinstance(registry, DeployRegistry)
+assert registry.supported_assistants() == ("cursor",)
+assert isinstance(registry.get("cursor"), CursorDeployer)
+assert SharedDeploymentEngine is not None
+assert CursorDeployService is not None
+print("installed_deploy_infra_ok")
+""",
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [str(python), str(deploy_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        if "installed_deploy_infra_ok" not in proc.stdout:
+            print(proc.stderr, file=sys.stderr)
+            return 1
+
         config_script = tmp_path / "smoke_project_config.py"
         config_script.write_text(
             """
