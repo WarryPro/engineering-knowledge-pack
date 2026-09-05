@@ -14,7 +14,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); `ekp-flutter` deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot stack profiles complete (`ekp-php` through `ekp-nativescript` in `v0.6.0`–`v0.13.0`); Antigravity + Claude in `v0.4.0`/`v0.5.0` (`ekp-core` pilot only); `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Substantially operational (`v0.16.0`)** | Package; Consumer CLI lifecycle (`update` / `uninstall`); safe Cursor project management; Windows + Ubuntu validation; remote acquisition / PyPI / non-Cursor Consumer lifecycle deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.18` composition (integration validation in progress)** | Package; composition + legacy Cursor lifecycle; Windows + Ubuntu validation; remote acquisition / PyPI / multi-assistant Consumer lifecycle deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; 8 scenarios; blind scoring/reporting tooling; L1 real-model public evidence optional/deferred |
 
 ---
@@ -272,7 +272,7 @@ Extend the adapter layer to additional AI assistant platforms.
 
 ## Phase 6: Consumer productization
 
-**Status:** Substantially operational (`v0.16.0`, 2026-09-03)
+**Status:** Operational through `v0.18` Project Composition Engine (integration validation in progress; release not published)
 
 Deliver consumer-facing installation and lifecycle management for Cursor without requiring a repository checkout.
 
@@ -290,16 +290,42 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 - [x] `ekp update` and `ekp uninstall`
 - [x] Transactional lifecycle with rollback and recovery workspace retention
 - [x] Cross-version project migration using the currently running package resources
-- [x] Cross-platform lifecycle validation (160 Consumer CLI tests; Ubuntu + Windows packaging smoke)
+- [x] Cross-platform lifecycle validation (Consumer CLI tests; Ubuntu + Windows packaging smoke)
 
-**Still deferred (remaining Phase 6):**
+**Deliverables implemented in `v0.18` (not yet published as a release tag):**
+
+- [x] Component registry and dependency closure (`components/`)
+- [x] `.ekp/project.yaml` project intent + composition assembly
+- [x] Composition-aware detect/install (`--component`, mutual exclusion with `--profile`)
+- [x] Persistent composition install, status drift, update without redetect, uninstall config preservation
+- [x] Legacy `--profile` / v0.17 manifest compatibility retained
+
+**Still deferred (remaining Phase 6 / later):**
 
 - [ ] Remote release/package acquisition
 - [ ] PyPI publication
-- [ ] Additional Consumer adapters (Copilot / Antigravity / Claude deployment)
+- [ ] Multi-assistant Consumer lifecycle (Copilot / Antigravity / Claude) — **v0.19**
+- [ ] Safe reconfiguration / workspaces — **v0.20**
+- [ ] Distribution + product UX — **v0.21**
+- [ ] Hardening — **v0.22**
 - [ ] Automatic multi-profile / monorepo orchestration
 
-**Exit criteria (met through `v0.16.0`):** A developer can install the package, detect or select a Cursor profile, install rules safely, inspect health, synchronize an existing project after upgrading the package, and uninstall managed ownership — without cloning EKP or running the manual assemble pipeline.
+**Exit criteria (met through published `v0.16.0`; extended by `v0.18` composition):** A developer can install the package, detect or select components (or an explicit legacy profile), install rules safely, inspect health including configuration drift, synchronize an existing project after upgrading the package, and uninstall managed ownership while preserving project intent — without cloning EKP or running the manual assemble pipeline.
+
+---
+
+## Product roadmap after `v0.18`
+
+| Version | Theme |
+|---------|--------|
+| v0.18 | Project Composition Engine — **IMPLEMENTED / integration validation in progress** |
+| v0.19 | Multi-Assistant Consumer Lifecycle |
+| v0.20 | Reconfiguration + Workspaces |
+| v0.21 | Distribution + Product UX |
+| v0.22 | Hardening |
+| v1.0 | Stable |
+
+Do not expand the Evaluation roadmap here; Evaluation L0 remains complete in `v0.17.0`.
 
 ---
 

@@ -19,12 +19,13 @@ On Linux/macOS CI uses `python`; on Windows use `py -3` if configured.
 | Path | Role |
 |------|------|
 | `knowledge/` | Source of truth — validated on every change |
-| `profiles/` | Bundle composition (seven operational `cursor-*` profiles + `ekp-php` + `ekp-typescript` + `ekp-symfony` + `ekp-frontend` + `ekp-core` pilot) |
+| `components/` | Technology component registry (v0.18 composition SoT) |
+| `profiles/` | Packaging / compatibility presets (operational `cursor-*` + stack `ekp-*` + `ekp-core` pilot) |
 | `scripts/validate/` | Validator CLI |
 | `scripts/adapters/` | Knowledge → tool format transformers |
 | `scripts/assemble/` | Profile → deployable bundle |
 | `src/ekp/` | Consumer CLI package (installed distribution) |
-| `schema/` | JSON Schema and graph rules |
+| `schema/` | JSON Schema and graph rules (includes project-config + component schemas) |
 | `dist/` | **Generated** — gitignored |
 
 ## Validation pipeline
@@ -74,7 +75,7 @@ py -3 -m pip install -e .
 py -3 -m unittest discover -s src/ekp/tests -v
 ```
 
-On Windows, nine Unix-only symlink safety tests are expected to skip. Ubuntu runs all 160 tests.
+On Windows, expected Unix-only symlink safety tests skip. Ubuntu runs the full Consumer suite.
 
 ### 4c. Package build and packaging smoke
 

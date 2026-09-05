@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Project Composition Engine (v0.18 development — `0.18.0.dev0`): technology components, dependency closure, `.ekp/project.yaml` intent, composition-aware detect/install, persistent composition lifecycle (status drift, update without redetect, uninstall preserves config)
+- Repeatable `--component` on `ekp install` (mutually exclusive with `--profile`)
+- ADR-0010 — project composition and assistant separation
+
+### Changed
+
+- Default Consumer install path uses component composition; explicit `--profile` remains legacy/compatibility mode
+- Consumer documentation reconciled for composition vs packaging profiles
+
+### Compatibility
+
+- Existing v0.17 profile-based installs remain `legacy-profile`; update does not auto-migrate to composition
+- Manifest `schema_version = 1` retained with optional composition fields
+- Managed Consumer assistant remains Cursor only (multi-assistant lifecycle deferred)
+
 ## [0.17.0] - 2026-09-04
 
 ### Added
