@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 from typing import Any, Optional
 
@@ -20,7 +19,7 @@ from ekp.config.models import (
     ProjectConfigSnapshot,
 )
 from ekp.config.normalization import configuration_sha256, normalize_project_config
-from ekp.install.atomic import ExclusiveTempFile
+from ekp.install.atomic import ExclusiveTempFile, exclusive_create_from_temp
 from ekp.install.paths import check_symlink_boundary, resolve_under_root
 from ekp.paths import get_ekp_root
 
@@ -297,31 +296,8 @@ class ProjectConfigStore:
 
     def _exclusive_commit(self, temp_path: Path, target: Path) -> None:
         """Commit temp content to target without overwriting an existing file."""
-        if target.exists() or target.is_symlink():
-            raise ProjectConfigError(
-                "project config already exists: {}".format(PROJECT_CONFIG_RELATIVE)
-            )
-
         try:
-            os.link(str(temp_path), str(target))
-            try:
-                temp_path.unlink()
-            except OSError:
-                pass
-            return
-        except FileExistsError as exc:
-            raise ProjectConfigError(
-                "project config already exists: {}".format(PROJECT_CONFIG_RELATIVE)
-            ) from exc
-        except OSError:
-            pass
-
-        flags = os.O_CREAT | os.O_EXCL | os.O_WRONLY
-        if hasattr(os, "O_BINARY"):
-            flags |= os.O_BINARY
-        try:
-            data = temp_path.read_bytes()
-            fd = os.open(str(target), flags)
+            exclusive_create_from_temp(temp_path, target)
         except FileExistsError as exc:
             raise ProjectConfigError(
                 "project config already exists: {}".format(PROJECT_CONFIG_RELATIVE)
@@ -330,17 +306,3 @@ class ProjectConfigStore:
             raise ProjectConfigError(
                 "unable to create project config: {}".format(exc)
             ) from exc
-
-        try:
-            os.write(fd, data)
-            try:
-                os.fsync(fd)
-            except OSError:
-                pass
-        finally:
-            os.close(fd)
-
-        try:
-            temp_path.unlink()
-        except OSError:
-            pass

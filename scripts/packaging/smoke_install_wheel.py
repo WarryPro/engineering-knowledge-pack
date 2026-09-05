@@ -366,6 +366,83 @@ print("installed_detect_composition_ok", payload["proposed_components"])
             print(proc.stderr, file=sys.stderr)
             return 1
 
+        composition_install_script = tmp_path / "smoke_composition_install.py"
+        composition_install_script.write_text(
+            """
+import json
+import tempfile
+from pathlib import Path
+from ekp.composition import PROJECT_COMPOSITION_PROFILE, ComponentRegistry
+from ekp.config import PROJECT_CONFIG_RELATIVE, ProjectConfigStore
+from ekp.install.composition_install import CompositionInstallService
+from ekp.install.intent import build_composition_intent
+from ekp.install.manifest import INSTALL_MODE_COMPOSITION, ManifestStore
+from ekp.paths import get_ekp_root
+
+def write_symfony(root):
+    root.joinpath("composer.json").write_text(
+        '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
+        encoding="utf-8",
+    )
+    root.joinpath("symfony.lock").write_text("{}", encoding="utf-8")
+    root.joinpath("config").mkdir(exist_ok=True)
+    root.joinpath("config/bundles.php").write_text("<?php", encoding="utf-8")
+
+def write_frontend(root):
+    root.joinpath("package.json").write_text(
+        '{"dependencies":{"react":"^18.0.0","typescript":"^5.0.0"}}',
+        encoding="utf-8",
+    )
+    root.joinpath("tsconfig.json").write_text("{}", encoding="utf-8")
+    (root / "src" / "components").mkdir(parents=True, exist_ok=True)
+
+root = get_ekp_root()
+assert root.name == "_resources", root
+registry = ComponentRegistry.load(root)
+
+with tempfile.TemporaryDirectory() as tmp:
+    project = Path(tmp)
+    write_symfony(project)
+    write_frontend(project)
+    intent = build_composition_intent(["symfony", "frontend"], registry)
+    result = CompositionInstallService(
+        registry=registry,
+        resource_root=root,
+    ).install(project, intent)
+    assert result.exit_code == 0, result.message
+    assert (project / PROJECT_CONFIG_RELATIVE).is_file()
+    rules = list((project / ".cursor" / "rules").glob("*.mdc"))
+    assert len(rules) == 110, len(rules)
+    manifest = ManifestStore(project).load()
+    assert manifest.profile == PROJECT_COMPOSITION_PROFILE
+    assert manifest.mode == INSTALL_MODE_COMPOSITION
+    assert manifest.configuration_sha256 == intent.configuration_sha256
+    assert len(manifest.managed_files) == 110
+    snapshot = ProjectConfigStore(project, registry=registry, resource_root=root).load_snapshot()
+    assert snapshot.configuration_sha256 == manifest.configuration_sha256
+    raw = json.loads((project / ".ekp" / "install.json").read_text(encoding="utf-8"))
+    assert raw["schema_version"] == 1
+    assert "components" not in raw
+print("installed_composition_install_ok", len(rules), manifest.configuration_sha256)
+""",
+            encoding="utf-8",
+        )
+
+        proc = subprocess.run(
+            [str(python), str(composition_install_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        if "installed_composition_install_ok" not in proc.stdout:
+            print(proc.stderr, file=sys.stderr)
+            return 1
+
         detect_script = tmp_path / "smoke_detect.py"
         detect_script.write_text(
             """

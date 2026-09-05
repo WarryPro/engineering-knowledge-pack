@@ -4,18 +4,21 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ekp.install.atomic import ExclusiveTempFile
+from ekp.install.atomic import ExclusiveTempFile, exclusive_create_from_temp
 from ekp.install.errors import InstallConflictError
 from ekp.install.paths import check_symlink_boundary, relative_posix_path, resolve_under_root
 
 MANIFEST_RELATIVE = ".ekp/install.json"
 SUPPORTED_SCHEMA_VERSION = 1
+INSTALL_MODE_LEGACY_PROFILE = "legacy-profile"
+INSTALL_MODE_COMPOSITION = "composition"
+_SHA256_HEX_RE = re.compile(r"^[0-9a-f]{64}$")
 REQUIRED_FIELDS = (
     "schema_version",
     "ekp_version",
@@ -63,12 +66,27 @@ class InstallManifest:
     install_root: str
     managed_files: List[ManagedFile] = field(default_factory=list)
     created_directories: List[str] = field(default_factory=list)
+    mode: Optional[str] = None
+    configuration_sha256: Optional[str] = None
+
+    @property
+    def effective_mode(self) -> str:
+        """Authoritative operational mode (absent mode ⇒ legacy-profile)."""
+        if self.mode is None:
+            return INSTALL_MODE_LEGACY_PROFILE
+        if self.mode == INSTALL_MODE_LEGACY_PROFILE:
+            return INSTALL_MODE_LEGACY_PROFILE
+        if self.mode == INSTALL_MODE_COMPOSITION:
+            return INSTALL_MODE_COMPOSITION
+        raise InstallConflictError(
+            "Unsupported EKP install mode: {!r}".format(self.mode)
+        )
 
     def managed_by_path(self) -> Dict[str, ManagedFile]:
         return {item.relative_path: item for item in self.managed_files}
 
     def to_dict(self) -> Dict[str, Any]:
-        return {
+        payload = {
             "schema_version": self.schema_version,
             "ekp_version": self.ekp_version,
             "profile": self.profile,
@@ -78,6 +96,12 @@ class InstallManifest:
             "managed_files": [item.to_dict() for item in self.managed_files],
             "created_directories": list(self.created_directories),
         }
+        # Omit optional nulls to preserve historical legacy shape.
+        if self.mode is not None:
+            payload["mode"] = self.mode
+        if self.configuration_sha256 is not None:
+            payload["configuration_sha256"] = self.configuration_sha256
+        return payload
 
     @classmethod
     def from_dict(cls, payload: Dict[str, Any]) -> "InstallManifest":
@@ -93,10 +117,18 @@ class InstallManifest:
                     "Existing install manifest is missing required field: {}".format(key)
                 )
 
+        mode = payload.get("mode", None)
+        if mode is not None:
+            mode = str(mode)
+
+        configuration_sha256 = payload.get("configuration_sha256", None)
+        if configuration_sha256 is not None:
+            configuration_sha256 = str(configuration_sha256)
+
         managed_files = [
             ManagedFile.from_dict(item) for item in payload.get("managed_files", [])
         ]
-        return cls(
+        manifest = cls(
             schema_version=int(schema_version),
             ekp_version=str(payload["ekp_version"]),
             profile=str(payload["profile"]),
@@ -108,7 +140,50 @@ class InstallManifest:
                 relative_posix_path(str(item))
                 for item in payload.get("created_directories", [])
             ],
+            mode=mode,
+            configuration_sha256=configuration_sha256,
         )
+        _validate_manifest_mode_invariants(manifest)
+        return manifest
+
+
+def _validate_manifest_mode_invariants(manifest: InstallManifest) -> None:
+    """Validate mode / profile / hash combinations."""
+    if manifest.mode is not None and manifest.mode not in (
+        INSTALL_MODE_LEGACY_PROFILE,
+        INSTALL_MODE_COMPOSITION,
+    ):
+        raise InstallConflictError(
+            "Unsupported EKP install mode: {!r}".format(manifest.mode)
+        )
+
+    effective = (
+        INSTALL_MODE_LEGACY_PROFILE
+        if manifest.mode is None
+        else manifest.mode
+    )
+
+    if effective == INSTALL_MODE_COMPOSITION:
+        from ekp.composition.models import PROJECT_COMPOSITION_PROFILE
+
+        if manifest.profile != PROJECT_COMPOSITION_PROFILE:
+            raise InstallConflictError(
+                "Composition install manifest requires profile {!r}, found {!r}".format(
+                    PROJECT_COMPOSITION_PROFILE, manifest.profile
+                )
+            )
+        if not manifest.configuration_sha256:
+            raise InstallConflictError(
+                "Composition install manifest is missing configuration_sha256"
+            )
+        if not _SHA256_HEX_RE.match(manifest.configuration_sha256):
+            raise InstallConflictError(
+                "Composition install manifest has invalid configuration_sha256"
+            )
+        if "cursor" not in manifest.adapters:
+            raise InstallConflictError(
+                "Composition install manifest must include the cursor adapter"
+            )
 
 
 @dataclass(frozen=True)
@@ -188,7 +263,7 @@ class ManifestStore:
         return parent / parts[-1]
 
     def exists(self) -> bool:
-        return self.manifest_path.is_file()
+        return self.manifest_path.is_file() or self.manifest_path.is_symlink()
 
     def _reject_symlinked_manifest(self) -> None:
         if self.manifest_path.is_symlink():
@@ -208,7 +283,7 @@ class ManifestStore:
         return self.manifest_path.read_bytes()
 
     def load(self) -> Optional[InstallManifest]:
-        if not self.exists():
+        if not self.manifest_path.exists() and not self.manifest_path.is_symlink():
             return None
 
         raw = self._read_manifest_bytes()
@@ -216,7 +291,7 @@ class ManifestStore:
 
     def load_with_fingerprint(self) -> Optional[ManifestSnapshot]:
         """Load manifest and SHA-256 fingerprint from one exact byte read."""
-        if not self.exists():
+        if not self.manifest_path.exists() and not self.manifest_path.is_symlink():
             return None
 
         raw = self._read_manifest_bytes()
@@ -226,14 +301,22 @@ class ManifestStore:
         )
 
     def save(self, manifest: InstallManifest) -> None:
-        self._write_manifest(manifest, expected_sha256=None)
+        self._write_manifest(manifest, expected_sha256=None, exclusive=False)
+
+    def create(self, manifest: InstallManifest) -> None:
+        """Atomically create install.json when missing; refuse if it exists."""
+        self._write_manifest(manifest, expected_sha256=None, exclusive=True)
 
     def replace(self, manifest: InstallManifest, expected_sha256: str) -> None:
         """Atomically replace manifest when current bytes match expected_sha256."""
-        self._write_manifest(manifest, expected_sha256=expected_sha256)
+        self._write_manifest(manifest, expected_sha256=expected_sha256, exclusive=False)
 
     def _write_manifest(
-        self, manifest: InstallManifest, expected_sha256: Optional[str]
+        self,
+        manifest: InstallManifest,
+        expected_sha256: Optional[str],
+        *,
+        exclusive: bool,
     ) -> None:
         boundary = check_symlink_boundary(self.project_root, MANIFEST_RELATIVE)
         if boundary:
@@ -246,7 +329,12 @@ class ManifestStore:
                 )
             )
 
-        if not self.manifest_path.exists():
+        if exclusive:
+            if self.manifest_path.exists() or self.manifest_path.is_symlink():
+                raise InstallConflictError(
+                    "Ownership manifest already exists: {}".format(MANIFEST_RELATIVE)
+                )
+        elif not self.manifest_path.exists():
             if expected_sha256 is not None:
                 raise InstallConflictError(
                     "Ownership manifest changed before update could complete."
@@ -259,6 +347,8 @@ class ManifestStore:
                         "Ownership manifest changed before update could complete."
                     )
 
+        _validate_manifest_mode_invariants(manifest)
+
         manifest_dir = self.manifest_path.parent
         manifest_dir.mkdir(parents=True, exist_ok=True)
 
@@ -266,6 +356,17 @@ class ManifestStore:
         temp = ExclusiveTempFile.create(manifest_dir)
         try:
             temp.write_text(payload)
+            temp.close_fd()
+
+            if exclusive:
+                try:
+                    exclusive_create_from_temp(temp.path, self.manifest_path)
+                except FileExistsError as exc:
+                    raise InstallConflictError(
+                        "Ownership manifest already exists: {}".format(MANIFEST_RELATIVE)
+                    ) from exc
+                temp.path = None
+                return
 
             if expected_sha256 is not None and self.manifest_path.exists():
                 current_sha256 = _sha256_bytes(self.manifest_path.read_bytes())

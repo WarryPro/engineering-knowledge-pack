@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import hashlib
-import os
-import shutil
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from ekp.install.atomic import ExclusiveTempFile
+from dataclasses import dataclass, field
+
+from ekp.install.atomic import ExclusiveTempFile, exclusive_create_from_temp
 from ekp.install.errors import (
     InstallAssemblyError,
     InstallConflictError,
@@ -21,6 +21,17 @@ from ekp.install.plan import FileOpKind, FileOperation, InstallPlan
 
 CURSOR_RULES_DIR = ".cursor/rules"
 CURSOR_ADAPTER = "cursor"
+
+
+@dataclass
+class AppliedManagedFiles:
+    """Result of writing managed adapter files without an ownership manifest."""
+
+    created_files: List[Path] = field(default_factory=list)
+    created_dirs: List[Path] = field(default_factory=list)
+    preexisting_dirs: set = field(default_factory=set)
+    managed_files: List[ManagedFile] = field(default_factory=list)
+    created_directory_names: List[str] = field(default_factory=list)
 
 
 def sha256_file(path: Path) -> str:
@@ -121,22 +132,39 @@ class CursorDeployService:
             dry_run=dry_run,
         )
 
-    def apply(self, plan: InstallPlan) -> InstallManifest:
+    def apply_managed_files(
+        self,
+        plan: InstallPlan,
+        *,
+        extra_directories: Optional[Iterable[str]] = None,
+        rollback_on_error: bool = True,
+    ) -> AppliedManagedFiles:
+        """
+        Create directories and write managed adapter files.
+
+        Does not create ``install.json``. Callers that need ownership persistence
+        must commit the manifest separately (composition installs require this).
+        """
         if plan.has_conflicts:
             raise InstallConflictError("Cannot apply install plan with conflicts.")
         if plan.dry_run:
             raise InstallFilesystemError("Dry-run plans cannot be applied.")
 
+        directory_relatives = list(plan.directories_to_create)
+        for item in extra_directories or ():
+            if item not in directory_relatives:
+                directory_relatives.append(item)
+
         created_files: List[Path] = []
         created_dirs: List[Path] = []
         preexisting_dirs = {
             resolve_under_root(plan.project_root, item)
-            for item in plan.directories_to_create
+            for item in directory_relatives
             if resolve_under_root(plan.project_root, item).exists()
         }
 
         try:
-            for relative in plan.directories_to_create:
+            for relative in directory_relatives:
                 target_dir = resolve_under_root(plan.project_root, relative)
                 existed = target_dir.exists()
                 target_dir.mkdir(parents=True, exist_ok=True)
@@ -155,6 +183,22 @@ class CursorDeployService:
                     )
 
                 existed = target.exists()
+                if operation.kind == FileOpKind.CREATE:
+                    if existed or target.is_symlink():
+                        raise InstallConflictError(
+                            "Refusing to overwrite unexpected target: {}".format(
+                                operation.relative_path
+                            )
+                        )
+                elif operation.kind == FileOpKind.RESTORE:
+                    # Restore expects a missing managed file; refuse unexpected content.
+                    if existed or target.is_symlink():
+                        raise InstallConflictError(
+                            "Restore target appeared before apply: {}".format(
+                                operation.relative_path
+                            )
+                        )
+
                 temp = ExclusiveTempFile.create(target.parent)
                 try:
                     temp.write_from_source(operation.source_path)
@@ -164,7 +208,20 @@ class CursorDeployService:
                                 operation.relative_path
                             )
                         )
-                    temp.commit(target)
+                    if operation.kind == FileOpKind.CREATE:
+                        # Exclusive publish: do not let os.replace overwrite a race loser.
+                        temp.close_fd()
+                        try:
+                            exclusive_create_from_temp(temp.path, target)
+                        except FileExistsError as exc:
+                            raise InstallConflictError(
+                                "Refusing to overwrite unexpected target: {}".format(
+                                    operation.relative_path
+                                )
+                            ) from exc
+                        temp.path = None
+                    else:
+                        temp.commit(target)
                 except Exception:
                     temp.cleanup()
                     raise
@@ -183,6 +240,25 @@ class CursorDeployService:
                 relative_posix_path(str(path.relative_to(plan.project_root)).replace("\\", "/"))
                 for path in created_dirs
             ]
+            return AppliedManagedFiles(
+                created_files=created_files,
+                created_dirs=created_dirs,
+                preexisting_dirs=preexisting_dirs,
+                managed_files=managed_files,
+                created_directory_names=sorted(set(created_directory_names)),
+            )
+        except OSError as exc:
+            if rollback_on_error:
+                self._rollback(created_files, created_dirs, preexisting_dirs)
+            raise InstallFilesystemError("Installation failed: {}".format(exc)) from exc
+        except Exception:
+            if rollback_on_error:
+                self._rollback(created_files, created_dirs, preexisting_dirs)
+            raise
+
+    def apply(self, plan: InstallPlan) -> InstallManifest:
+        applied = self.apply_managed_files(plan, rollback_on_error=True)
+        try:
             manifest = InstallManifest(
                 schema_version=1,
                 ekp_version=plan.ekp_version,
@@ -190,17 +266,33 @@ class CursorDeployService:
                 adapters=[plan.adapter],
                 installed_at=utc_now_iso(),
                 install_root=".",
-                managed_files=managed_files,
-                created_directories=sorted(set(created_directory_names)),
+                managed_files=applied.managed_files,
+                created_directories=applied.created_directory_names,
             )
             ManifestStore(plan.project_root).save(manifest)
             return manifest
         except OSError as exc:
-            self._rollback(created_files, created_dirs, preexisting_dirs)
+            self._rollback(
+                applied.created_files,
+                applied.created_dirs,
+                applied.preexisting_dirs,
+            )
             raise InstallFilesystemError("Installation failed: {}".format(exc)) from exc
         except Exception:
-            self._rollback(created_files, created_dirs, preexisting_dirs)
+            self._rollback(
+                applied.created_files,
+                applied.created_dirs,
+                applied.preexisting_dirs,
+            )
             raise
+
+    def rollback_managed_files(self, applied: AppliedManagedFiles) -> None:
+        """Best-effort rollback of files/dirs created by ``apply_managed_files``."""
+        self._rollback(
+            applied.created_files,
+            applied.created_dirs,
+            applied.preexisting_dirs,
+        )
 
     def _validate_existing_manifest(
         self,
