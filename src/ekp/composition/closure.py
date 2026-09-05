@@ -99,3 +99,57 @@ def resolve_knowledge_paths(
             seen.add(relative)
             paths.append(relative)
     return paths
+
+
+def _transitive_dependencies(
+    component_id: str,
+    registry: ComponentRegistry,
+) -> Set[str]:
+    """Return all dependency ids reachable from component_id (excluding itself)."""
+    found: Set[str] = set()
+    stack = list(registry.get(component_id).requires)
+    while stack:
+        current = stack.pop()
+        if current in found:
+            continue
+        found.add(current)
+        stack.extend(registry.get(current).requires)
+    return found
+
+
+def reduce_requested_components(
+    requested: Sequence[str],
+    registry: ComponentRegistry,
+) -> List[str]:
+    """
+    Reduce requested components to a minimal semantic intent set.
+
+    A requested id ``x`` is redundant when another requested id ``y`` transitively
+    requires ``x``. Result ids are unique and sorted lexically.
+    """
+    if not isinstance(requested, (list, tuple)):
+        raise CompositionError("requested components must be a sequence of ids")
+
+    unique: List[str] = []
+    seen: Set[str] = set()
+    for raw in requested:
+        component_id = str(raw)
+        if component_id in seen:
+            continue
+        seen.add(component_id)
+        if not registry.has(component_id):
+            raise CompositionError("unknown component: {!r}".format(component_id))
+        unique.append(component_id)
+
+    kept: List[str] = []
+    for candidate in unique:
+        redundant = False
+        for other in unique:
+            if other == candidate:
+                continue
+            if candidate in _transitive_dependencies(other, registry):
+                redundant = True
+                break
+        if not redundant:
+            kept.append(candidate)
+    return sorted(kept)

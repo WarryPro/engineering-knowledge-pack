@@ -15,6 +15,7 @@ from jsonschema import Draft202012Validator
 from ekp.composition import (
     ComponentRegistry,
     CompositionError,
+    reduce_requested_components,
     resolve_component_closure,
     resolve_knowledge_paths,
 )
@@ -299,6 +300,55 @@ class ComponentKnowledgeTests(unittest.TestCase):
         paths_b = resolve_knowledge_paths(closed, self.registry)
         self.assertEqual(paths_a, paths_b)
         self.assertEqual(len(paths_a), len(set(paths_a)))
+
+
+class RequestedComponentReductionTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.registry = ComponentRegistry.load()
+
+    def test_symfony_implies_php(self):
+        self.assertEqual(
+            reduce_requested_components(["symfony", "php"], self.registry),
+            ["symfony"],
+        )
+
+    def test_frontend_implies_typescript_and_core(self):
+        self.assertEqual(
+            reduce_requested_components(
+                ["frontend", "typescript", "core"], self.registry
+            ),
+            ["frontend"],
+        )
+
+    def test_nativescript_implies_typescript(self):
+        self.assertEqual(
+            reduce_requested_components(["nativescript", "typescript"], self.registry),
+            ["nativescript"],
+        )
+
+    def test_independent_roots_sorted(self):
+        self.assertEqual(
+            reduce_requested_components(
+                ["symfony", "frontend", "devops"], self.registry
+            ),
+            ["devops", "frontend", "symfony"],
+        )
+
+    def test_core_only(self):
+        self.assertEqual(
+            reduce_requested_components(["core"], self.registry),
+            ["core"],
+        )
+
+    def test_full_redundant_set_reduces_to_roots(self):
+        self.assertEqual(
+            reduce_requested_components(
+                ["symfony", "frontend", "core", "php", "typescript"],
+                self.registry,
+            ),
+            ["frontend", "symfony"],
+        )
 
 
 class LegacyProfileParityTests(unittest.TestCase):
