@@ -9,15 +9,16 @@ from typing import List, Optional
 from ekp.composition import ComponentRegistry, resolve_composition
 from ekp.config.models import ProjectConfigError
 from ekp.config.project import ProjectConfigStore
-from ekp.install.cursor_deploy import sha256_file
+from ekp.install.deploy.hashing import sha256_file
+from ekp.install.deploy.registry import build_default_deploy_registry
 from ekp.install.errors import InstallConflictError
 from ekp.install.manifest import (
     INSTALL_MODE_COMPOSITION,
-    INSTALL_MODE_LEGACY_PROFILE,
     InstallManifest,
     ManifestStore,
 )
 from ekp.install.paths import check_symlink_boundary, resolve_project_root, resolve_under_root
+from ekp.lifecycle.uninstall import validate_lifecycle_manifest
 from ekp.paths import get_ekp_root
 from ekp.status.models import ManagedFileStatus, StatusResult, StatusState
 from ekp.version import get_version
@@ -65,6 +66,27 @@ class StatusService:
 
         mode = manifest.effective_mode
         composition_fields = self._empty_composition_fields(mode)
+
+        try:
+            validate_lifecycle_manifest(
+                manifest, deploy_registry=build_default_deploy_registry()
+            )
+        except InstallConflictError as exc:
+            return StatusResult(
+                project_root=str(project_root),
+                installed=True,
+                state=StatusState.INVALID,
+                running_version=running_version,
+                schema_version=manifest.schema_version,
+                installed_version=manifest.ekp_version,
+                profile=manifest.profile,
+                adapters=list(manifest.adapters),
+                install_root=manifest.install_root,
+                installed_at=manifest.installed_at,
+                managed_total=len(manifest.managed_files),
+                error_message=exc.message,
+                **composition_fields,
+            )
 
         file_statuses = self._inspect_managed_files(project_root, manifest)
         unsafe_paths = [item.relative_path for item in file_statuses if item.unsafe]
@@ -238,6 +260,7 @@ class StatusService:
 
         current_hash = snapshot.configuration_sha256
         drift = current_hash != bound_hash
+        assistants = list(snapshot.config.assistants)
         try:
             composition = resolve_composition(snapshot.config.components, registry)
             resolved = list(composition.resolved_components)
@@ -250,9 +273,33 @@ class StatusService:
             "current_configuration_sha256": current_hash,
             "requested_components": list(snapshot.config.components),
             "resolved_components": resolved,
-            "assistants": list(snapshot.config.assistants),
+            "assistants": assistants,
             "configuration_drift": drift,
         }
+
+        # Hash match + assistant-set mismatch => ownership corruption (INVALID).
+        if not drift and set(assistants) != set(manifest.adapters):
+            return StatusResult(
+                project_root=str(project_root),
+                installed=True,
+                state=StatusState.INVALID,
+                running_version=running_version,
+                schema_version=manifest.schema_version,
+                installed_version=manifest.ekp_version,
+                profile=manifest.profile,
+                adapters=list(manifest.adapters),
+                install_root=manifest.install_root,
+                installed_at=manifest.installed_at,
+                managed_total=len(manifest.managed_files),
+                intact_count=intact_count,
+                modified_paths=modified_paths,
+                missing_paths=missing_paths,
+                error_message=(
+                    "Ownership manifest adapters do not match project configuration "
+                    "assistants despite a matching configuration_sha256."
+                ),
+                **composition_fields,
+            )
 
         state = self._resolve_composition_state(
             installed_version=manifest.ekp_version,

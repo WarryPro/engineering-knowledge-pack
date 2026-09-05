@@ -110,7 +110,7 @@ class LegacyTempSymlinkTests(unittest.TestCase):
                 project_root=project,
                 snapshot=snapshot,
                 running_version="0.16.0.dev0",
-                inventory=_inventory_map(bundle),
+                desired=_inventory_map(bundle),
                 bundle_path=bundle,
             )
             TransactionApplier().apply_update(plan)
@@ -133,7 +133,7 @@ class DirectoryRollbackTests(unittest.TestCase):
                 project_root=project,
                 snapshot=snapshot,
                 running_version="0.16.0.dev0",
-                inventory=_inventory_map(bundle),
+                desired=_inventory_map(bundle),
                 bundle_path=bundle,
             )
             rules_dir = project / ".cursor" / "rules"
@@ -165,7 +165,7 @@ class DirectoryRollbackTests(unittest.TestCase):
                 project_root=project,
                 snapshot=snapshot,
                 running_version="0.16.0.dev0",
-                inventory=_inventory_map(bundle),
+                desired=_inventory_map(bundle),
                 bundle_path=bundle,
             )
             rules_dir = project / ".cursor" / "rules"

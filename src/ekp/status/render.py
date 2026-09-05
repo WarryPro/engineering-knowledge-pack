@@ -78,7 +78,7 @@ def render_human(result: StatusResult) -> str:
             [
                 "",
                 "Project configuration has changed since EKP was installed.",
-                "Automatic reconfiguration is not supported in v0.18.",
+                "Automatic reconfiguration is not supported by `ekp update`.",
             ]
         )
 

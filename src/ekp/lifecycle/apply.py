@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import List, Optional
 
 from ekp.install.atomic import ExclusiveTempFile
-from ekp.install.cursor_deploy import sha256_file
+from ekp.install.deploy.hashing import sha256_file
 from ekp.install.errors import InstallAssemblyError, InstallConflictError, InstallFilesystemError
 from ekp.install.manifest import InstallManifest, ManifestStore
 from ekp.install.paths import check_symlink_boundary, resolve_under_root

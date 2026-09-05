@@ -1,4 +1,4 @@
-"""Lifecycle plan model for uninstall and future update."""
+"""Lifecycle plan model for uninstall and update."""
 
 from __future__ import annotations
 
@@ -19,25 +19,32 @@ class LifecycleOpKind(str, Enum):
 
 @dataclass
 class LifecycleFileOperation:
-    """Single planned lifecycle file action."""
+    """Single planned lifecycle file action.
+
+    ``adapter`` is required and must reflect actual ownership (no silent Cursor default).
+    """
 
     relative_path: str
     kind: LifecycleOpKind
+    adapter: str
     previous_sha256: Optional[str] = None
     expected_sha256: Optional[str] = None
     source_path: Optional[Path] = None
-    adapter: str = "cursor"
 
 
 @dataclass
 class LifecyclePlan:
-    """Complete preflight lifecycle plan."""
+    """Complete preflight lifecycle plan.
+
+    ``adapters`` is the canonical multi-assistant representation (lexical when built).
+    ``adapter`` is a compatibility property for single-adapter plans only.
+    """
 
     project_root: Path
     profile: str
     old_version: str
     new_version: Optional[str]
-    adapter: str
+    adapters: List[str]
     mode: str
     operations: List[LifecycleFileOperation] = field(default_factory=list)
     conflicts: List[str] = field(default_factory=list)
@@ -51,6 +58,16 @@ class LifecyclePlan:
     dry_run: bool = False
     # Composition update: revalidate project.yaml semantic hash before/at commit.
     expected_configuration_sha256: Optional[str] = None
+
+    @property
+    def adapter(self) -> str:
+        """Compatibility: sole adapter for single-assistant plans."""
+        if len(self.adapters) != 1:
+            raise AttributeError(
+                "LifecyclePlan.adapter is only defined for single-adapter plans; "
+                "use .adapters"
+            )
+        return self.adapters[0]
 
     @property
     def has_conflicts(self) -> bool:
