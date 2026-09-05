@@ -44,3 +44,6 @@ class DetectionReport:
     diagnostics: List[str] = field(default_factory=list)
     ambiguous: bool = False
     reason: Optional[str] = None
+    # Composition-aware additive fields (AW-D). Empty when no medium/high proposal.
+    proposed_components: List[str] = field(default_factory=list)
+    resolved_components: List[str] = field(default_factory=list)

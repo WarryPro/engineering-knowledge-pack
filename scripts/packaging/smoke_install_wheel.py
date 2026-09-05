@@ -306,6 +306,66 @@ print("installed_composition_assembly_ok", result.rules_count)
             print(proc.stderr, file=sys.stderr)
             return 1
 
+        detect_composition_script = tmp_path / "smoke_detect_composition.py"
+        detect_composition_script.write_text(
+            """
+import json
+import tempfile
+from pathlib import Path
+from ekp.detection.service import DetectionService
+from ekp.detection.render import report_to_dict
+
+def write_symfony(root):
+    root.joinpath("composer.json").write_text(
+        '{"require":{"php":"^8.2","symfony/framework-bundle":"^7.0"}}',
+        encoding="utf-8",
+    )
+    root.joinpath("symfony.lock").write_text("{}", encoding="utf-8")
+    root.joinpath("config").mkdir(exist_ok=True)
+    root.joinpath("config/bundles.php").write_text("<?php", encoding="utf-8")
+
+def write_frontend(root):
+    root.joinpath("package.json").write_text(
+        '{"dependencies":{"react":"^18.0.0","typescript":"^5.0.0"}}',
+        encoding="utf-8",
+    )
+    root.joinpath("tsconfig.json").write_text("{}", encoding="utf-8")
+    (root / "src" / "components").mkdir(parents=True, exist_ok=True)
+
+with tempfile.TemporaryDirectory() as tmp:
+    root = Path(tmp)
+    write_symfony(root)
+    write_frontend(root)
+    report = DetectionService().detect(str(root))
+    payload = report_to_dict(report)
+    assert payload["proposed_components"] == ["frontend", "symfony"], payload
+    assert payload["resolved_components"] == [
+        "core", "php", "symfony", "typescript", "frontend"
+    ], payload
+    assert payload["recommended_profile"] is None
+    assert payload["ambiguous"] is True
+    text = json.dumps(payload, sort_keys=True)
+    assert "proposed_components" in text
+print("installed_detect_composition_ok", payload["proposed_components"])
+""",
+            encoding="utf-8",
+        )
+
+        proc = subprocess.run(
+            [str(python), str(detect_composition_script)],
+            capture_output=True,
+            text=True,
+            cwd=str(tmp_path),
+        )
+        if proc.returncode != 0:
+            print(proc.stdout, file=sys.stderr)
+            print(proc.stderr, file=sys.stderr)
+            return proc.returncode
+        print(proc.stdout.strip())
+        if "installed_detect_composition_ok" not in proc.stdout:
+            print(proc.stderr, file=sys.stderr)
+            return 1
+
         detect_script = tmp_path / "smoke_detect.py"
         detect_script.write_text(
             """
