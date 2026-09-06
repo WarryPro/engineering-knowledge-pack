@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Multi-Assistant Consumer Lifecycle (v0.19)** — install the same resolved technology composition into any non-empty subset of Cursor, GitHub Copilot, Claude, and Google Antigravity under one project lifecycle
+- Generic deployer abstraction (`DesiredManagedFile`, `Deployer`, `DeployRegistry`, `SharedDeploymentEngine`) with Adapter ≠ Deployer separation (ADR-0011)
+- Copilot, Claude, and Antigravity Consumer deployers alongside Cursor
+- Repeatable `ekp install --assistant` (order-insensitive; duplicates deduped; unknown rejected)
+- Interactive assistant picker (blank selection → Cursor); tool detection signals never persist as consent
+- Multi-assistant status / update / repair / uninstall with one ownership manifest and transactional apply
+
+### Lifecycle / Safety
+
+- Plan all selected assistants, check all conflicts, apply one transaction, write one `install.json` last
+- One assistant failure rolls back the entire install/update
+- Assistant add/remove in `project.yaml` after install → `CONFIGURATION_DRIFT`; `ekp update` refuses silent reconfiguration
+- `HEALTHY` only when all managed assistant files are healthy
+- Default without `--assistant` remains Cursor-only (v0.18 compatibility)
+- Existing v0.18 composition and v0.17 legacy-profile projects remain updatable; `ekp update` never adds/removes assistants
+
+### Product examples (v0.19)
+
+- Core all four assistants → 78 managed files (Cursor 65 + Copilot 2 + Claude 5 + Antigravity 6)
+- Symfony + Frontend Cursor default → 110 managed files
+- Symfony + Frontend all four → 137 managed files (110 + 6 + 10 + 11)
+- Symfony + Frontend Copilot + Claude only → 16 managed files
+- No assistant-specific technology profiles required
+
+### Scope
+
+- Safe reconfiguration / assistant add-remove / workspaces deferred to v0.20
+- Distribution / PyPI / product UX deferred to v0.21
+- No dated `0.19.0` release section until publication
+
 ## [0.18.0] - 2026-09-05
 
 ### Added

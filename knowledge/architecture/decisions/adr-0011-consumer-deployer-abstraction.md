@@ -10,7 +10,7 @@ Accepted
 
 ## Context
 
-EKP v0.18 introduced project composition (ADR-0010) and kept Consumer filesystem deployment inside `CursorDeployService`. Adapter generation already supports four assistants (`cursor`, `copilot`, `claude`, `antigravity`) via `AdapterRegistry`, but Consumer lifecycle hard-codes Cursor paths (`.cursor/rules/*.mdc`), planning, atomic writes, and ownership.
+EKP v0.18 introduced project composition (ADR-0010) and kept Consumer filesystem deployment inside `CursorDeployService`. Adapter generation already supports four assistants (`cursor`, `copilot`, `claude`, `antigravity`) via `AdapterRegistry`, but Consumer lifecycle hard-coded Cursor paths (`.cursor/rules/*.mdc`), planning, atomic writes, and ownership.
 
 v0.19 must support managed Consumer deployment for multiple assistants without duplicating collision planning, atomic CREATE/RESTORE, rollback, or ownership-manifest logic per assistant. Treating adapters as deployers would conflate **generation** (canonical knowledge → assistant bundle) with **deployment** (bundle → consumer filesystem).
 
@@ -64,8 +64,9 @@ Forbidden: four parallel `*DeployService` classes that duplicate planning, atomi
 
 ### Transaction and ownership
 
-- One transaction across selected assistants (when multi-assistant Consumer install is enabled later)
+- One transaction across selected assistants
 - One ownership manifest (`install.json`)
+- One shared deployment / lifecycle path (`SharedDeploymentEngine` + `TransactionApplier`)
 - Duplicate desired targets (same path, same or different adapters) are conflicts / programming errors — no last-writer-wins
 
 ### v0.19 target assistants
@@ -77,16 +78,14 @@ claude
 antigravity
 ```
 
-**Phase AX-A** implements Consumer deployment only for **Cursor** (`DeployRegistry` registers `cursor` only). Public Consumer support (`SUPPORTED_PROJECT_ASSISTANTS`, CLI, project config) remains Cursor-only until later phases. Copilot / Claude / Antigravity managed deployers follow in AX-B+.
-
-`DeployRegistry` is the long-term authoritative SoT for managed Consumer assistant capability. Do not introduce a second managed-assistant list.
+`DeployRegistry` is the authoritative SoT for managed Consumer assistant capability (all four registered). Public Consumer selection uses repeatable `--assistant` (default Cursor when omitted). Copilot / Claude / Antigravity managed deployers are implemented and lifecycle-covered.
 
 ## Rationale
 
 - Separates STACK (components) from ASSISTANT (adapters/deployers) per ADR-0010
-- Reuses proven Cursor safety (TOCTOU, atomic writes, rollback) for future assistants
+- Reuses proven Cursor safety (TOCTOU, atomic writes, rollback) for all managed assistants
 - Keeps adapter generators unchanged and contributor multi-output assembly green
-- Avoids premature public multi-assistant install while proving Cursor parity on the shared engine
+- Extends Consumer product surface without assistant-specific technology graphs
 
 ## Alternatives considered
 
@@ -100,20 +99,19 @@ Fold consumer path mapping into adapter generators. Rejected: adapters must stay
 
 ### Broaden public Consumer support in the same change as the abstraction
 
-Rejected: AX-A proves Cursor parity on the shared engine first; public multi-assistant activation is a later phase.
+Rejected historically for AX-A: Cursor parity on the shared engine first; public multi-assistant activation followed in later AX phases and is now complete for v0.19.
 
 ## Consequences
 
 ### Positive
 
 - Clear Adapter ≠ Deployer boundary
-- Shared safety semantics for all future managed assistants
-- Cursor remains a thin deployer + compatibility facade with zero Consumer behavior change in AX-A
+- Shared safety semantics for all managed assistants
+- Four v0.19 assistants under one composition lifecycle
 
 ### Negative
 
-- Temporary dual surface: `CursorDeployService` facade over shared engine until later retirement
-- Non-Cursor Consumer deployers deferred (AX-B)
+- Temporary dual surface: `CursorDeployService` facade over shared engine may remain until later retirement
 
 ### Risks
 
@@ -122,10 +120,10 @@ Rejected: AX-A proves Cursor parity on the shared engine first; public multi-ass
 ## Compliance
 
 - ADR index lists ADR-0011 as Accepted
-- `DeployRegistry` registers only implemented deployers (Cursor in AX-A)
-- Shared engine has no hard-coded `.cursor/rules` / `*.mdc` knowledge
+- `DeployRegistry` registers implemented deployers (cursor, copilot, claude, antigravity)
+- Shared engine has no hard-coded `.cursor/rules` / `*.mdc` knowledge as the only path model
 - Cursor composition/legacy install parity gates remain green
-- No public `--assistant`, project-config assistant expansion, or non-Cursor deployers in AX-A
+- Public `--assistant` and project-config assistants are activated for the four v0.19 assistants
 
 ## Related
 
