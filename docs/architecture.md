@@ -13,53 +13,58 @@ knowledge/
     ↓ deploy          →  consumer project (Consumer CLI or manual copy — see deployment.md)
 ```
 
-### Consumer CLI deployment layer (`v0.18` composition)
+### Consumer CLI deployment layer (`v0.19` multi-assistant composition)
 
-For application developers using Cursor, the Consumer CLI composes technology components and deploys assembled Cursor rules:
+For application developers, the Consumer CLI composes technology components once, generates assistant bundles, then deploys selected assistants through a shared lifecycle:
 
 ```
 Detection
   → Component Proposal
   → Composition (dependency closure)
-  → ProjectConfig (.ekp/project.yaml intent)
+  → ProjectConfig (.ekp/project.yaml intent: components + assistants)
   → Assembly (canonical knowledge union)
-  → Adapter (Cursor)
-  → Deployment (.cursor/rules/)
+  → AdapterRegistry (assistant bundles)
+  → DeployRegistry (DesiredManagedFile mapping)
+  → SharedDeploymentEngine / TransactionApplier
   → Manifest / Lifecycle (.ekp/install.json)
 ```
 
 ```
 Canonical knowledge (knowledge/, components/, schema/)
       ↓
-Component registry + resolve_composition
+ComponentRegistry + resolve_composition
       ↓
 AssemblyService (composed knowledge paths)
       ↓
-Cursor adapter
+AdapterRegistry → assistant bundles
+      ↓
+DeployRegistry → DesiredManagedFile[]
       ↓
 Consumer CLI
 ├── detect / component proposal
-├── install (composition default; --profile legacy)
-├── status (incl. CONFIGURATION_DRIFT)
+├── install (composition default; --assistant repeatable; --profile legacy)
+├── status (incl. CONFIGURATION_DRIFT; HEALTHY only when all managed files healthy)
 └── lifecycle
-    ├── update (bound to project.yaml hash; no redetect)
+    ├── update (bound to project.yaml hash; no redetect; no assistant reconfiguration)
     └── uninstall (preserves project.yaml)
       ↓
-safe deployment (.cursor/rules/ + .ekp/project.yaml + .ekp/install.json)
+safe multi-assistant deployment + .ekp/project.yaml + .ekp/install.json
       ↓
 consumer project
 ```
 
-**Boundaries (ADR-0010):**
+**Boundaries (ADR-0010 / ADR-0011):**
 
 | Artifact | Role |
 |----------|------|
 | `components/*.yaml` | Composition source of truth (requires + direct knowledge) |
-| `.ekp/project.yaml` | User/project requested intent |
-| `.ekp/install.json` | Operational ownership (`mode`, `configuration_sha256`) |
+| `.ekp/project.yaml` | User/project requested intent (components + assistants) |
+| `.ekp/install.json` | Operational ownership (`mode`, `configuration_sha256`, multi-adapter inventory) |
+| `AdapterRegistry` | Assistant-specific **generation** |
+| `DeployRegistry` | Assistant-specific **Consumer filesystem mapping** |
 | `cursor-*` / `ekp-*` profiles | Compatibility / packaging presets — not the default Consumer composition graph |
 
-Stack ≠ assistant: components never encode Cursor/Copilot/Claude/Antigravity. v0.18 managed assistant remains Cursor only.
+**Hard invariants:** STACK ≠ ASSISTANT; Adapter ≠ Deployer; one technology composition → one `project.yaml` → one `install.json` → one lifecycle. Components never encode Cursor/Copilot/Claude/Antigravity.
 
 Key lifecycle concepts:
 
@@ -76,7 +81,7 @@ running installed package version
   = update target version
 ```
 
-There is no remote version resolver in v0.18. Same-version resource drift inside one package is treated as an internal consistency failure. Package acquisition ≠ project update.
+There is no remote version resolver in v0.19. Same-version resource drift inside one package is treated as an internal consistency failure. Package acquisition ≠ project update.
 
 Manual assembly (contributor path) stops at `dist/<profile>/` for copy-based deployment. See [`deployment.md`](deployment.md).
 ```
@@ -246,7 +251,7 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 - Validator v2.3 with graph rules, namespaces, index generation, reports
 - Adapters: Cursor (all 15 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
 - Assemble pipeline with `--verify` (CI verifies all 15 profiles)
-- Consumer CLI (published in `v0.16.0`) — Cursor-only detect, install, status, update, and uninstall for application projects
+- Consumer CLI (`v0.19`) — multi-assistant composition detect/install/status/update/uninstall (Cursor default; Copilot / Claude / Antigravity via `--assistant`); legacy `--profile` retained
 
 **Planned / deferred:**
 

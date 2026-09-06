@@ -19,7 +19,7 @@ On Linux/macOS CI uses `python`; on Windows use `py -3` if configured.
 | Path | Role |
 |------|------|
 | `knowledge/` | Source of truth — validated on every change |
-| `components/` | Technology component registry (v0.18 composition SoT) |
+| `components/` | Technology component registry (v0.18+ composition SoT; STACK ≠ ASSISTANT) |
 | `profiles/` | Packaging / compatibility presets (operational `cursor-*` + stack `ekp-*` + `ekp-core` pilot) |
 | `scripts/validate/` | Validator CLI |
 | `scripts/adapters/` | Knowledge → tool format transformers |

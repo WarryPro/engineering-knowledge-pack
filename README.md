@@ -6,29 +6,30 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 
 ## Using EKP in a consumer project
 
-Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **v0.18 Consumer managed deployment targets Cursor only.** You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
+Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **v0.19 Consumer managed deployment supports Cursor, GitHub Copilot, Claude, and Google Antigravity** (same technology composition; assistant-specific outputs). You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
 
 Published install (latest released tag):
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.18.0
 ```
 
-`v0.18.0` is a **release candidate** on `staging` (Project Composition Engine). Until official publication, use a local checkout / staging build, or wait for the published `v0.18.0` tag. Alternative: `pip install` from a local checkout or Git ref into a virtual environment.
+`v0.19.0` multi-assistant Consumer work is on the feature branch (`0.19.0.dev0`) and is **not** a published tag yet. Until publication, use a local checkout / staging build for v0.19 behavior, or stay on published `v0.18.0` for Cursor-only composition. Alternative: `pip install` from a local checkout or Git ref into a virtual environment.
 
-### Composition model (v0.18)
+### Composition model (v0.19)
 
-Default Consumer installs compose **technology components**, not combinatorial profiles:
+Default Consumer installs compose **technology components**, not combinatorial profiles, then deploy to one or more **assistants**:
 
 ```text
 components
   → dependency closure
   → canonical knowledge
-  → Cursor adapter
-  → .cursor/rules + .ekp/install.json
+  → AdapterRegistry (assistant bundles)
+  → DeployRegistry (filesystem mapping)
+  → managed files + .ekp/install.json
 ```
 
-Example: `symfony` + `frontend` resolves to `core` + `php` + `symfony` + `typescript` + `frontend` (110 Cursor rules). No `cursor-symfony-frontend` profile is required.
+Example: `symfony` + `frontend` resolves to `core` + `php` + `symfony` + `typescript` + `frontend`. With default assistants that is **110 Cursor** managed files. Selecting all four assistants yields **137** managed files (Cursor 110 + Copilot 6 + Claude 10 + Antigravity 11) from **one** composition and **one** lifecycle manifest. No `cursor-symfony-frontend` profile is required.
 
 ### Existing project
 
@@ -38,12 +39,21 @@ ekp detect
 ekp install
 # or non-interactive when detection is unambiguous:
 ekp install --yes
+# explicit multi-assistant (repeatable --assistant; order-insensitive):
+ekp install \
+  --assistant cursor \
+  --assistant copilot \
+  --assistant claude \
+  --assistant antigravity \
+  --yes
 ekp status
 ekp update
 ekp uninstall
 ```
 
-Detection proposes selectable components from stack markers. Install persists **requested** components only in `.ekp/project.yaml`; dependencies are derived at assemble/install time. `ekp update` synchronizes managed files from the running package using that intent — it does **not** rewrite `project.yaml` or redetect a new stack. `ekp uninstall` removes managed files and `.ekp/install.json` but **preserves** `project.yaml` when present.
+**Default / consent:** omitting `--assistant` installs **Cursor only**. Detected tool signals (`.cursor`, `.github`, `.claude`, `.agents`, …) may be shown but **never** become consent to enable assistants.
+
+Detection proposes selectable components from stack markers. Install persists **requested** components and assistants only in `.ekp/project.yaml`; dependencies are derived at assemble/install time. `ekp update` synchronizes managed files from the running package using that intent — it does **not** rewrite `project.yaml`, redetect a new stack, or add/remove assistants. `ekp uninstall` removes managed files and `.ekp/install.json` but **preserves** `project.yaml` when present.
 
 ### Empty / new project
 
@@ -54,13 +64,31 @@ mkdir my-project && cd my-project
 ekp install
 ```
 
-Explicit non-interactive components (repeatable `--component`):
+Explicit non-interactive components (repeatable `--component`) and assistants (repeatable `--assistant`):
 
 ```bash
-ekp install --component symfony --component frontend --yes
+ekp install \
+  --component symfony \
+  --component frontend \
+  --assistant cursor \
+  --assistant copilot \
+  --assistant claude \
+  --assistant antigravity \
+  --yes
 ```
 
-`ekp install --yes` on a truly empty project **fails** (no guessing). There is no auto-created composition without detection evidence or an explicit `--component` / interactive choice.
+`ekp install --yes` on a truly empty project **fails** (no guessing). There is no auto-created composition without detection evidence or an explicit `--component` / interactive choice. Technology intent remains required even when `--assistant` is supplied alone.
+
+### Assistant destinations
+
+| Assistant | Managed outputs |
+|-----------|-----------------|
+| Cursor | `.cursor/rules/*.mdc` |
+| GitHub Copilot | `.github/copilot-instructions.md`, `.github/instructions/*.instructions.md` |
+| Claude | `CLAUDE.md`, `.claude/skills/*/SKILL.md` |
+| Google Antigravity | `.agents/rules/*.md` |
+
+Unmanaged collisions at those paths refuse install before mutation. Foreign files in `.github/`, `.claude/`, `.agents/`, or `.cursor/` that EKP does not own are left intact across install/uninstall.
 
 ### Project configuration
 
@@ -73,13 +101,17 @@ components:
   - frontend
 assistants:
   - cursor
+  - copilot
+  - claude
+  - antigravity
 ```
 
-- Stores **requested** components only; dependencies are derived
+- Stores **requested** components and assistants only; dependencies are derived
+- Assistants are user/project intent — changing them after install is **configuration drift**; `ekp update` does **not** reconfigure
 - User/project-owned — update does not rewrite it; uninstall preserves it
 - Operational ownership and hashes live in `.ekp/install.json` (`mode=composition`, `configuration_sha256`)
 
-Semantic changes to requested components yield `CONFIGURATION_DRIFT`; `ekp update` refuses silent reconfiguration (safe reconfiguration is planned for later releases).
+Semantic changes to requested components or assistants yield `CONFIGURATION_DRIFT`; `ekp update` refuses silent reconfiguration (safe reconfiguration is planned for v0.20).
 
 ### Legacy profiles (still supported)
 
@@ -91,13 +123,13 @@ ekp install --profile cursor-symfony --yes
 
 Legacy mode writes historical `install.json` shape (`mode` absent / `legacy-profile`) and does **not** create an EKP `project.yaml`. `--profile` and `--component` are mutually exclusive. Existing v0.17 profile installs stay on the legacy-profile lifecycle until you choose otherwise; v0.18 update does not auto-migrate them to composition.
 
-Other flags: `--path`, `--dry-run`, `--yes` (confirmation only — not a safety bypass).
+Other flags: `--path`, `--dry-run`, `--yes` (confirmation only — not a safety bypass), repeatable `--assistant` (mutually exclusive with `--profile`).
 
 ### Package upgrade vs project update
 
 ```bash
 # upgrade the package on your machine (acquisition)
-pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
+pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.18.0
 
 # then synchronize an existing managed project (project update)
 cd my-project
@@ -117,28 +149,34 @@ ekp uninstall
 
 - Only managed files recorded by EKP are removed
 - Modified owned files block uninstall
-- Unmanaged Cursor rules survive
+- Unmanaged assistant files survive
 - `project.yaml` is preserved when present
-- Conservative directory cleanup may leave empty `.cursor` / `.ekp` directories when ownership was not proven
+- Conservative directory cleanup may leave empty assistant / `.ekp` directories when ownership was not proven
 
 ### Safety
 
 - Composition and legacy installs track ownership in `.ekp/install.json`
-- Unmanaged Cursor rule collisions, symlinked `.cursor`/`.ekp`, and invalid config block unsafe writes
+- Unmanaged collisions, symlinked assistant roots / `.ekp`, and invalid config block unsafe writes
+- Multi-assistant install/update plans all selected assistants, checks all conflicts, applies one transaction, and writes one `install.json` last (one assistant failure rolls the whole operation back)
 - `--yes` skips confirmation prompts, not safety checks
 - `--dry-run` shows the plan without writing files
 
-### Current Consumer limitation
+### Support matrix (v0.19 Consumer)
 
-**v0.18 Consumer managed deployment = Cursor only.** Repository adapters for Copilot, Claude, and Antigravity still exist for the manual assemble pipeline; they are **not** managed through the Consumer install/update/uninstall lifecycle yet (planned for v0.19).
+| Assistant | Generation | Deploy | Install | Status | Update | Repair | Uninstall |
+|-----------|------------|--------|---------|--------|--------|--------|-----------|
+| Cursor | supported | supported | supported | supported | supported | supported | supported |
+| GitHub Copilot | supported | supported | supported | supported | supported | supported | supported |
+| Claude | supported | supported | supported | supported | supported | supported | supported |
+| Google Antigravity | supported | supported | supported | supported | supported | supported | supported |
 
-See [`docs/deployment.md`](docs/deployment.md) for the full Consumer CLI path vs manual adapter deployment.
+Manual assemble (Path B) remains available for contributor/profile workflows. See [`docs/deployment.md`](docs/deployment.md).
 
 ---
 
 ## Developing EKP itself
 
-Contributors and maintainers work with the knowledge pipeline below. This path is **not** required for the supported Cursor Consumer CLI workflow.
+Contributors and maintainers work with the knowledge pipeline below. This path is **not** required for the supported Consumer CLI workflow.
 
 ## What this repository contains
 
@@ -190,10 +228,10 @@ py -3 -m pip install -r scripts/validate/requirements.txt
 
 ## Getting started
 
-### Consumer projects (Cursor)
+### Consumer projects
 
 1. Install the published package (see [Using EKP in a consumer project](#using-ekp-in-a-consumer-project)).
-2. Run `ekp detect`, `ekp install`, `ekp status`, and later `ekp update` / `ekp uninstall` as needed.
+2. Run `ekp detect`, `ekp install` (optional `--assistant`), `ekp status`, and later `ekp update` / `ekp uninstall` as needed.
 
 ### Contributors
 
@@ -224,8 +262,9 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.17.0`
-- **v0.18.0 (release candidate — not yet published):** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle
+- **Latest published release:** `v0.18.0`
+- **v0.19.0 (in development on feature branch — not released):** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
+- **v0.18.0:** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle at publication time
 - **v0.17.0:** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack
 - **v0.16.0:** Consumer Lifecycle — `ekp update` and `ekp uninstall`; safe cross-version project synchronization; transactional rollback; manifest CAS; Ubuntu + Windows lifecycle packaging smoke; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`
 - **v0.15.0:** Consumer CLI (`ekp version`, `detect`, `install`, `status`); Cursor-only consumer installation; project detection and profile resolution; ownership manifest and safe deployment; Windows + Ubuntu validation; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.15.0`
@@ -267,7 +306,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.18` composition (release candidate)** | Package; composition + legacy Cursor lifecycle; Windows + Ubuntu CI; remote acquisition / PyPI / multi-assistant Consumer lifecycle deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.19` multi-assistant (integration validation in progress)** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; Windows + Ubuntu CI; remote acquisition / PyPI deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics

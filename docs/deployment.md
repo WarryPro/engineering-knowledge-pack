@@ -6,7 +6,7 @@ This guide has **two paths**:
 
 | Path | Audience | Adapters |
 |------|----------|----------|
-| **A — Consumer CLI** (recommended for Cursor) | Application developers | Cursor only (`v0.18` composition + legacy profiles) |
+| **A — Consumer CLI** (recommended) | Application developers | Cursor, Copilot, Claude, Antigravity (`v0.19` composition + legacy Cursor profiles) |
 | **B — Manual assembly** | Contributors and advanced/manual deployment | Cursor, Copilot, Antigravity, Claude (per profile) |
 
 Related:
@@ -17,25 +17,31 @@ Related:
 
 ---
 
-## Path A — Consumer CLI (Cursor)
+## Path A — Consumer CLI
 
-**Recommended for Cursor** in application projects. No repository checkout, validator, index generation, or manual file copying required.
+**Recommended** for application projects. No repository checkout, validator, index generation, or manual file copying required.
 
 ### Install the package (machine)
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.17.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.18.0
 ```
 
-Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself.
+Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself. `ekp update` never downloads a release — it applies resources from the currently running package.
 
 ### Deploy into a project (composition default)
 
 ```bash
 cd <project>
 ekp detect          # optional — inspect technologies and proposed components
-ekp install         # composition from detection or interactive components
+ekp install         # composition from detection or interactive components; default assistant = Cursor
 ekp install --component symfony --component frontend --yes
+ekp install \
+  --assistant cursor \
+  --assistant copilot \
+  --assistant claude \
+  --assistant antigravity \
+  --yes
 ekp status          # read-only installation health
 ```
 
@@ -43,7 +49,8 @@ ekp status          # read-only installation health
 |------|---------|
 | `--path <dir>` | Target project directory (default: current directory) |
 | `--component <id>` | Explicit technology component (repeatable; composition mode) |
-| `--profile <name>` | Explicit Cursor profile preset (legacy compatibility; mutually exclusive with `--component`) |
+| `--assistant <id>` | Explicit managed assistant (repeatable; composition mode; default Cursor when omitted) |
+| `--profile <name>` | Explicit Cursor profile preset (legacy compatibility; mutually exclusive with `--component` / `--assistant`) |
 | `--yes` | Skip confirmation prompts (does not bypass safety checks) |
 | `--dry-run` | Show plan without writing files |
 
@@ -51,21 +58,26 @@ Legacy presets remain: `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-ty
 
 ### What gets written
 
-Composition install:
+Composition install (per selected assistants):
 
 ```
-<project>/.cursor/rules/*.mdc    # Cursor rules for the resolved component closure
-<project>/.ekp/project.yaml      # requested intent (components + assistants)
-<project>/.ekp/install.json      # ownership manifest (mode=composition, configuration_sha256)
+<project>/.cursor/rules/*.mdc                         # Cursor
+<project>/.github/copilot-instructions.md             # Copilot
+<project>/.github/instructions/*.instructions.md
+<project>/CLAUDE.md                                   # Claude
+<project>/.claude/skills/*/SKILL.md
+<project>/.agents/rules/*.md                          # Antigravity
+<project>/.ekp/project.yaml                           # requested intent (components + assistants)
+<project>/.ekp/install.json                           # ownership manifest (mode=composition, configuration_sha256)
 ```
 
-Legacy `--profile` install writes rules + `install.json` only (no EKP-created `project.yaml`).
+Legacy `--profile` install writes Cursor rules + `install.json` only (no EKP-created `project.yaml`).
 
 ### Ownership warning
 
-Manual copying into `.cursor/rules/` (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
+Manual copying into assistant paths (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
 
-### Project lifecycle (`v0.18`)
+### Project lifecycle (`v0.19`)
 
 Typical flow:
 
@@ -84,15 +96,27 @@ uninstall (`ekp uninstall`) when removing EKP ownership
          (project.yaml preserved if present)
 ```
 
+#### Transactional multi-assistant behavior
+
+```text
+plan all selected assistants
+check all conflicts
+apply one transaction
+write one install.json last
+```
+
+One assistant failure → entire install/update rollback.
+
 #### `ekp update`
 
 Synchronizes an existing managed project to the resources bundled with the **currently running** EKP package. Update is local/offline with respect to release acquisition — it does not download packages or contact GitHub.
 
 User-facing contract:
 
-- **Composition:** `project.yaml` + `configuration_sha256` bind intent; update does **not** redetect components or rewrite config
+- **Composition:** `project.yaml` + `configuration_sha256` bind intent; update does **not** redetect components, rewrite config, or add/remove assistants
 - **Legacy-profile:** `manifest.profile` remains authoritative; update does not redetect or switch profile
-- configuration drift (yaml hash ≠ bound hash) → status `CONFIGURATION_DRIFT` and update **refuses** silent reconfiguration
+- configuration drift (yaml hash ≠ bound hash), including assistant list edits → status `CONFIGURATION_DRIFT` and update **refuses** silent reconfiguration
+- `HEALTHY` only when **all** managed assistant files are healthy
 - same-version missing managed files can be repaired when healthy/bound
 - modified owned files are conflicts
 - new unmanaged collisions are conflicts
@@ -108,21 +132,21 @@ Removes EKP-owned managed files using the ownership manifest:
 - unmanaged content is ignored
 - ownership manifest is removed last
 - **`.ekp/project.yaml` is preserved** when present (config-only project → `NOT_INSTALLED`)
-- conservative directory cleanup may leave empty `.cursor` / `.ekp` directories when ownership was not proven
+- conservative directory cleanup may leave empty assistant / `.ekp` directories when ownership was not proven
 
-#### Not supported in `v0.18`
+#### Not supported in `v0.19`
 
 - remote package/release acquisition from inside `ekp update`
-- automatic reconfiguration / `ekp configure`
-- multi-assistant Consumer lifecycle (Copilot / Claude / Antigravity)
-- monorepo orchestration
+- automatic reconfiguration / `ekp configure` / assistant add-remove after install
+- monorepo / workspace orchestration
 - PyPI publication as the distribution channel
 - combinatorial profiles such as `cursor-symfony-frontend`
+- automatic assistant enablement from tool detection signals
 ---
 
 ## Path B — Manual assembly
 
-Contributor workflow, advanced deployment, and the **current required path** for Copilot, Antigravity, and Claude consumer deployment.
+Contributor workflow and advanced/manual deployment for profile-based assemble output. Consumer Path A now covers managed Copilot, Claude, and Antigravity installs; Path B remains useful for packaging verification and non-managed copies.
 
 ---
 
