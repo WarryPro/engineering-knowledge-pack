@@ -1159,6 +1159,103 @@ with tempfile.TemporaryDirectory() as mismatch_dir:
         assert load_status(ekp, empty_comp)["state"] == "healthy"
         print("installed_wheel_empty_component_smoke_ok")
 
+        # Public flagship multi-assistant CLI (AX-E).
+        flagship = tmp_path / "public-all-four"
+        flagship.mkdir()
+        proc = run_ekp(
+            ekp,
+            [
+                "install",
+                "--component",
+                "symfony",
+                "--component",
+                "frontend",
+                "--assistant",
+                "cursor",
+                "--assistant",
+                "copilot",
+                "--assistant",
+                "claude",
+                "--assistant",
+                "antigravity",
+                "--yes",
+            ],
+            flagship,
+        )
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        flagship_manifest = load_manifest(flagship)
+        assert len(flagship_manifest["managed_files"]) == 137, len(
+            flagship_manifest["managed_files"]
+        )
+        assert flagship_manifest["adapters"] == [
+            "antigravity",
+            "claude",
+            "copilot",
+            "cursor",
+        ]
+        assert load_status(ekp, flagship)["state"] == "healthy"
+        proc = run_ekp(ekp, ["update", "--yes"], flagship)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        (flagship / ".github" / "copilot-instructions.md").unlink()
+        assert load_status(ekp, flagship)["state"] == "incomplete"
+        proc = run_ekp(ekp, ["update", "--yes"], flagship)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert load_status(ekp, flagship)["state"] == "healthy"
+        yaml_bytes = (flagship / ".ekp" / "project.yaml").read_bytes()
+        proc = run_ekp(ekp, ["uninstall", "--yes"], flagship)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert load_status(ekp, flagship)["state"] == "not_installed"
+        assert (flagship / ".ekp" / "project.yaml").read_bytes() == yaml_bytes
+        print("installed_wheel_public_all_four_flagship_ok", 137)
+
+        claude_only = tmp_path / "public-claude-only"
+        claude_only.mkdir()
+        proc = run_ekp(
+            ekp,
+            [
+                "install",
+                "--component",
+                "core",
+                "--assistant",
+                "claude",
+                "--yes",
+            ],
+            claude_only,
+        )
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert len(load_manifest(claude_only)["managed_files"]) == 5
+        assert load_status(ekp, claude_only)["state"] == "healthy"
+        assert (claude_only / "CLAUDE.md").is_file()
+        proc = run_ekp(ekp, ["update", "--yes"], claude_only)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        proc = run_ekp(ekp, ["uninstall", "--yes"], claude_only)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert load_status(ekp, claude_only)["state"] == "not_installed"
+        print("installed_wheel_public_claude_only_ok", 5)
+
+        cursor_default = tmp_path / "public-cursor-default"
+        cursor_default.mkdir()
+        proc = run_ekp(
+            ekp,
+            [
+                "install",
+                "--component",
+                "symfony",
+                "--component",
+                "frontend",
+                "--yes",
+            ],
+            cursor_default,
+        )
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        cursor_manifest = load_manifest(cursor_default)
+        assert cursor_manifest["adapters"] == ["cursor"]
+        assert len(cursor_manifest["managed_files"]) == 110
+        assert count_rules(cursor_default) == 110
+        assert not (cursor_default / "CLAUDE.md").exists()
+        assert not (cursor_default / ".github" / "copilot-instructions.md").exists()
+        print("installed_wheel_public_cursor_default_ok", 110)
+
         legacy = tmp_path / "legacy-profile"
         legacy.mkdir()
         write_symfony(legacy)

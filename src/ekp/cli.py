@@ -5,6 +5,7 @@ import sys
 
 from ekp.detection.render import render_human, render_json
 from ekp.detection.service import DetectionService
+from ekp.install.deploy.registry import build_default_deploy_registry
 from ekp.install.service import InstallRequest, InstallService
 from ekp.lifecycle.uninstall import UninstallRequest, UninstallService
 from ekp.lifecycle.update import UpdateRequest, UpdateService
@@ -13,6 +14,10 @@ from ekp.status.render import render_human as render_status_human
 from ekp.status.render import render_json as render_status_json
 from ekp.status.service import StatusRequest, StatusService
 from ekp.version import get_version
+
+
+def _supported_assistants_help():
+    return ", ".join(build_default_deploy_registry().supported_assistants())
 
 
 def main(argv=None):
@@ -43,7 +48,8 @@ def main(argv=None):
 
     install_parser = subparsers.add_parser(
         "install",
-        help="Install EKP Cursor rules into a consumer project",
+        help="Install EKP into a consumer project",
+        description="Install EKP into a consumer project",
     )
     install_parser.add_argument(
         "--path",
@@ -52,14 +58,32 @@ def main(argv=None):
     )
     install_parser.add_argument(
         "--profile",
-        help="Explicit Cursor profile preset (legacy compatibility; mutually exclusive with --component)",
+        help=(
+            "Legacy Cursor profile preset "
+            "(mutually exclusive with --component and --assistant)"
+        ),
     )
     install_parser.add_argument(
         "--component",
         action="append",
         dest="components",
         metavar="ID",
-        help="Project technology component to install (repeatable; mutually exclusive with --profile)",
+        help=(
+            "Repeatable project technology component "
+            "(mutually exclusive with --profile)"
+        ),
+    )
+    install_parser.add_argument(
+        "--assistant",
+        action="append",
+        dest="assistants",
+        metavar="ID",
+        help=(
+            "Repeatable managed AI assistant target "
+            "(supported: {}; mutually exclusive with --profile)".format(
+                _supported_assistants_help()
+            )
+        ),
     )
     install_parser.add_argument(
         "--yes",
@@ -89,7 +113,7 @@ def main(argv=None):
 
     uninstall_parser = subparsers.add_parser(
         "uninstall",
-        help="Remove EKP-managed Cursor files from a consumer project",
+        help="Remove EKP-managed files from a consumer project",
     )
     uninstall_parser.add_argument(
         "--path",
@@ -157,6 +181,7 @@ def main(argv=None):
                     path=args.path,
                     profile=args.profile,
                     components=args.components,
+                    assistants=args.assistants,
                     assume_yes=args.yes,
                     dry_run=args.dry_run,
                 )

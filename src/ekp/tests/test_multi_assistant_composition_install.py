@@ -373,7 +373,7 @@ class MultiAssistantCompositionInstallTests(unittest.TestCase):
             self.assertEqual(target.read_text(encoding="utf-8"), "race-winner\n")
             self.assertFalse((project / ".ekp" / "install.json").exists())
 
-    def test_public_cli_still_cursor_only(self):
+    def test_public_cli_default_remains_cursor_only(self):
         with tempfile.TemporaryDirectory() as tmp:
             project = Path(tmp) / "project"
             project.mkdir()
@@ -393,6 +393,27 @@ class MultiAssistantCompositionInstallTests(unittest.TestCase):
             self.assertFalse((project / "CLAUDE.md").exists())
             self.assertFalse((project / ".github" / "copilot-instructions.md").exists())
             self.assertFalse((project / ".agents").exists())
+
+    def test_public_cli_all_four_assistants(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            symfony_fixture(project)
+            frontend_fixture(project)
+            result = InstallService().install(
+                InstallRequest(
+                    path=str(project),
+                    components=["symfony", "frontend"],
+                    assistants=["cursor", "copilot", "claude", "antigravity"],
+                    assume_yes=True,
+                )
+            )
+            self.assertEqual(result.exit_code, EXIT_SUCCESS, result.message)
+            manifest = ManifestStore(project).load()
+            self.assertEqual(
+                manifest.adapters, ["antigravity", "claude", "copilot", "cursor"]
+            )
+            self.assertEqual(len(manifest.managed_files), 137)
 
 
 if __name__ == "__main__":

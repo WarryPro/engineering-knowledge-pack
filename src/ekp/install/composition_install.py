@@ -1,4 +1,4 @@
-"""Internal composition install service (multi-assistant capable; public CLI Cursor-only)."""
+"""Composition install service (public multi-assistant Consumer path)."""
 
 from __future__ import annotations
 

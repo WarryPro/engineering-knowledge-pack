@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Callable, List, Optional, Sequence, Set, Tuple
 
 from ekp.composition import (
     ComponentRegistry,
@@ -13,6 +13,7 @@ from ekp.composition import (
 )
 from ekp.config.assistants import (
     DEFAULT_PROJECT_ASSISTANT,
+    assistant_display_label,
     canonicalize_assistants,
     default_project_assistants,
 )
@@ -63,10 +64,14 @@ def validate_composition_assistants(
         selected = canonicalize_assistants(assistants)
         if not selected:
             raise InstallSelectionError("assistants must not be empty")
+    supported = registry.supported_assistants()
     for assistant_id in selected:
         if not registry.is_supported(assistant_id):
             raise InstallSelectionError(
-                "Unsupported Consumer assistant: {!r}".format(assistant_id)
+                "Unsupported Consumer assistant: {!r}.\n"
+                "Supported assistants: {}".format(
+                    assistant_id, ", ".join(supported)
+                )
             )
     return selected
 
@@ -184,7 +189,9 @@ def select_install_intent(
     Resolve install intent without writing project.yaml / install.json / adapter files.
 
     Mutual exclusion: explicit profile cannot combine with components or assistants.
-    Public CLI does not pass ``explicit_assistants`` (defaults remain Cursor-only).
+    When ``explicit_assistants`` is omitted and ``assume_yes`` is true, Cursor is default.
+    Interactive installs prompt for assistants after components are known.
+    Tool signals never auto-select assistants.
     """
     if explicit_profile and explicit_components:
         raise InstallSelectionError(
@@ -198,6 +205,8 @@ def select_install_intent(
         )
 
     loaded = registry or ComponentRegistry.load(resource_root or get_ekp_root())
+    deploy = _deploy_registry_or_default(deploy_registry)
+    signal_ids = _tool_signal_assistant_ids(report)
 
     if explicit_profile:
         return build_legacy_profile_intent(
@@ -207,33 +216,50 @@ def select_install_intent(
         )
 
     if explicit_components is not None:
+        assistants = _resolve_assistants_for_composition(
+            explicit_assistants=explicit_assistants,
+            assume_yes=assume_yes,
+            deploy_registry=deploy,
+            signal_ids=signal_ids,
+            input_fn=input_fn,
+            output_fn=output_fn,
+        )
         return build_composition_intent(
             explicit_components,
             loaded,
-            assistants=explicit_assistants,
+            assistants=assistants,
             additional_concerns=report.additional_concerns,
-            deploy_registry=deploy_registry,
+            deploy_registry=deploy,
         )
 
     if report.proposed_components:
-        # Tool signals never expand assistants; default remains Cursor.
+        assistants = _resolve_assistants_for_composition(
+            explicit_assistants=explicit_assistants,
+            assume_yes=assume_yes,
+            deploy_registry=deploy,
+            signal_ids=signal_ids,
+            input_fn=input_fn,
+            output_fn=output_fn,
+        )
         return build_composition_intent(
             report.proposed_components,
             loaded,
-            assistants=explicit_assistants,
+            assistants=assistants,
             additional_concerns=report.additional_concerns,
-            deploy_registry=deploy_registry,
+            deploy_registry=deploy,
         )
 
     if assume_yes:
+        if explicit_assistants is not None:
+            raise InstallSelectionError(
+                "No supported technology composition detected.\n\n"
+                "Assistant selection does not replace technology selection.\n"
+                "Specify --component or --profile, or provide .ekp/project.yaml."
+            )
         raise InstallSelectionError(
             "No supported technology composition detected.\n\n"
             "For non-interactive installation specify an explicit profile or components."
         )
-
-    if explicit_assistants is not None and not report.proposed_components:
-        # Assistants without components still require interactive/component selection.
-        pass
 
     return _prompt_empty_components(
         loaded,
@@ -241,8 +267,36 @@ def select_install_intent(
         output_fn=output_fn,
         additional_concerns=report.additional_concerns,
         explicit_assistants=explicit_assistants,
-        deploy_registry=deploy_registry,
+        deploy_registry=deploy,
+        signal_ids=signal_ids,
     )
+
+
+def _resolve_assistants_for_composition(
+    *,
+    explicit_assistants: Optional[Sequence[str]],
+    assume_yes: bool,
+    deploy_registry: DeployRegistry,
+    signal_ids: Set[str],
+    input_fn: Callable[[str], str],
+    output_fn: Callable[[str], None],
+) -> Optional[Sequence[str]]:
+    if explicit_assistants is not None:
+        return validate_composition_assistants(
+            explicit_assistants, deploy_registry=deploy_registry
+        )
+    if assume_yes:
+        return None  # validate_composition_assistants defaults to Cursor
+    return prompt_assistants(
+        deploy_registry=deploy_registry,
+        signal_ids=signal_ids,
+        input_fn=input_fn,
+        output_fn=output_fn,
+    )
+
+
+def _tool_signal_assistant_ids(report: DetectionReport) -> Set[str]:
+    return {signal.tool for signal in getattr(report, "tool_signals", []) or []}
 
 
 def component_display_label(component_id: str) -> str:
@@ -254,6 +308,75 @@ def component_display_label(component_id: str) -> str:
     return component_id[:1].upper() + component_id[1:]
 
 
+def prompt_assistants(
+    *,
+    deploy_registry: Optional[DeployRegistry] = None,
+    signal_ids: Optional[Set[str]] = None,
+    input_fn: Callable[[str], str] = input,
+    output_fn: Callable[[str], None] = print,
+) -> Tuple[str, ...]:
+    """
+    Interactive multi-assistant selection.
+
+    Blank / Enter accepts Cursor only. Tool signals may be annotated but never
+    auto-selected.
+    """
+    registry = _deploy_registry_or_default(deploy_registry)
+    options = list(registry.supported_assistants())
+    signals = signal_ids or set()
+
+    output_fn("")
+    output_fn("Select AI assistants (default: Cursor):")
+    for index, assistant_id in enumerate(options, start=1):
+        label = assistant_display_label(assistant_id)
+        if assistant_id in signals:
+            output_fn(
+                "  {}. {} — detected project signal".format(index, label)
+            )
+        else:
+            output_fn("  {}. {}".format(index, label))
+    output_fn("")
+    output_fn(
+        "Enter one or more numbers or assistant IDs separated by commas "
+        "(blank = Cursor only):"
+    )
+
+    while True:
+        raw = input_fn("Assistants: ").strip()
+        if not raw:
+            return default_project_assistants()
+
+        parts = [part.strip() for part in raw.split(",") if part.strip()]
+        if not parts:
+            output_fn("Enter at least one selection, or press Enter for Cursor.")
+            continue
+
+        chosen: List[str] = []
+        invalid = False
+        for part in parts:
+            if part.isdigit():
+                index = int(part)
+                if index < 1 or index > len(options):
+                    output_fn("Invalid selection number: {}".format(part))
+                    invalid = True
+                    break
+                chosen.append(options[index - 1])
+                continue
+            lowered = part.lower()
+            if lowered not in options:
+                output_fn(
+                    "Unsupported assistant: {!r}. Supported: {}".format(
+                        part, ", ".join(options)
+                    )
+                )
+                invalid = True
+                break
+            chosen.append(lowered)
+        if invalid:
+            continue
+        return validate_composition_assistants(chosen, deploy_registry=registry)
+
+
 def _prompt_empty_components(
     registry: ComponentRegistry,
     *,
@@ -262,6 +385,7 @@ def _prompt_empty_components(
     additional_concerns: Sequence[str] = (),
     explicit_assistants: Optional[Sequence[str]] = None,
     deploy_registry: Optional[DeployRegistry] = None,
+    signal_ids: Optional[Set[str]] = None,
 ) -> InstallIntent:
     selectable = [
         component
@@ -293,10 +417,18 @@ def _prompt_empty_components(
             output_fn("Invalid selection.")
             continue
         chosen = [selectable[index - 1].id for index in indexes]
+        assistants = explicit_assistants
+        if assistants is None:
+            assistants = prompt_assistants(
+                deploy_registry=deploy_registry,
+                signal_ids=signal_ids,
+                input_fn=input_fn,
+                output_fn=output_fn,
+            )
         return build_composition_intent(
             chosen,
             registry,
-            assistants=explicit_assistants,
+            assistants=assistants,
             additional_concerns=additional_concerns,
             deploy_registry=deploy_registry,
         )

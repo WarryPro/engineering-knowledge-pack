@@ -43,7 +43,7 @@ class DeployRegistry:
 
 
 def build_default_deploy_registry() -> DeployRegistry:
-    """Production registry: all four managed deployers (public CLI still Cursor-only)."""
+    """Production registry: all four managed Consumer deployers."""
     registry = DeployRegistry()
     registry.register(CursorDeployer())
     registry.register(CopilotDeployer())
