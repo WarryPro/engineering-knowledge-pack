@@ -3,9 +3,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 from ekp.assembly import AssemblyRequest, AssemblyService
+from ekp.composition import ComponentRegistry
+from ekp.config.models import ProjectConfigError
+from ekp.config.project import ProjectConfigStore
 from ekp.detection.service import DetectionService
 from ekp.install.composition_install import CompositionInstallService
 from ekp.install.cursor_deploy import CursorDeployService
@@ -17,8 +21,10 @@ from ekp.install.errors import (
 )
 from ekp.install.intent import (
     MODE_COMPOSITION,
+    build_composition_intent,
     build_legacy_profile_intent,
     select_install_intent,
+    validate_composition_assistants,
 )
 from ekp.install.manifest import (
     INSTALL_MODE_COMPOSITION,
@@ -35,6 +41,7 @@ from ekp.install.render import (
     render_success,
 )
 from ekp.install.selection import validate_explicit_profile
+from ekp.paths import get_ekp_root
 from ekp.resolution.resolver import apply_resolution
 from ekp.version import get_version
 
@@ -44,6 +51,7 @@ class InstallRequest:
     path: str = "."
     profile: Optional[str] = None
     components: Optional[Sequence[str]] = None
+    assistants: Optional[Sequence[str]] = None
     assume_yes: bool = False
     dry_run: bool = False
 
@@ -109,6 +117,13 @@ class InstallService:
                 project_root, intent, existing_manifest, ekp_version, request
             )
 
+        registry = ComponentRegistry.load(get_ekp_root())
+        config_intent = self._intent_from_existing_project_config(
+            project_root, request, registry
+        )
+        if config_intent is not None:
+            return self._install_composition(project_root, config_intent, request)
+
         report = apply_resolution(self.detection_service.detect(path=str(project_root)))
         intent = select_install_intent(
             report=report,
@@ -116,7 +131,11 @@ class InstallService:
             explicit_components=list(request.components)
             if request.components is not None
             else None,
+            explicit_assistants=list(request.assistants)
+            if request.assistants is not None
+            else None,
             assume_yes=request.assume_yes,
+            registry=registry,
             input_fn=self.input_fn,
             output_fn=self.output_fn,
         )
@@ -125,6 +144,61 @@ class InstallService:
             return self._install_composition(project_root, intent, request)
 
         return self._install_legacy(project_root, intent, existing_manifest, ekp_version, request)
+
+    def _intent_from_existing_project_config(
+        self,
+        project_root: Path,
+        request: InstallRequest,
+        registry: ComponentRegistry,
+    ):
+        """Use authoritative .ekp/project.yaml when present and compatible."""
+        store = ProjectConfigStore(project_root, registry=registry)
+        if not store.exists():
+            return None
+
+        try:
+            snapshot = store.load_snapshot()
+        except ProjectConfigError as exc:
+            raise InstallSelectionError(
+                "Invalid project configuration: {}".format(exc)
+            ) from exc
+
+        if snapshot is None:
+            return None
+
+        config = snapshot.config
+
+        if request.profile:
+            raise InstallSelectionError(
+                "Cannot combine --profile with existing .ekp/project.yaml.\n"
+                "Project composition intent already exists; use composition install "
+                "flags or uninstall first."
+            )
+
+        if request.components is not None:
+            explicit_components = set(request.components)
+            if explicit_components != set(config.components):
+                raise InstallSelectionError(
+                    "Explicit --component selection differs from existing "
+                    ".ekp/project.yaml (automatic reconfiguration is not supported)."
+                )
+
+        if request.assistants is not None:
+            explicit_assistants = set(
+                validate_composition_assistants(request.assistants)
+            )
+            if explicit_assistants != set(config.assistants):
+                raise InstallSelectionError(
+                    "Explicit --assistant selection differs from existing "
+                    ".ekp/project.yaml (automatic reconfiguration is not supported)."
+                )
+
+        # Authoritative config: do not redetect or prompt.
+        return build_composition_intent(
+            list(config.components),
+            registry,
+            assistants=list(config.assistants),
+        )
 
     def _existing_install_gate(self, existing_manifest, request: InstallRequest):
         if existing_manifest is None:
@@ -141,7 +215,7 @@ class InstallService:
             )
 
         # Legacy sticky mode: refuse composition intent / mode change.
-        if request.components is not None:
+        if request.components is not None or request.assistants is not None:
             return InstallResult(
                 exit_code=InstallSelectionError.exit_code,
                 message=(

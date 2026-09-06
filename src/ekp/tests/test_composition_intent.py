@@ -348,6 +348,7 @@ class InstallIntentTests(unittest.TestCase):
         intent = select_install_intent(
             report,
             explicit_components=["symfony", "frontend"],
+            assume_yes=True,
             registry=self.registry,
         )
         self.assertEqual(intent.mode, MODE_COMPOSITION)
@@ -372,7 +373,9 @@ class InstallIntentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             symfony_fixture(Path(tmp))
             report = DetectionService().detect(str(Path(tmp)))
-            intent = select_install_intent(report, registry=self.registry)
+            intent = select_install_intent(
+                report, assume_yes=True, registry=self.registry
+            )
             self.assertEqual(intent.mode, MODE_COMPOSITION)
             self.assertEqual(intent.components, ("symfony",))
 
@@ -418,18 +421,26 @@ class InstallIntentTests(unittest.TestCase):
         # Choose Symfony + Frontend by index in lexical selectable list.
         symfony_idx = selectable_ids.index("symfony") + 1
         frontend_idx = selectable_ids.index("frontend") + 1
+        answers = iter(
+            [
+                "{},{}".format(symfony_idx, frontend_idx),
+                "",  # blank assistant selection → Cursor only
+            ]
+        )
         intent = select_install_intent(
             report,
             assume_yes=False,
             registry=self.registry,
-            input_fn=lambda _prompt: "{},{}".format(symfony_idx, frontend_idx),
+            input_fn=lambda _prompt: next(answers),
             output_fn=outputs.append,
         )
         self.assertEqual(intent.mode, MODE_COMPOSITION)
         self.assertEqual(intent.components, ("frontend", "symfony"))
+        self.assertEqual(intent.assistants, ("cursor",))
         joined = "\n".join(outputs)
         self.assertIn("Select project components", joined)
         self.assertIn("Core engineering knowledge only", joined)
+        self.assertIn("Select AI assistants", joined)
 
     def test_unknown_explicit_component(self):
         with self.assertRaises(InstallSelectionError):

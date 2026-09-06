@@ -226,6 +226,8 @@ class ProductMatrixTests(unittest.TestCase):
                 calls["n"] += 1
                 if calls["n"] == 1:
                     return selection
+                if calls["n"] == 2:
+                    return ""  # blank assistant selection → Cursor only
                 return "y"
 
             from ekp.install.service import InstallRequest, InstallService
@@ -238,6 +240,7 @@ class ProductMatrixTests(unittest.TestCase):
             raw = (project / PROJECT_CONFIG_RELATIVE).read_text(encoding="utf-8")
             self.assertIn("- symfony", raw)
             self.assertIn("- frontend", raw)
+            self.assertIn("- cursor", raw)
             self.assertNotRegex(raw, r"(?m)^\s*-\s*php\s*$")
             self.assertNotRegex(raw, r"(?m)^\s*-\s*typescript\s*$")
             self.assertNotRegex(raw, r"(?m)^\s*-\s*core\s*$")

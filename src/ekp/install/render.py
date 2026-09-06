@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from ekp.config.assistants import assistant_display_label
 from ekp.install.plan import FileOpKind, InstallPlan
 
 
@@ -147,6 +148,27 @@ def render_success(plan: InstallPlan, *, noop: bool = False) -> str:
     )
 
 
+def _managed_files_block(plan) -> list:
+    intent = plan.intent
+    lines = ["Managed files:"]
+    if len(intent.assistants) == 1 and intent.assistants[0] == "cursor":
+        lines.append("  Cursor rules  {}".format(plan.rules_count))
+        lines.append("  Total         {}".format(plan.managed_file_count))
+        return lines
+
+    width = max(len(assistant_display_label(a)) for a in intent.assistants)
+    for assistant_id in intent.assistants:
+        label = assistant_display_label(assistant_id)
+        count = plan.assistant_counts.get(assistant_id, 0)
+        lines.append(
+            "  {}  {}".format(label.ljust(width), count)
+        )
+    lines.append(
+        "  {}  {}".format("Total".ljust(width), plan.managed_file_count)
+    )
+    return lines
+
+
 def render_composition_dry_run(plan) -> str:
     from ekp.composition import PROJECT_COMPOSITION_PROFILE
     from ekp.install.intent import MODE_COMPOSITION
@@ -173,13 +195,20 @@ def render_composition_dry_run(plan) -> str:
     lines.append("")
     lines.append("Assistants:")
     for item in intent.assistants:
-        lines.append("  {}".format(item))
+        lines.append("  {}".format(assistant_display_label(item)))
     lines.append("")
-    lines.append("Cursor rules: {}".format(plan.rules_count))
-    lines.append("Would write:  .ekp/project.yaml" if plan.config_action == "create" else "Would reuse:  .ekp/project.yaml")
+    lines.extend(_managed_files_block(plan))
+    lines.append("")
+    lines.append(
+        "Would write:  .ekp/project.yaml"
+        if plan.config_action == "create"
+        else "Would reuse:  .ekp/project.yaml"
+    )
     lines.append("Would write:  .ekp/install.json")
     lines.append("")
-    lines.append("Conflicts: {}".format(len(plan.conflicts) + len(plan.cursor_plan.conflicts)))
+    lines.append(
+        "Conflicts: {}".format(len(plan.conflicts) + len(plan.cursor_plan.conflicts))
+    )
     lines.append("Dry run — no files written.")
     return "\n".join(lines)
 
@@ -200,11 +229,11 @@ def render_composition_confirmation(plan) -> str:
         for item in composition.resolved_components:
             lines.append("  {}".format(item))
     lines.append("")
-    lines.append("Assistant:")
+    lines.append("Assistants:")
     for item in intent.assistants:
-        lines.append("  {}".format(item))
+        lines.append("  {}".format(assistant_display_label(item)))
     lines.append("")
-    lines.append("Cursor rules: {}".format(plan.rules_count))
+    lines.extend(_managed_files_block(plan))
     lines.append("Config:       {}".format(plan.config_action))
     lines.append("")
     lines.append("Continue? [Y/n]")
@@ -212,11 +241,16 @@ def render_composition_confirmation(plan) -> str:
 
 
 def render_composition_success(plan) -> str:
+    intent = plan.intent
     return (
-        "EKP composition install complete.\n\n"
-        "Mode:     composition\n"
-        "Profile:  project-composition\n"
-        "Rules:    {}\n"
-        "Config:   {}\n"
-        "Manifest: .ekp/install.json".format(plan.rules_count, plan.config_action)
+        "EKP installation complete.\n\n"
+        "Mode: composition\n"
+        "Assistants: {}\n"
+        "Managed files: {}\n"
+        "Config: {}\n"
+        "Manifest: .ekp/install.json".format(
+            ", ".join(intent.assistants),
+            plan.managed_file_count,
+            plan.config_action,
+        )
     )

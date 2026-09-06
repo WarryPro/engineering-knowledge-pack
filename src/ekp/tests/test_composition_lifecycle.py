@@ -56,6 +56,25 @@ class CompositionCliInstallTests(unittest.TestCase):
         text = buf.getvalue()
         self.assertIn("--component", text)
         self.assertIn("--profile", text)
+        self.assertIn("--assistant", text)
+        self.assertIn("Install EKP into a consumer project", text)
+        self.assertNotIn("Install EKP Cursor rules", text)
+
+    def test_profile_and_assistant_mutual_exclusion(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            code = main(
+                [
+                    "install",
+                    "--path",
+                    tmp,
+                    "--profile",
+                    "cursor-symfony",
+                    "--assistant",
+                    "copilot",
+                    "--yes",
+                ]
+            )
+            self.assertEqual(code, EXIT_SELECTION)
 
     def test_component_and_profile_mutual_exclusion(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -187,6 +206,7 @@ class CompositionCliInstallTests(unittest.TestCase):
                     "--component",
                     "frontend",
                     "--dry-run",
+                    "--yes",
                 ]
             )
             self.assertEqual(code, 0)
