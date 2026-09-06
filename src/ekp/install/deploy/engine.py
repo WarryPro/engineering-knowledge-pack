@@ -288,8 +288,14 @@ class SharedDeploymentEngine:
                 )
                 for op in plan.operations
             ]
+            # Created dirs come from resolve_under_root (canonical). Relative conversion
+            # must use the same resolved project-root spelling so Windows short/long
+            # aliases and other equivalent path forms remain containable.
+            canonical_project_root = plan.project_root.resolve()
             created_directory_names = [
-                relative_posix_path(str(path.relative_to(plan.project_root)).replace("\\", "/"))
+                relative_posix_path(
+                    str(path.relative_to(canonical_project_root)).replace("\\", "/")
+                )
                 for path in created_dirs
             ]
             return AppliedManagedFiles(

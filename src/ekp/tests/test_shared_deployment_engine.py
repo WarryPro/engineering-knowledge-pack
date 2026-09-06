@@ -293,6 +293,51 @@ class SharedDeploymentEngineTests(unittest.TestCase):
                 self.engine.apply_managed_files(plan)
             self.assertFalse((project / "file.md").exists())
 
+    def test_apply_with_noncanonical_equivalent_project_root(self):
+        """Resolved created dirs must relativize against resolved project root.
+
+        Portable stand-in for Windows short/long TEMP aliases: plan.project_root
+        keeps a ``..`` spelling while created paths are fully resolved.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            (root / "alias-parent").mkdir()
+            noncanonical = root / "alias-parent" / ".." / "project"
+            self.assertIn("..", noncanonical.parts)
+            self.assertEqual(noncanonical.resolve(), project.resolve())
+            self.assertNotEqual(str(noncanonical), str(noncanonical.resolve()))
+
+            source = root / "src.md"
+            source.write_text("hello\n", encoding="utf-8")
+            desired = [_desired("docs/nested/hello.md", "cursor", source)]
+            ops, conflicts = self.engine.plan_first_install(noncanonical, desired)
+            self.assertEqual(conflicts, [])
+            dirs = self.engine.directories_to_create(noncanonical, ops)
+            plan = self._plan(noncanonical, ops, dirs)
+            applied = self.engine.apply_managed_files(plan)
+
+            target = project / "docs" / "nested" / "hello.md"
+            self.assertTrue(target.is_file())
+            self.assertEqual(applied.created_directory_names, ["docs/nested"])
+            for name in applied.created_directory_names:
+                self.assertFalse(Path(name).is_absolute())
+                self.assertNotIn("..", Path(name).parts)
+                self.assertEqual(name, name.replace("\\", "/"))
+
+            keep = project / "foreign.txt"
+            keep.write_text("stay\n", encoding="utf-8")
+            self.engine.rollback(
+                applied.created_files, applied.created_dirs, applied.preexisting_dirs
+            )
+            self.assertFalse(target.exists())
+            # Only tracked created dirs are removed; parent dirs created via
+            # mkdir(parents=True) may remain empty (existing ownership semantics).
+            self.assertFalse((project / "docs" / "nested").exists())
+            self.assertTrue(keep.is_file())
+            self.assertTrue(project.is_dir())
+
     def test_assistant_x_synthetic_extensibility(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
