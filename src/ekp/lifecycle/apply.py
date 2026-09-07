@@ -40,6 +40,11 @@ class UpdateApplyResult:
 
 
 @dataclass
+class ConfigureApplyResult:
+    warnings: List[str]
+
+
+@dataclass
 class _CreatedFile:
     relative_path: str
     expected_sha256: str
@@ -107,6 +112,10 @@ class TransactionApplier:
             raise
 
     def apply_update(self, plan: LifecyclePlan) -> UpdateApplyResult:
+        if plan.transition_kind:
+            raise InstallFilesystemError(
+                "Configure transition plans require apply_configure_transition."
+            )
         if plan.has_conflicts:
             raise LifecycleConflictError("Cannot apply update plan with conflicts.")
         if plan.dry_run:
@@ -180,6 +189,250 @@ class TransactionApplier:
                 raise LifecycleRollbackError(self._rollback_incomplete_message(backup_root))
             shutil.rmtree(backup_root, ignore_errors=True)
             raise
+
+    def apply_configure_transition(self, plan: LifecyclePlan) -> ConfigureApplyResult:
+        """Apply a precomputed configure transition (config replace + file ops).
+
+        Ordering (frozen):
+          1 validate plan / no conflicts
+          2 verify manifest fingerprint present
+          3 verify OLD config semantic hash
+          4 verify OLD config exact-byte fingerprint
+          5 create required directories
+          6 atomically replace project.yaml
+          7 apply CREATE/WRITE/DELETE
+          8 verify NEW config exact bytes
+          9 verify NEW semantic hash
+          10 replace install.json LAST
+
+        Rollback order on failure after config replace:
+          managed file changes → created directories → project.yaml old bytes
+          (config rollback skipped if external actors mutated committed bytes).
+        """
+        if plan.transition_kind != "configure":
+            raise InstallFilesystemError(
+                "apply_configure_transition requires transition_kind='configure'."
+            )
+        if plan.has_conflicts:
+            raise LifecycleConflictError("Cannot apply configure plan with conflicts.")
+        if plan.dry_run:
+            raise InstallFilesystemError("Dry-run plans cannot be applied.")
+        if not plan.manifest_sha256:
+            raise InstallFilesystemError("Configure plan is missing manifest fingerprint.")
+        if not plan.expected_old_configuration_sha256:
+            raise InstallFilesystemError("Configure plan is missing old semantic hash.")
+        if not plan.new_configuration_sha256:
+            raise InstallFilesystemError("Configure plan is missing new semantic hash.")
+        if not plan.expected_project_config_content_sha256:
+            raise InstallFilesystemError(
+                "Configure plan is missing old project config content fingerprint."
+            )
+        if not plan.new_project_config_bytes:
+            raise InstallFilesystemError("Configure plan is missing new project config bytes.")
+        if not plan.new_project_config_content_sha256:
+            raise InstallFilesystemError(
+                "Configure plan is missing new project config content fingerprint."
+            )
+        if not plan.commit_manifest or plan.new_manifest is None:
+            raise InstallFilesystemError(
+                "Configure plan requires commit_manifest with new_manifest."
+            )
+
+        from ekp.config.models import ProjectConfigError, ProjectConfigRollbackError
+        from ekp.config.project import ProjectConfigStore, project_config_content_sha256
+        from ekp.composition import ComponentRegistry
+        from ekp.paths import get_ekp_root
+
+        backup_root = Path(tempfile.mkdtemp(prefix="ekp-lifecycle-"))
+        created: List[_CreatedFile] = []
+        written: List[_WrittenFile] = []
+        deleted: List[_DeletedFile] = []
+        created_directories: List[str] = []
+        config_handle = None
+
+        try:
+            registry = ComponentRegistry.load(get_ekp_root())
+            store = ProjectConfigStore(plan.project_root, registry=registry)
+
+            file_snap = store.load_file_snapshot()
+            if file_snap is None:
+                raise LifecycleConflictError(
+                    "Project configuration missing before configure transition."
+                )
+            if file_snap.configuration_sha256 != plan.expected_old_configuration_sha256:
+                raise LifecycleConflictError(
+                    "Project configuration semantic hash mismatch before configure; "
+                    "refusing transition."
+                )
+            if file_snap.content_sha256 != plan.expected_project_config_content_sha256:
+                raise LifecycleConflictError(
+                    "Project configuration bytes changed before configure; "
+                    "refusing transition."
+                )
+
+            planned_new_content = project_config_content_sha256(
+                plan.new_project_config_bytes
+            )
+            if planned_new_content != plan.new_project_config_content_sha256:
+                raise InstallFilesystemError(
+                    "Configure plan new project config content fingerprint mismatch."
+                )
+
+            new_config = store._parse_config_bytes(plan.new_project_config_bytes)
+            from ekp.config.normalization import configuration_sha256 as semantic_hash
+
+            if semantic_hash(new_config, registry) != plan.new_configuration_sha256:
+                raise InstallFilesystemError(
+                    "Configure plan new project config semantic hash mismatch."
+                )
+
+            self._create_directories(plan, created_directories)
+
+            try:
+                config_handle = store.replace(
+                    new_config,
+                    expected_content_sha256=plan.expected_project_config_content_sha256,
+                )
+            except ProjectConfigError as exc:
+                raise LifecycleConflictError(str(exc)) from exc
+
+            if (
+                config_handle.new_content_sha256 != plan.new_project_config_content_sha256
+                or config_handle.new_bytes != plan.new_project_config_bytes
+                or config_handle.new_configuration_sha256 != plan.new_configuration_sha256
+            ):
+                raise InstallFilesystemError(
+                    "Configure project config replacement produced unexpected bytes/hash."
+                )
+
+            for operation in plan.operations:
+                if operation.kind == LifecycleOpKind.NOOP:
+                    continue
+                if operation.kind == LifecycleOpKind.CREATE:
+                    self._apply_create(plan, operation, created)
+                elif operation.kind == LifecycleOpKind.WRITE:
+                    self._apply_write(plan, operation, backup_root, written)
+                elif operation.kind == LifecycleOpKind.DELETE:
+                    self._apply_delete(plan.project_root, operation, backup_root, deleted)
+
+            self._verify_new_configure_config(plan, store)
+            manifest = self._finalize_new_manifest(plan, created_directories)
+            ManifestStore(plan.project_root).replace(
+                manifest, expected_sha256=plan.manifest_sha256
+            )
+
+            shutil.rmtree(backup_root, ignore_errors=True)
+            return ConfigureApplyResult(warnings=[])
+        except InstallConflictError:
+            if self._rollback_configure(
+                plan.project_root,
+                created,
+                written,
+                deleted,
+                created_directories,
+                config_handle,
+            ):
+                shutil.rmtree(backup_root, ignore_errors=True)
+            else:
+                raise LifecycleRollbackError(
+                    self._rollback_incomplete_message(backup_root)
+                )
+            raise
+        except OSError as exc:
+            if not self._rollback_configure(
+                plan.project_root,
+                created,
+                written,
+                deleted,
+                created_directories,
+                config_handle,
+            ):
+                raise LifecycleRollbackError(
+                    self._rollback_incomplete_message(backup_root, exc)
+                ) from exc
+            shutil.rmtree(backup_root, ignore_errors=True)
+            raise InstallFilesystemError("Configure transition failed: {}".format(exc)) from exc
+        except InstallAssemblyError:
+            if not self._rollback_configure(
+                plan.project_root,
+                created,
+                written,
+                deleted,
+                created_directories,
+                config_handle,
+            ):
+                raise LifecycleRollbackError(self._rollback_incomplete_message(backup_root))
+            shutil.rmtree(backup_root, ignore_errors=True)
+            raise
+        except Exception:
+            if not self._rollback_configure(
+                plan.project_root,
+                created,
+                written,
+                deleted,
+                created_directories,
+                config_handle,
+            ):
+                raise LifecycleRollbackError(self._rollback_incomplete_message(backup_root))
+            shutil.rmtree(backup_root, ignore_errors=True)
+            raise
+
+    def _verify_new_configure_config(self, plan: LifecyclePlan, store) -> None:
+        from ekp.config.models import ProjectConfigError
+
+        try:
+            file_snap = store.load_file_snapshot()
+        except ProjectConfigError as exc:
+            raise LifecycleConflictError(
+                "Project configuration became invalid during configure: {}".format(exc)
+            ) from exc
+        if file_snap is None:
+            raise LifecycleConflictError(
+                "Project configuration missing after configure replacement."
+            )
+        if file_snap.content_sha256 != plan.new_project_config_content_sha256:
+            raise LifecycleConflictError(
+                "Project configuration bytes changed during configure; "
+                "refusing to commit ownership update."
+            )
+        if file_snap.configuration_sha256 != plan.new_configuration_sha256:
+            raise LifecycleConflictError(
+                "Project configuration semantic hash changed during configure; "
+                "refusing to commit ownership update."
+            )
+
+    def _rollback_configure(
+        self,
+        project_root: Path,
+        created: List[_CreatedFile],
+        written: List[_WrittenFile],
+        deleted: List[_DeletedFile],
+        created_directories: List[str],
+        config_handle,
+    ) -> bool:
+        from ekp.config.models import ProjectConfigRollbackError
+        from ekp.config.project import ProjectConfigStore
+        from ekp.composition import ComponentRegistry
+        from ekp.paths import get_ekp_root
+
+        restored_all = self._rollback_update(
+            project_root, created, written, deleted, created_directories
+        )
+        if config_handle is None:
+            return restored_all
+        try:
+            store = ProjectConfigStore(
+                project_root, registry=ComponentRegistry.load(get_ekp_root())
+            )
+            store.rollback_replace(
+                expected_current_content_sha256=config_handle.new_content_sha256,
+                old_bytes=config_handle.old_bytes,
+            )
+        except ProjectConfigRollbackError:
+            restored_all = False
+        except Exception:
+            restored_all = False
+        return restored_all
 
     def _create_directories(self, plan: LifecyclePlan, created_directories: List[str]) -> None:
         for relative in sorted(plan.directories_to_create, key=lambda path: path.count("/")):

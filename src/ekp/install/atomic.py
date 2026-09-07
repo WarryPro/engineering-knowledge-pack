@@ -32,9 +32,12 @@ class ExclusiveTempFile:
                 pass
 
     def write_text(self, text: str, *, encoding: str = "utf-8") -> None:
+        self.write_bytes(text.encode(encoding))
+
+    def write_bytes(self, data: bytes) -> None:
         with os.fdopen(self._fd, "wb") as dst:
             self._fd = -1
-            dst.write(text.encode(encoding))
+            dst.write(data)
             dst.flush()
             try:
                 os.fsync(dst.fileno())

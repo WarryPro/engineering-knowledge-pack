@@ -11,6 +11,9 @@ from ekp.config.models import (
     PROJECT_CONFIG_RELATIVE,
     ProjectConfig,
     ProjectConfigError,
+    ProjectConfigFileSnapshot,
+    ProjectConfigReplaceHandle,
+    ProjectConfigRollbackError,
     ProjectConfigSnapshot,
 )
 from ekp.config.normalization import (
@@ -18,7 +21,7 @@ from ekp.config.normalization import (
     normalize_project_config,
     reduce_requested_components_for_config,
 )
-from ekp.config.project import ProjectConfigStore
+from ekp.config.project import ProjectConfigStore, project_config_content_sha256
 
 __all__ = [
     "ASSISTANT_DISPLAY_LABELS",
@@ -26,6 +29,9 @@ __all__ = [
     "PROJECT_CONFIG_RELATIVE",
     "ProjectConfig",
     "ProjectConfigError",
+    "ProjectConfigFileSnapshot",
+    "ProjectConfigReplaceHandle",
+    "ProjectConfigRollbackError",
     "ProjectConfigSnapshot",
     "ProjectConfigStore",
     "assistant_display_label",
@@ -33,5 +39,6 @@ __all__ = [
     "configuration_sha256",
     "default_project_assistants",
     "normalize_project_config",
+    "project_config_content_sha256",
     "reduce_requested_components_for_config",
 ]
