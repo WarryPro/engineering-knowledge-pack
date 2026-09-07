@@ -8,6 +8,7 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
 import yaml
 from jsonschema import Draft202012Validator
@@ -602,6 +603,356 @@ class ProjectConfigHashContractTests(unittest.TestCase):
         )
         digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
         self.assertEqual(configuration_sha256(config, self.registry), digest)
+
+
+class ProjectConfigSchema1GoldenHashTests(unittest.TestCase):
+    """v0.19 schema1 configuration_sha256 compatibility anchors — must not drift."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.registry = ComponentRegistry.load()
+
+    def _hash(self, components, assistants):
+        return configuration_sha256(
+            ProjectConfig(
+                schema_version=1,
+                components=tuple(components),
+                assistants=tuple(assistants),
+            ),
+            self.registry,
+        )
+
+    def test_core_cursor(self):
+        self.assertEqual(
+            self._hash(["core"], ["cursor"]),
+            "68b272bbf381ea285450bacb842ff85df681f9cf3ebb299a5a5263985b6e8bf6",
+        )
+
+    def test_symfony_cursor(self):
+        self.assertEqual(
+            self._hash(["symfony"], ["cursor"]),
+            "3d0e5a61de7f76d189d1a5f21dea6881e70ea849e2d94685915d466f35c60869",
+        )
+
+    def test_symfony_frontend_cursor(self):
+        self.assertEqual(
+            self._hash(["symfony", "frontend"], ["cursor"]),
+            "9f1eeec39cddb476e5ef30e405d3d97123e994c5e6b46981bd553bcfd7c1cccc",
+        )
+
+    def test_symfony_frontend_all_four(self):
+        self.assertEqual(
+            self._hash(
+                ["symfony", "frontend"],
+                ["cursor", "copilot", "claude", "antigravity"],
+            ),
+            "98f13c07b85b4e21e6efddf67730a20b401a771a5a769144dc1e585f92022114",
+        )
+
+    def test_symfony_frontend_copilot_claude(self):
+        self.assertEqual(
+            self._hash(["symfony", "frontend"], ["copilot", "claude"]),
+            "cb6c14c00d6b48dda5f490deb7637cb7d55b2d36f5294fa29d1447723875e04f",
+        )
+
+    def test_ordering_variants_same_semantic_hash(self):
+        a = self._hash(["frontend", "symfony"], ["copilot", "cursor"])
+        b = self._hash(["symfony", "frontend"], ["cursor", "copilot"])
+        c = self._hash(["core", "php", "symfony", "frontend"], ["cursor", "copilot"])
+        self.assertEqual(a, b)
+        self.assertEqual(b, c)
+        expected = configuration_sha256(
+            ProjectConfig(1, ("symfony", "frontend"), ("cursor", "copilot")),
+            self.registry,
+        )
+        self.assertEqual(a, expected)
+
+
+class ProjectConfigPhysicalHashTests(unittest.TestCase):
+    """Physical content fingerprint is distinct from semantic configuration_sha256."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.registry = ComponentRegistry.load()
+
+    def test_same_semantic_different_bytes_different_content_hash(self):
+        from ekp.config.project import project_config_content_sha256
+
+        variants = [
+            b"schema_version: 1\ncomponents:\n  - symfony\nassistants:\n  - cursor\n",
+            b"schema_version: 1\ncomponents: [symfony]\nassistants:\n  - cursor\n",
+            b"# note\nschema_version: 1\ncomponents:\n  - symfony\nassistants:\n  - cursor\n",
+            b"assistants:\n  - cursor\ncomponents:\n  - symfony\nschema_version: 1\n",
+        ]
+        semantic = set()
+        physical = set()
+        schema = json.loads(
+            (get_ekp_root() / "schema" / "project-config.schema.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        for raw in variants:
+            payload = yaml.safe_load(raw.decode("utf-8"))
+            config = validate_project_config_payload(
+                payload, self.registry, schema=schema
+            )
+            semantic.add(configuration_sha256(config, self.registry))
+            physical.add(project_config_content_sha256(raw))
+        self.assertEqual(len(semantic), 1)
+        self.assertEqual(len(physical), len(variants))
+
+
+class ProjectConfigReplaceRollbackTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.registry = ComponentRegistry.load()
+
+    def _store(self, project: Path) -> ProjectConfigStore:
+        return ProjectConfigStore(project, registry=self.registry)
+
+    def _write_raw(self, project: Path, text: str) -> bytes:
+        path = project / ".ekp" / "project.yaml"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        raw = text.encode("utf-8")
+        path.write_bytes(raw)
+        return raw
+
+    def test_replace_happy_path(self):
+        from ekp.config.project import project_config_content_sha256, render_project_config_yaml
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            old = self._write_raw(
+                project,
+                "schema_version: 1\ncomponents: [symfony]\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            self.assertEqual(snap.content_sha256, project_config_content_sha256(old))
+            new_config = ProjectConfig(1, ("symfony", "frontend"), ("cursor",))
+            handle = store.replace(
+                new_config, expected_content_sha256=snap.content_sha256
+            )
+            expected_bytes = render_project_config_yaml(new_config).encode("utf-8")
+            self.assertEqual((project / ".ekp" / "project.yaml").read_bytes(), expected_bytes)
+            self.assertEqual(handle.new_bytes, expected_bytes)
+            self.assertEqual(
+                handle.new_configuration_sha256,
+                configuration_sha256(new_config, self.registry),
+            )
+            self.assertEqual(handle.old_bytes, old)
+
+    def test_replace_stale_content_refuses(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - symfony\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            # Whitespace / comment change preserving semantic intent.
+            self._write_raw(
+                project,
+                "# changed\nschema_version: 1\ncomponents:\n  - symfony\nassistants:\n  - cursor\n",
+            )
+            before = (project / ".ekp" / "project.yaml").read_bytes()
+            with self.assertRaises(ProjectConfigError) as ctx:
+                store.replace(
+                    ProjectConfig(1, ("symfony", "frontend"), ("cursor",)),
+                    expected_content_sha256=snap.content_sha256,
+                )
+            self.assertIn("changed", str(ctx.exception).lower())
+            self.assertEqual((project / ".ekp" / "project.yaml").read_bytes(), before)
+
+    def test_replace_semantic_drift_refuses(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - symfony\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - core\nassistants:\n  - cursor\n",
+            )
+            before = (project / ".ekp" / "project.yaml").read_bytes()
+            with self.assertRaises(ProjectConfigError):
+                store.replace(
+                    ProjectConfig(1, ("symfony", "frontend"), ("cursor",)),
+                    expected_content_sha256=snap.content_sha256,
+                )
+            self.assertEqual((project / ".ekp" / "project.yaml").read_bytes(), before)
+
+    def test_replace_missing_config_refuses(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - core\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            (project / ".ekp" / "project.yaml").unlink()
+            with self.assertRaises(ProjectConfigError):
+                store.replace(
+                    ProjectConfig(1, ("symfony",), ("cursor",)),
+                    expected_content_sha256=snap.content_sha256,
+                )
+            self.assertFalse((project / ".ekp" / "project.yaml").exists())
+
+    @unittest.skipUnless(os.name != "nt", "Symlink test skipped on Windows")
+    def test_replace_symlink_race_refuses(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - core\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            outside = root / "outside.yaml"
+            outside.write_text(
+                "schema_version: 1\ncomponents:\n  - core\nassistants:\n  - cursor\n",
+                encoding="utf-8",
+            )
+            path = project / ".ekp" / "project.yaml"
+            path.unlink()
+            path.symlink_to(outside)
+            before = outside.read_bytes()
+            with self.assertRaises(ProjectConfigError):
+                store.replace(
+                    ProjectConfig(1, ("symfony",), ("cursor",)),
+                    expected_content_sha256=snap.content_sha256,
+                )
+            self.assertEqual(outside.read_bytes(), before)
+
+    def test_replace_non_regular_race_refuses(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - core\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            path = project / ".ekp" / "project.yaml"
+            path.unlink()
+            path.mkdir()
+            with self.assertRaises(ProjectConfigError):
+                store.replace(
+                    ProjectConfig(1, ("symfony",), ("cursor",)),
+                    expected_content_sha256=snap.content_sha256,
+                )
+            self.assertTrue(path.is_dir())
+
+    def test_rollback_happy_path_restores_exact_bytes(self):
+        from ekp.config.project import ProjectConfigRollbackError  # noqa: F401
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            old = self._write_raw(
+                project,
+                "schema_version: 1\ncomponents: [symfony]\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            handle = store.replace(
+                ProjectConfig(1, ("symfony", "frontend"), ("cursor",)),
+                expected_content_sha256=snap.content_sha256,
+            )
+            store.rollback_replace(
+                expected_current_content_sha256=handle.new_content_sha256,
+                old_bytes=handle.old_bytes,
+            )
+            restored = (project / ".ekp" / "project.yaml").read_bytes()
+            self.assertEqual(restored, old)
+            file_snap = store.load_file_snapshot()
+            self.assertEqual(file_snap.content_sha256, snap.content_sha256)
+            self.assertEqual(
+                file_snap.configuration_sha256, snap.configuration_sha256
+            )
+
+    def test_rollback_external_mutation_preserves_bytes(self):
+        from ekp.config.models import ProjectConfigRollbackError
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - core\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            handle = store.replace(
+                ProjectConfig(1, ("symfony",), ("cursor",)),
+                expected_content_sha256=snap.content_sha256,
+            )
+            external = (
+                b"# external\nschema_version: 1\ncomponents:\n  - frontend\n"
+                b"assistants:\n  - cursor\n"
+            )
+            (project / ".ekp" / "project.yaml").write_bytes(external)
+            with self.assertRaises(ProjectConfigRollbackError):
+                store.rollback_replace(
+                    expected_current_content_sha256=handle.new_content_sha256,
+                    old_bytes=handle.old_bytes,
+                )
+            self.assertEqual(
+                (project / ".ekp" / "project.yaml").read_bytes(), external
+            )
+
+    def test_rollback_missing_config_refuses(self):
+        from ekp.config.models import ProjectConfigRollbackError
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - core\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+            handle = store.replace(
+                ProjectConfig(1, ("symfony",), ("cursor",)),
+                expected_content_sha256=snap.content_sha256,
+            )
+            (project / ".ekp" / "project.yaml").unlink()
+            with self.assertRaises(ProjectConfigRollbackError):
+                store.rollback_replace(
+                    expected_current_content_sha256=handle.new_content_sha256,
+                    old_bytes=handle.old_bytes,
+                )
+            self.assertFalse((project / ".ekp" / "project.yaml").exists())
+
+    def test_replace_write_failure_leaves_old_intact(self):
+        from ekp.install.atomic import ExclusiveTempFile
+
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp)
+            old = self._write_raw(
+                project,
+                "schema_version: 1\ncomponents:\n  - core\nassistants:\n  - cursor\n",
+            )
+            store = self._store(project)
+            snap = store.load_file_snapshot()
+
+            def boom(self_, data):
+                raise OSError("injected write failure")
+
+            with mock.patch.object(ExclusiveTempFile, "write_bytes", boom):
+                with self.assertRaises(OSError):
+                    store.replace(
+                        ProjectConfig(1, ("symfony",), ("cursor",)),
+                        expected_content_sha256=snap.content_sha256,
+                    )
+            self.assertEqual((project / ".ekp" / "project.yaml").read_bytes(), old)
+            leftovers = list((project / ".ekp").glob("ekp-*.tmp"))
+            self.assertEqual(leftovers, [])
 
 
 if __name__ == "__main__":

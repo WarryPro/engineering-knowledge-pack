@@ -57,7 +57,21 @@ class LifecyclePlan:
     bundle_path: Optional[Path] = None
     dry_run: bool = False
     # Composition update: revalidate project.yaml semantic hash before/at commit.
+    # Meaning unchanged from v0.19: expected CURRENT composition hash during update.
     expected_configuration_sha256: Optional[str] = None
+    # Optional transition identity (e.g. "configure"). Distinct from ``mode``.
+    # ``mode`` remains install semantic mode (composition / legacy-profile).
+    transition_kind: Optional[str] = None
+    # Configure transition: expected OLD semantic hash (pre-replace).
+    expected_old_configuration_sha256: Optional[str] = None
+    # Configure transition: intended NEW semantic hash (post-replace).
+    new_configuration_sha256: Optional[str] = None
+    # Configure transition: exact-byte CAS fingerprint of current project.yaml.
+    expected_project_config_content_sha256: Optional[str] = None
+    # Configure transition: deterministic rendered NEW project.yaml bytes.
+    new_project_config_bytes: Optional[bytes] = None
+    # Configure transition: physical fingerprint of ``new_project_config_bytes``.
+    new_project_config_content_sha256: Optional[str] = None
 
     @property
     def adapter(self) -> str:

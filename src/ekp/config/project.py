@@ -1,7 +1,8 @@
-"""Safe load and exclusive create for .ekp/project.yaml."""
+"""Safe load, exclusive create, and transactional replace for .ekp/project.yaml."""
 
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, Optional, Sequence, Tuple
@@ -15,12 +16,20 @@ from ekp.config.models import (
     SUPPORTED_PROJECT_SCHEMA_VERSION,
     ProjectConfig,
     ProjectConfigError,
+    ProjectConfigFileSnapshot,
+    ProjectConfigReplaceHandle,
+    ProjectConfigRollbackError,
     ProjectConfigSnapshot,
 )
 from ekp.config.normalization import configuration_sha256, normalize_project_config
 from ekp.install.atomic import ExclusiveTempFile, exclusive_create_from_temp
 from ekp.install.paths import check_symlink_boundary, resolve_under_root
 from ekp.paths import get_ekp_root
+
+
+def project_config_content_sha256(raw_bytes: bytes) -> str:
+    """SHA-256 of exact project.yaml bytes (physical fingerprint, not semantic)."""
+    return hashlib.sha256(raw_bytes).hexdigest()
 
 
 def _production_supported_assistants() -> Tuple[str, ...]:
@@ -139,7 +148,7 @@ def validate_project_config_payload(
 
 
 class ProjectConfigStore:
-    """Load and exclusively create user-owned project intent configuration."""
+    """Load, exclusively create, and transactionally replace project intent configuration."""
 
     def __init__(
         self,
@@ -212,6 +221,47 @@ class ProjectConfigStore:
         if boundary:
             raise ProjectConfigError(boundary)
 
+    def _read_raw_bytes(self) -> bytes:
+        """Read exact project.yaml bytes after safety checks. Raises on races."""
+        if not self.config_path.exists() and not self.config_path.is_symlink():
+            raise ProjectConfigError(
+                "project config missing: {}".format(PROJECT_CONFIG_RELATIVE)
+            )
+        self._ensure_config_path_safe()
+        if not self.config_path.is_file() or self.config_path.is_symlink():
+            raise ProjectConfigError(
+                "project config path is not a regular file: {}".format(
+                    PROJECT_CONFIG_RELATIVE
+                )
+            )
+        try:
+            return self.config_path.read_bytes()
+        except OSError as exc:
+            raise ProjectConfigError(
+                "unable to read project config: {}".format(exc)
+            ) from exc
+
+    def _parse_config_bytes(self, raw: bytes) -> ProjectConfig:
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise ProjectConfigError(
+                "project config is not valid UTF-8: {}".format(exc)
+            ) from exc
+        try:
+            payload = yaml.safe_load(text)
+        except yaml.YAMLError as exc:
+            raise ProjectConfigError(
+                "invalid YAML in project config: {}".format(exc)
+            ) from exc
+        if payload is None:
+            raise ProjectConfigError("project config root must be a mapping/object")
+        return validate_project_config_payload(
+            payload,
+            self._registry_or_load(),
+            schema=self._schema(),
+        )
+
     def load(self) -> Optional[ProjectConfig]:
         """Return None when missing; raise ProjectConfigError when invalid."""
         if not self.config_path.exists() and not self.config_path.is_symlink():
@@ -259,6 +309,22 @@ class ProjectConfigStore:
             config=config,
             normalized=normalized,
             configuration_sha256=digest,
+        )
+
+    def load_file_snapshot(self) -> Optional[ProjectConfigFileSnapshot]:
+        """Load semantic snapshot plus exact file bytes / physical fingerprint."""
+        if not self.config_path.exists() and not self.config_path.is_symlink():
+            return None
+        raw = self._read_raw_bytes()
+        config = self._parse_config_bytes(raw)
+        registry = self._registry_or_load()
+        normalized = normalize_project_config(config, registry)
+        return ProjectConfigFileSnapshot(
+            config=config,
+            normalized=normalized,
+            configuration_sha256=configuration_sha256(config, registry),
+            raw_bytes=raw,
+            content_sha256=project_config_content_sha256(raw),
         )
 
     def create(self, config: ProjectConfig) -> ProjectConfig:
@@ -311,6 +377,142 @@ class ProjectConfigStore:
             )
 
         return validated
+
+    def replace(
+        self,
+        new_config: ProjectConfig,
+        *,
+        expected_content_sha256: str,
+    ) -> ProjectConfigReplaceHandle:
+        """
+        Atomically replace project.yaml when current exact bytes match CAS fingerprint.
+
+        Compare-and-swap uses physical content SHA-256, never semantic configuration_sha256.
+        """
+        registry = self._registry_or_load()
+        validated = validate_project_config_payload(
+            {
+                "schema_version": new_config.schema_version,
+                "components": list(new_config.components),
+                "assistants": list(new_config.assistants),
+            },
+            registry,
+            schema=self._schema(),
+        )
+        new_text = render_project_config_yaml(validated)
+        new_bytes = new_text.encode("utf-8")
+        new_content = project_config_content_sha256(new_bytes)
+        new_semantic = configuration_sha256(validated, registry)
+
+        old_raw = self._read_raw_bytes()
+        old_content = project_config_content_sha256(old_raw)
+        if old_content != expected_content_sha256:
+            raise ProjectConfigError(
+                "project config changed before replacement; refusing overwrite"
+            )
+        old_config = self._parse_config_bytes(old_raw)
+        old_semantic = configuration_sha256(old_config, registry)
+
+        parent = self.config_path.parent
+        tmp = ExclusiveTempFile.create(parent)
+        try:
+            tmp.write_bytes(new_bytes)
+            # Immediate pre-commit revalidation (TOCTOU).
+            current = self._read_raw_bytes()
+            if project_config_content_sha256(current) != expected_content_sha256:
+                raise ProjectConfigError(
+                    "project config changed before replacement; refusing overwrite"
+                )
+            tmp.commit(self.config_path)
+        except Exception:
+            tmp.cleanup()
+            raise
+
+        # Post-replace verification.
+        try:
+            actual = self._read_raw_bytes()
+        except ProjectConfigError as exc:
+            raise ProjectConfigError(
+                "project config unverifiable after replacement: {}".format(exc)
+            ) from exc
+        if project_config_content_sha256(actual) != new_content:
+            raise ProjectConfigError(
+                "project config bytes mismatch after replacement"
+            )
+        loaded = self._parse_config_bytes(actual)
+        if configuration_sha256(loaded, registry) != new_semantic:
+            raise ProjectConfigError(
+                "project config semantic hash mismatch after replacement"
+            )
+
+        return ProjectConfigReplaceHandle(
+            old_bytes=old_raw,
+            old_content_sha256=old_content,
+            old_configuration_sha256=old_semantic,
+            new_bytes=new_bytes,
+            new_content_sha256=new_content,
+            new_configuration_sha256=new_semantic,
+            config=validated,
+        )
+
+    def rollback_replace(
+        self,
+        *,
+        expected_current_content_sha256: str,
+        old_bytes: bytes,
+    ) -> None:
+        """
+        Restore exact prior project.yaml bytes after a successful replace.
+
+        Refuses if current bytes no longer match what this store committed, or if
+        the path is missing / symlink / non-regular (no blind recreation).
+        """
+        try:
+            current = self._read_raw_bytes()
+        except ProjectConfigError as exc:
+            raise ProjectConfigRollbackError(
+                "cannot rollback project config: {}".format(exc)
+            ) from exc
+
+        current_sha = project_config_content_sha256(current)
+        if current_sha != expected_current_content_sha256:
+            raise ProjectConfigRollbackError(
+                "project config changed after replacement; refusing rollback overwrite"
+            )
+
+        parent = self.config_path.parent
+        tmp = ExclusiveTempFile.create(parent)
+        try:
+            tmp.write_bytes(old_bytes)
+            # Immediate pre-commit revalidation.
+            try:
+                recheck = self._read_raw_bytes()
+            except ProjectConfigError as exc:
+                raise ProjectConfigRollbackError(
+                    "cannot rollback project config: {}".format(exc)
+                ) from exc
+            if project_config_content_sha256(recheck) != expected_current_content_sha256:
+                raise ProjectConfigRollbackError(
+                    "project config changed after replacement; refusing rollback overwrite"
+                )
+            tmp.commit(self.config_path)
+        except ProjectConfigRollbackError:
+            tmp.cleanup()
+            raise
+        except Exception:
+            tmp.cleanup()
+            raise
+
+        try:
+            restored = self._read_raw_bytes()
+        except ProjectConfigError as exc:
+            raise ProjectConfigRollbackError(
+                "project config unverifiable after rollback: {}".format(exc)
+            ) from exc
+        if restored != old_bytes:
+            raise ProjectConfigRollbackError(
+                "project config bytes mismatch after rollback"
+            )
 
     def _exclusive_commit(self, temp_path: Path, target: Path) -> None:
         """Commit temp content to target without overwriting an existing file."""
