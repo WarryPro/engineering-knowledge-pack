@@ -14,7 +14,7 @@ Published install (latest released tag):
 pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.18.0
 ```
 
-`v0.19.0` multi-assistant Consumer work is on the feature branch (`0.19.0.dev0`) and is **not** a published tag yet. Until publication, use a local checkout / staging build for v0.19 behavior, or stay on published `v0.18.0` for Cursor-only composition. Alternative: `pip install` from a local checkout or Git ref into a virtual environment.
+`v0.19.0` is a **release candidate** on `staging` (Multi-Assistant Consumer Lifecycle). Until official publication, use a local checkout / staging build, or wait for the published `v0.19.0` tag. Alternative: `pip install` from a local checkout or Git ref into a virtual environment.
 
 ### Composition model (v0.19)
 
@@ -263,7 +263,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 ## Release status
 
 - **Latest published release:** `v0.18.0`
-- **v0.19.0 (in development on feature branch — not released):** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
+- **v0.19.0 (release candidate — not yet published):** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
 - **v0.18.0:** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle at publication time
 - **v0.17.0:** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack
 - **v0.16.0:** Consumer Lifecycle — `ekp update` and `ekp uninstall`; safe cross-version project synchronization; transactional rollback; manifest CAS; Ubuntu + Windows lifecycle packaging smoke; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`
@@ -306,7 +306,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.19` multi-assistant (integration validation in progress)** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; Windows + Ubuntu CI; remote acquisition / PyPI deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.19` multi-assistant (release candidate)** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; Windows + Ubuntu CI; remote acquisition / PyPI deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics

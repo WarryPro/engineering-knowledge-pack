@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-09-07
+
 ### Added
 
-- **Multi-Assistant Consumer Lifecycle (v0.19)** — install the same resolved technology composition into any non-empty subset of Cursor, GitHub Copilot, Claude, and Google Antigravity under one project lifecycle
+- **Multi-Assistant Consumer Lifecycle** — install the same resolved technology composition into any non-empty subset of Cursor, GitHub Copilot, Claude, and Google Antigravity under one project lifecycle
 - Generic deployer abstraction (`DesiredManagedFile`, `Deployer`, `DeployRegistry`, `SharedDeploymentEngine`) with Adapter ≠ Deployer separation (ADR-0011)
 - Copilot, Claude, and Antigravity Consumer deployers alongside Cursor
 - Repeatable `ekp install --assistant` (order-insensitive; duplicates deduped; unknown rejected)
@@ -25,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Default without `--assistant` remains Cursor-only (v0.18 compatibility)
 - Existing v0.18 composition and v0.17 legacy-profile projects remain updatable; `ekp update` never adds/removes assistants
 
-### Product examples (v0.19)
+### Product examples (v0.19.0)
 
 - Core all four assistants → 78 managed files (Cursor 65 + Copilot 2 + Claude 5 + Antigravity 6)
 - Symfony + Frontend Cursor default → 110 managed files
@@ -37,7 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Safe reconfiguration / assistant add-remove / workspaces deferred to v0.20
 - Distribution / PyPI / product UX deferred to v0.21
-- No dated `0.19.0` release section until publication
 
 ## [0.18.0] - 2026-09-05
 
