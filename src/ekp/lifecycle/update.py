@@ -36,7 +36,12 @@ from ekp.lifecycle.apply import (
     TransactionApplier,
 )
 from ekp.lifecycle.boundaries import adapters_from_desired, lifecycle_symlink_check_paths
-from ekp.lifecycle.plan import LifecycleFileOperation, LifecycleOpKind, LifecyclePlan
+from ekp.lifecycle.file_ops import (
+    classify_lifecycle_operation,
+    directories_to_create_for_operations,
+    noop_operation,
+)
+from ekp.lifecycle.plan import LifecycleFileOperation, LifecyclePlan
 from ekp.lifecycle.render import (
     render_update_confirmation,
     render_update_conflict_message,
@@ -401,14 +406,14 @@ def build_update_plan(
         boundary = check_symlink_boundary(project_root, relative)
         if boundary:
             conflicts.append(boundary)
-            operations.append(_noop_operation(relative, old_sha, adapter))
+            operations.append(noop_operation(relative, old_sha, adapter))
             continue
 
         try:
             target = resolve_under_root(project_root, relative)
         except ValueError as exc:
             conflicts.append(str(exc))
-            operations.append(_noop_operation(relative, old_sha, adapter))
+            operations.append(noop_operation(relative, old_sha, adapter))
             continue
 
         disk_exists = target.exists()
@@ -417,10 +422,10 @@ def build_update_plan(
 
         if disk_symlink:
             conflicts.append("Symlink target not managed safely: {}".format(relative))
-            operations.append(_noop_operation(relative, old_sha, adapter))
+            operations.append(noop_operation(relative, old_sha, adapter))
             continue
 
-        op = _classify_update_operation(
+        op = classify_lifecycle_operation(
             relative=relative,
             adapter=adapter,
             old_sha=old_sha,
@@ -434,11 +439,11 @@ def build_update_plan(
                 conflicts.append("Unmanaged file blocks update: {}".format(relative))
             else:
                 conflicts.append("Managed file modified by user: {}".format(relative))
-            operations.append(_noop_operation(relative, old_sha, adapter))
+            operations.append(noop_operation(relative, old_sha, adapter))
         else:
             operations.append(op)
 
-    directories_to_create = _directories_to_create(project_root, operations)
+    directories_to_create = directories_to_create_for_operations(project_root, operations)
     cross_version = manifest.ekp_version != running_version
     commit_manifest = cross_version
 
@@ -470,118 +475,6 @@ def build_update_plan(
         dry_run=dry_run,
         expected_configuration_sha256=expected_configuration_sha256,
     )
-
-
-def _noop_operation(
-    relative: str, old_sha: Optional[str], adapter: str
-) -> LifecycleFileOperation:
-    return LifecycleFileOperation(
-        relative_path=relative,
-        kind=LifecycleOpKind.NOOP,
-        adapter=adapter,
-        previous_sha256=old_sha,
-    )
-
-
-def _classify_update_operation(
-    *,
-    relative: str,
-    adapter: str,
-    old_sha: Optional[str],
-    new_sha: Optional[str],
-    source_path: Optional[Path],
-    disk_exists: bool,
-    disk_sha: Optional[str],
-) -> Optional[LifecycleFileOperation]:
-    if old_sha is not None and new_sha is not None:
-        if old_sha == new_sha:
-            if not disk_exists:
-                return LifecycleFileOperation(
-                    relative_path=relative,
-                    kind=LifecycleOpKind.CREATE,
-                    adapter=adapter,
-                    previous_sha256=None,
-                    expected_sha256=new_sha,
-                    source_path=source_path,
-                )
-            if disk_sha == old_sha:
-                return _noop_operation(relative, old_sha, adapter)
-            return None
-
-        if not disk_exists:
-            return LifecycleFileOperation(
-                relative_path=relative,
-                kind=LifecycleOpKind.CREATE,
-                adapter=adapter,
-                previous_sha256=None,
-                expected_sha256=new_sha,
-                source_path=source_path,
-            )
-        if disk_sha == old_sha:
-            return LifecycleFileOperation(
-                relative_path=relative,
-                kind=LifecycleOpKind.WRITE,
-                adapter=adapter,
-                previous_sha256=old_sha,
-                expected_sha256=new_sha,
-                source_path=source_path,
-            )
-        return None
-
-    if old_sha is None and new_sha is not None:
-        if not disk_exists:
-            return LifecycleFileOperation(
-                relative_path=relative,
-                kind=LifecycleOpKind.CREATE,
-                adapter=adapter,
-                previous_sha256=None,
-                expected_sha256=new_sha,
-                source_path=source_path,
-            )
-        return None
-
-    if old_sha is not None and new_sha is None:
-        if not disk_exists:
-            return _noop_operation(relative, old_sha, adapter)
-        if disk_sha == old_sha:
-            return LifecycleFileOperation(
-                relative_path=relative,
-                kind=LifecycleOpKind.DELETE,
-                adapter=adapter,
-                previous_sha256=old_sha,
-                expected_sha256=None,
-                source_path=None,
-            )
-        return None
-
-    return _noop_operation(relative, old_sha, adapter)
-
-
-def _directories_to_create(
-    project_root: Path, operations: List[LifecycleFileOperation]
-) -> List[str]:
-    needed: Set[str] = set()
-    for operation in operations:
-        if operation.kind != LifecycleOpKind.CREATE:
-            continue
-        parent = Path(operation.relative_path).parent
-        current = parent
-        while current.as_posix() not in (".", ""):
-            needed.add(current.as_posix())
-            current = current.parent
-
-    created: List[str] = []
-    for relative in sorted(needed, key=lambda path: path.count("/")):
-        boundary = check_symlink_boundary(project_root, relative)
-        if boundary:
-            continue
-        try:
-            target = resolve_under_root(project_root, relative)
-        except ValueError:
-            continue
-        if not target.exists():
-            created.append(relative)
-    return created
 
 
 def _build_new_manifest(
