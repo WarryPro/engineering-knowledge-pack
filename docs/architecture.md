@@ -13,7 +13,7 @@ knowledge/
     ↓ deploy          →  consumer project (Consumer CLI or manual copy — see deployment.md)
 ```
 
-### Consumer CLI deployment layer (`v0.19` multi-assistant + upcoming `v0.20` configure)
+### Consumer CLI deployment layer (`v0.19` multi-assistant + `v0.20` configure)
 
 For application developers, the Consumer CLI composes technology components once, generates assistant bundles, then deploys selected assistants through a shared lifecycle:
 
@@ -44,7 +44,7 @@ Consumer CLI
 ├── detect / component proposal
 ├── install (composition default; --assistant repeatable; --profile legacy)
 ├── status (incl. CONFIGURATION_DRIFT; HEALTHY only when all managed files healthy)
-├── configure (upcoming v0.20 — exact desired-state intent change; HEALTHY composition only)
+├── configure (v0.20 — exact desired-state intent change; HEALTHY composition only)
 └── lifecycle
     ├── update (bound to project.yaml semantic hash; no redetect; no assistant reconfiguration)
     └── uninstall (preserves project.yaml)
@@ -76,7 +76,7 @@ Key lifecycle concepts:
 - **configuration_sha256** — **semantic** normalized project intent (schema1-compatible; persisted in manifest)
 - **project.yaml content SHA-256** — **physical** exact-byte identity used only for transactional CAS / rollback (not a persistent user-facing schema field)
 
-### Safe Reconfiguration flow (upcoming v0.20)
+### Safe Reconfiguration flow (v0.20)
 
 Authorized intentional intent change for a HEALTHY composition install:
 

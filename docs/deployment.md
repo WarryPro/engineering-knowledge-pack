@@ -77,7 +77,7 @@ Legacy `--profile` install writes Cursor rules + `install.json` only (no EKP-cre
 
 Manual copying into assistant paths (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
 
-### Project lifecycle (`v0.19` + upcoming `v0.20` configure)
+### Project lifecycle (`v0.19` + `v0.20` configure)
 
 Typical flow:
 
@@ -135,7 +135,7 @@ User-facing contract:
 - new unmanaged collisions are conflicts
 - `--dry-run` previews without mutation; `--yes` skips confirmation only
 
-#### `ekp configure` (upcoming v0.20)
+#### `ekp configure` (v0.20 Safe Reconfiguration)
 
 Changes the **exact** desired component and assistant sets of an existing **HEALTHY composition** installation (desired-state, not add/remove deltas).
 

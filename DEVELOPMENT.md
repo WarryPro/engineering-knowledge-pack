@@ -77,7 +77,7 @@ py -3 -m unittest discover -s src/ekp/tests -v
 
 On Windows, expected Unix-only symlink safety tests skip. Ubuntu runs the full Consumer suite.
 
-Focused Safe Reconfiguration coverage (upcoming v0.20):
+Focused Safe Reconfiguration coverage (v0.20):
 
 ```bash
 py -3 -m unittest ekp.tests.test_project_config ekp.tests.test_configure_primitives ekp.tests.test_configure_service ekp.tests.test_configure_cli -q

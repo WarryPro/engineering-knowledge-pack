@@ -8,13 +8,13 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 
 Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **v0.19 Consumer managed deployment supports Cursor, GitHub Copilot, Claude, and Google Antigravity** (same technology composition; assistant-specific outputs). You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
 
+**Latest public release:** `v0.19.0`. **`v0.20.0`:** release candidate on staging — not yet published.
+
 Published install (latest public release):
 
 ```bash
 pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.19.0
 ```
-
-**Upcoming `v0.20` (Safe Reconfiguration)** is implemented on the feature branch as `0.20.0.dev0` — not yet released. Use a local checkout / staging build for pre-release validation.
 
 ### Composition model (v0.19+)
 
@@ -113,7 +113,7 @@ assistants:
 - User/project-owned — update does not rewrite it; uninstall preserves it
 - Operational ownership and hashes live in `.ekp/install.json` (`mode=composition`, `configuration_sha256` = semantic intent)
 
-### Reconfigure a healthy composition (upcoming v0.20)
+### Reconfigure a healthy composition (v0.20 Safe Reconfiguration)
 
 `ekp configure` sets the **exact** desired component and assistant sets (not add/remove deltas). Eligible only for **HEALTHY composition** installs at the running package version.
 
@@ -164,7 +164,7 @@ cd my-project
 ekp status
 ekp update --dry-run
 ekp update --yes
-# only then, if you need a new intent (upcoming v0.20):
+# only then, if you need a new intent (v0.20 Safe Reconfiguration):
 # ekp configure --component … --assistant … --yes
 ```
 
@@ -190,14 +190,14 @@ ekp uninstall
 - `--yes` skips confirmation prompts, not safety checks
 - `--dry-run` shows the plan without writing files
 
-### Support matrix (v0.19 Consumer + upcoming v0.20 configure)
+### Support matrix (v0.19 Consumer + v0.20 configure)
 
 | Assistant | Generation | Deploy | Install | Status | Update | Configure | Repair | Uninstall |
 |-----------|------------|--------|---------|--------|--------|-----------|--------|-----------|
-| Cursor | supported | supported | supported | supported | supported | upcoming v0.20 | supported | supported |
-| GitHub Copilot | supported | supported | supported | supported | supported | upcoming v0.20 | supported | supported |
-| Claude | supported | supported | supported | supported | supported | upcoming v0.20 | supported | supported |
-| Google Antigravity | supported | supported | supported | supported | supported | upcoming v0.20 | supported | supported |
+| Cursor | supported | supported | supported | supported | supported | supported | supported | supported |
+| GitHub Copilot | supported | supported | supported | supported | supported | supported | supported | supported |
+| Claude | supported | supported | supported | supported | supported | supported | supported | supported |
+| Google Antigravity | supported | supported | supported | supported | supported | supported | supported | supported |
 
 Configure applies to **composition** installs only (not legacy-profile). Manual assemble (Path B) remains available for contributor/profile workflows. See [`docs/deployment.md`](docs/deployment.md).
 
@@ -292,7 +292,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 ## Release status
 
 - **Latest public release:** `v0.19.0`
-- **Upcoming `v0.20` (not released):** Safe Reconfiguration — public `ekp configure` desired-state workflow for HEALTHY composition installs (`0.20.0.dev0` on the feature branch)
+- **`v0.20.0`:** release candidate on staging — not yet published. Safe Reconfiguration — public `ekp configure` desired-state workflow for HEALTHY composition installs
 - **v0.19.0:** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
 - **v0.18.0:** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle at publication time
 - **v0.17.0:** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack

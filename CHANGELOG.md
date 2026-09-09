@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-09-09
+
 ### Added
 
-- **Safe Reconfiguration (upcoming v0.20)** — public `ekp configure` changes the exact desired component and assistant sets of an existing **HEALTHY composition** installation
+- **Safe Reconfiguration (v0.20)** — public `ekp configure` changes the exact desired component and assistant sets of an existing **HEALTHY composition** installation
 - Interactive configure defaults to **current** persisted intent (blank keeps current; never tool detection; never Cursor injection)
 - Noninteractive configure (`--yes` / `--dry-run`) requires both exact dimensions (`>=1 --component`, `>=1 --assistant`)
 - Configure dry-run renders current/desired intent, semantic hashes, CREATE/WRITE/DELETE/NOOP, and conflicts with zero writes
@@ -59,7 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Scope
 
-- Safe reconfiguration delivered in upcoming v0.20 (`ekp configure`); workspaces deferred to v0.21
+- Safe reconfiguration deferred to v0.20 (`ekp configure`); workspaces deferred to v0.21
 - Distribution / PyPI / product UX deferred to v0.22
 
 ## [0.18.0] - 2026-09-05
