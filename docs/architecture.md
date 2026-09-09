@@ -13,7 +13,7 @@ knowledge/
     ↓ deploy          →  consumer project (Consumer CLI or manual copy — see deployment.md)
 ```
 
-### Consumer CLI deployment layer (`v0.19` multi-assistant composition)
+### Consumer CLI deployment layer (`v0.19` multi-assistant + upcoming `v0.20` configure)
 
 For application developers, the Consumer CLI composes technology components once, generates assistant bundles, then deploys selected assistants through a shared lifecycle:
 
@@ -44,8 +44,9 @@ Consumer CLI
 ├── detect / component proposal
 ├── install (composition default; --assistant repeatable; --profile legacy)
 ├── status (incl. CONFIGURATION_DRIFT; HEALTHY only when all managed files healthy)
+├── configure (upcoming v0.20 — exact desired-state intent change; HEALTHY composition only)
 └── lifecycle
-    ├── update (bound to project.yaml hash; no redetect; no assistant reconfiguration)
+    ├── update (bound to project.yaml semantic hash; no redetect; no assistant reconfiguration)
     └── uninstall (preserves project.yaml)
       ↓
 safe multi-assistant deployment + .ekp/project.yaml + .ekp/install.json
@@ -53,7 +54,7 @@ safe multi-assistant deployment + .ekp/project.yaml + .ekp/install.json
 consumer project
 ```
 
-**Boundaries (ADR-0010 / ADR-0011):**
+**Boundaries (ADR-0010 / ADR-0011 / ADR-0012):**
 
 | Artifact | Role |
 |----------|------|
@@ -72,6 +73,34 @@ Key lifecycle concepts:
 - **LifecyclePlan** — planned CREATE / WRITE / DELETE / NOOP operations bound to a manifest snapshot
 - **TransactionApplier** — backup, apply-time revalidation, rollback, and recovery workspace retention
 - **ManifestStore** — ownership persistence with compare-and-swap for update and last-step removal for uninstall
+- **configuration_sha256** — **semantic** normalized project intent (schema1-compatible; persisted in manifest)
+- **project.yaml content SHA-256** — **physical** exact-byte identity used only for transactional CAS / rollback (not a persistent user-facing schema field)
+
+### Safe Reconfiguration flow (upcoming v0.20)
+
+Authorized intentional intent change for a HEALTHY composition install:
+
+```text
+current ProjectConfig
+  ↓
+desired ProjectConfig (exact component + assistant sets)
+  ↓
+semantic hash transition (configuration_sha256)
+  ↓
+assemble desired composition (once)
+  ↓
+desired managed inventory
+  ↓
+LifecyclePlan
+  ↓
+transactional exact-byte config replacement
+  ↓
+managed-file delta (CREATE / WRITE / DELETE / NOOP)
+  ↓
+install.json LAST
+```
+
+Public CLI: `ekp configure` — prepare once, render, confirm, apply the **same** prepared plan. Manual `project.yaml` edits remain drift and are refused. Workspaces / monorepos are deferred to v0.21 (ADR-0012).
 
 Package vs project version:
 
@@ -81,7 +110,7 @@ running installed package version
   = update target version
 ```
 
-There is no remote version resolver in v0.19. Same-version resource drift inside one package is treated as an internal consistency failure. Package acquisition ≠ project update.
+There is no remote version resolver in Consumer lifecycle. Same-version resource drift inside one package is treated as an internal consistency failure. Package acquisition ≠ project update ≠ configure.
 
 Manual assembly (contributor path) stops at `dist/<profile>/` for copy-based deployment. See [`deployment.md`](deployment.md).
 ```

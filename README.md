@@ -8,15 +8,15 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 
 Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **v0.19 Consumer managed deployment supports Cursor, GitHub Copilot, Claude, and Google Antigravity** (same technology composition; assistant-specific outputs). You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
 
-Published install (latest released tag):
+Published install (latest public release):
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.18.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.19.0
 ```
 
-`v0.19.0` is a **release candidate** on `staging` (Multi-Assistant Consumer Lifecycle). Until official publication, use a local checkout / staging build, or wait for the published `v0.19.0` tag. Alternative: `pip install` from a local checkout or Git ref into a virtual environment.
+**Upcoming `v0.20` (Safe Reconfiguration)** is implemented on the feature branch as `0.20.0.dev0` — not yet released. Use a local checkout / staging build for pre-release validation.
 
-### Composition model (v0.19)
+### Composition model (v0.19+)
 
 Default Consumer installs compose **technology components**, not combinatorial profiles, then deploy to one or more **assistants**:
 
@@ -47,13 +47,14 @@ ekp install \
   --assistant antigravity \
   --yes
 ekp status
+ekp configure   # intentional desired-state change (HEALTHY composition only)
 ekp update
 ekp uninstall
 ```
 
 **Default / consent:** omitting `--assistant` installs **Cursor only**. Detected tool signals (`.cursor`, `.github`, `.claude`, `.agents`, …) may be shown but **never** become consent to enable assistants.
 
-Detection proposes selectable components from stack markers. Install persists **requested** components and assistants only in `.ekp/project.yaml`; dependencies are derived at assemble/install time. `ekp update` synchronizes managed files from the running package using that intent — it does **not** rewrite `project.yaml`, redetect a new stack, or add/remove assistants. `ekp uninstall` removes managed files and `.ekp/install.json` but **preserves** `project.yaml` when present.
+Detection proposes selectable components from stack markers. Install persists **requested** components and assistants only in `.ekp/project.yaml`; dependencies are derived at assemble/install time. `ekp update` synchronizes managed files from the running package using that intent — it does **not** rewrite `project.yaml`, redetect a new stack, or add/remove assistants. To change components or assistants intentionally, use `ekp configure` from a **HEALTHY** composition install. `ekp uninstall` removes managed files and `.ekp/install.json` but **preserves** `project.yaml` when present.
 
 ### Empty / new project
 
@@ -107,12 +108,39 @@ assistants:
 ```
 
 - Stores **requested** components and assistants only; dependencies are derived
-- Assistants are user/project intent — changing them after install is **configuration drift**; `ekp update` does **not** reconfigure
+- Assistants and components are user/project intent — change them with `ekp configure`, not by editing YAML by hand
+- Manual edits to `project.yaml` are **configuration drift**; neither `ekp update` nor `ekp configure` adopts drift
 - User/project-owned — update does not rewrite it; uninstall preserves it
-- Operational ownership and hashes live in `.ekp/install.json` (`mode=composition`, `configuration_sha256`)
+- Operational ownership and hashes live in `.ekp/install.json` (`mode=composition`, `configuration_sha256` = semantic intent)
 
-Semantic changes to requested components or assistants yield `CONFIGURATION_DRIFT`; `ekp update` refuses silent reconfiguration (safe reconfiguration is planned for v0.20).
+### Reconfigure a healthy composition (upcoming v0.20)
 
+`ekp configure` sets the **exact** desired component and assistant sets (not add/remove deltas). Eligible only for **HEALTHY composition** installs at the running package version.
+
+```bash
+# Noninteractive: both dimensions required with --yes or --dry-run
+ekp configure \
+  --component symfony \
+  --component frontend \
+  --assistant cursor \
+  --assistant copilot \
+  --yes
+
+# Preview without writes
+ekp configure \
+  --component symfony \
+  --assistant cursor \
+  --dry-run
+
+# Interactive: omit --yes/--dry-run; blank selection keeps current persisted intent
+ekp configure
+```
+
+With `--yes` or `--dry-run`, supply at least one `--component` and one `--assistant`. Interactive mode may prompt for missing dimensions using **current** persisted selections as defaults (never tool detection; never Cursor injection).
+
+**Not configure:** VERSION_MISMATCH → `ekp update` first; INCOMPLETE/MODIFIED → repair/resolve first; CONFIGURATION_DRIFT → restore installed config first; legacy-profile → configure unavailable.
+
+Package upgrade and project sync remain separate: install/upgrade the EKP package, run `ekp update` to synchronize, then `ekp configure` only from HEALTHY to change intent.
 ### Legacy profiles (still supported)
 
 Explicit packaging presets remain available:
@@ -129,17 +157,18 @@ Other flags: `--path`, `--dry-run`, `--yes` (confirmation only — not a safety 
 
 ```bash
 # upgrade the package on your machine (acquisition)
-pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.18.0
+pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.19.0
 
 # then synchronize an existing managed project (project update)
 cd my-project
 ekp status
 ekp update --dry-run
 ekp update --yes
+# only then, if you need a new intent (upcoming v0.20):
+# ekp configure --component … --assistant … --yes
 ```
 
-`ekp update` uses resources bundled with the currently running package. It does not contact GitHub or download releases.
-
+`ekp update` uses resources bundled with the currently running package. It does not contact GitHub or download releases. `ekp configure` does not download or upgrade EKP either — it only changes project intent after the project is HEALTHY on the running package.
 ### Uninstall managed files
 
 ```bash
@@ -161,16 +190,16 @@ ekp uninstall
 - `--yes` skips confirmation prompts, not safety checks
 - `--dry-run` shows the plan without writing files
 
-### Support matrix (v0.19 Consumer)
+### Support matrix (v0.19 Consumer + upcoming v0.20 configure)
 
-| Assistant | Generation | Deploy | Install | Status | Update | Repair | Uninstall |
-|-----------|------------|--------|---------|--------|--------|--------|-----------|
-| Cursor | supported | supported | supported | supported | supported | supported | supported |
-| GitHub Copilot | supported | supported | supported | supported | supported | supported | supported |
-| Claude | supported | supported | supported | supported | supported | supported | supported |
-| Google Antigravity | supported | supported | supported | supported | supported | supported | supported |
+| Assistant | Generation | Deploy | Install | Status | Update | Configure | Repair | Uninstall |
+|-----------|------------|--------|---------|--------|--------|-----------|--------|-----------|
+| Cursor | supported | supported | supported | supported | supported | upcoming v0.20 | supported | supported |
+| GitHub Copilot | supported | supported | supported | supported | supported | upcoming v0.20 | supported | supported |
+| Claude | supported | supported | supported | supported | supported | upcoming v0.20 | supported | supported |
+| Google Antigravity | supported | supported | supported | supported | supported | upcoming v0.20 | supported | supported |
 
-Manual assemble (Path B) remains available for contributor/profile workflows. See [`docs/deployment.md`](docs/deployment.md).
+Configure applies to **composition** installs only (not legacy-profile). Manual assemble (Path B) remains available for contributor/profile workflows. See [`docs/deployment.md`](docs/deployment.md).
 
 ---
 
@@ -262,8 +291,9 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 
 ## Release status
 
-- **Latest published release:** `v0.18.0`
-- **v0.19.0 (release candidate — not yet published):** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
+- **Latest public release:** `v0.19.0`
+- **Upcoming `v0.20` (not released):** Safe Reconfiguration — public `ekp configure` desired-state workflow for HEALTHY composition installs (`0.20.0.dev0` on the feature branch)
+- **v0.19.0:** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
 - **v0.18.0:** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle at publication time
 - **v0.17.0:** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack
 - **v0.16.0:** Consumer Lifecycle — `ekp update` and `ekp uninstall`; safe cross-version project synchronization; transactional rollback; manifest CAS; Ubuntu + Windows lifecycle packaging smoke; install via `pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.16.0`

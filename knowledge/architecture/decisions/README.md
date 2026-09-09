@@ -44,6 +44,7 @@ domain: architecture
 | [adr-0009](adr-0009-adapter-dispatch-architecture.md) | Adapter dispatch architecture | Accepted |
 | [adr-0010](adr-0010-project-composition-and-assistant-separation.md) | Project composition and assistant separation | Accepted |
 | [adr-0011](adr-0011-consumer-deployer-abstraction.md) | Consumer deployer abstraction | Accepted |
+| [adr-0012](adr-0012-transactional-safe-reconfiguration.md) | Transactional safe reconfiguration | Accepted |
 
 ## When to write an ADR
 
