@@ -320,9 +320,11 @@ class TransactionApplier:
             ManifestStore(plan.project_root).replace(
                 manifest, expected_sha256=plan.manifest_sha256
             )
+            # Empty recorded dirs only (foreign content preserved).
+            warnings = self._cleanup_directories(plan)
 
             shutil.rmtree(backup_root, ignore_errors=True)
-            return ConfigureApplyResult(warnings=[])
+            return ConfigureApplyResult(warnings=warnings)
         except InstallConflictError:
             if self._rollback_configure(
                 plan.project_root,
