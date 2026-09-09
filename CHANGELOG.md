@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Safe Reconfiguration (upcoming v0.20)** — public `ekp configure` changes the exact desired component and assistant sets of an existing **HEALTHY composition** installation
+- Interactive configure defaults to **current** persisted intent (blank keeps current; never tool detection; never Cursor injection)
+- Noninteractive configure (`--yes` / `--dry-run`) requires both exact dimensions (`>=1 --component`, `>=1 --assistant`)
+- Configure dry-run renders current/desired intent, semantic hashes, CREATE/WRITE/DELETE/NOOP, and conflicts with zero writes
+- Transactional configure transition: prepare once → confirm → apply the same plan; exact-byte `project.yaml` replacement + managed-file delta; `install.json` last
+
+### Lifecycle / Safety
+
+- Configure refuses NOT_INSTALLED, legacy-profile, VERSION_MISMATCH, INCOMPLETE, MODIFIED, CONFIGURATION_DRIFT, and INVALID (no force / drift adoption / legacy migration)
+- Manual `project.yaml` edits remain configuration drift; configure does not adopt hand-edited YAML
+- Modified owned files and unmanaged collisions refuse reconfiguration; foreign assistant-directory content is preserved
+- Package upgrade and project sync remain separate: upgrade package → `ekp update` → only then `ekp configure` from HEALTHY
+- v0.19 composition installs remain update-compatible; v0.17 legacy-profile installs remain supported but cannot configure
+- ProjectConfig / InstallManifest `schema_version` remains **1** (semantic `configuration_sha256` unchanged; physical content CAS is transactional only)
+
+### Scope
+
+- Workspaces / monorepos deferred to v0.21
+- Distribution / PyPI / product UX deferred to v0.22
+
 ## [0.19.0] - 2026-09-07
 
 ### Added
@@ -37,8 +59,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Scope
 
-- Safe reconfiguration / assistant add-remove / workspaces deferred to v0.20
-- Distribution / PyPI / product UX deferred to v0.21
+- Safe reconfiguration delivered in upcoming v0.20 (`ekp configure`); workspaces deferred to v0.21
+- Distribution / PyPI / product UX deferred to v0.22
 
 ## [0.18.0] - 2026-09-05
 

@@ -304,13 +304,14 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 
 - [ ] Remote release/package acquisition
 - [ ] PyPI publication
-- [x] Multi-assistant Consumer Lifecycle (Copilot / Antigravity / Claude) — **v0.19 COMPLETE — release candidate validated** (not published)
-- [ ] Safe reconfiguration / workspaces — **v0.20**
-- [ ] Distribution + product UX — **v0.21**
-- [ ] Hardening — **v0.22**
-- [ ] Automatic multi-profile / monorepo orchestration
+- [x] Multi-assistant Consumer Lifecycle (Copilot / Antigravity / Claude) — **v0.19 COMPLETE — published**
+- [x] Safe Reconfiguration (`ekp configure`) — **v0.20 IMPLEMENTED — product validation / integration candidate** (not released)
+- [ ] Workspace / monorepo support — **v0.21**
+- [ ] Distribution + product UX — **v0.22**
+- [ ] Hardening / RC — **v0.23**
+- [ ] Automatic multi-profile / monorepo orchestration (subsumed under v0.21 workspace theme)
 
-**Exit criteria (met through published `v0.16.0`; extended by `v0.18` composition and `v0.19` multi-assistant):** A developer can install the package, detect or select components (or an explicit legacy profile), install managed files for any non-empty subset of Cursor / Copilot / Claude / Antigravity safely, inspect health including configuration drift, synchronize an existing project after upgrading the package, and uninstall managed ownership while preserving project intent — without cloning EKP or running the manual assemble pipeline.
+**Exit criteria (met through published `v0.19.0`; extended by upcoming `v0.20` configure):** A developer can install the package, detect or select components (or an explicit legacy profile), install managed files for any non-empty subset of Cursor / Copilot / Claude / Antigravity safely, inspect health including configuration drift, synchronize an existing project after upgrading the package, intentionally reconfigure composition intent from a HEALTHY state (`ekp configure`), and uninstall managed ownership while preserving project intent — without cloning EKP or running the manual assemble pipeline.
 
 ---
 
@@ -319,11 +320,16 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 | Version | Theme |
 |---------|--------|
 | v0.18.0 | Project Composition Engine — **published baseline** |
-| v0.19 | Multi-Assistant Consumer Lifecycle — **COMPLETE — release candidate validated** (not published) |
-| v0.20 | Reconfiguration & Workspace Support |
-| v0.21 | Distribution & Product UX |
-| v0.22 | Hardening |
+| v0.19 | Multi-Assistant Consumer Lifecycle — **published** |
+| v0.20 | Safe Reconfiguration — **IMPLEMENTED — product validation / integration candidate** |
+| v0.21 | Workspace / Monorepo Support |
+| v0.22 | Distribution & Product UX |
+| v0.23 | Product Hardening / RC |
 | v1.0.0 | Stable |
+
+**v0.20 — Safe Reconfiguration:** public `ekp configure` desired-state workflow for HEALTHY composition installs; transactional semantic + exact-byte config replacement; schema_version remains 1. Not released until a later promotion phase.
+
+**v0.21 — Workspace / Monorepo Support (high-level):** explicit workspace/monorepo technology intent under one EKP project lifecycle with scoped assistant generation. Not implemented in v0.20.
 
 Do not expand the Evaluation roadmap here; Evaluation L0 remains complete in `v0.17.0`.
 

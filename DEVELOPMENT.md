@@ -77,6 +77,19 @@ py -3 -m unittest discover -s src/ekp/tests -v
 
 On Windows, expected Unix-only symlink safety tests skip. Ubuntu runs the full Consumer suite.
 
+Focused Safe Reconfiguration coverage (upcoming v0.20):
+
+```bash
+py -3 -m unittest ekp.tests.test_project_config ekp.tests.test_configure_primitives ekp.tests.test_configure_service ekp.tests.test_configure_cli -q
+```
+
+Invariants to preserve:
+
+- Semantic `configuration_sha256` goldens (schema1 / v0.19 compatibility)
+- Physical `project.yaml` content CAS for configure transitions (distinct from semantic hash)
+- `assemble_composition` call count: 0 on semantic NOOP; 1 on real prepare/apply or dry-run change
+- Prepare → confirm → apply uses the **same** prepared plan (no second assembly)
+
 ### 4c. Package build and packaging smoke
 
 ```bash

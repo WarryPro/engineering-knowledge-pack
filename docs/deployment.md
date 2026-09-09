@@ -77,7 +77,7 @@ Legacy `--profile` install writes Cursor rules + `install.json` only (no EKP-cre
 
 Manual copying into assistant paths (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
 
-### Project lifecycle (`v0.19`)
+### Project lifecycle (`v0.19` + upcoming `v0.20` configure)
 
 Typical flow:
 
@@ -90,11 +90,23 @@ status
     ↓
 package upgrade (new Git tag / reinstall)
     ↓
-project update (`ekp update`)
+project update (`ekp update`) — synchronize persisted intent to current package
+    ↓
+configure (`ekp configure`) — intentionally change persisted intent (HEALTHY composition only)
     ↓
 uninstall (`ekp uninstall`) when removing EKP ownership
          (project.yaml preserved if present)
 ```
+
+**Distinct responsibilities:**
+
+| Command | Responsibility |
+|---------|----------------|
+| `ekp install` | Create initial managed ownership from selected intent |
+| `ekp status` | Inspect health / drift / version mismatch (no mutation) |
+| `ekp update` | Synchronize **persisted** intent to the currently running package |
+| `ekp configure` | Intentionally replace exact component + assistant desired state |
+| `ekp uninstall` | Remove managed ownership; preserve `project.yaml` |
 
 #### Transactional multi-assistant behavior
 
@@ -105,7 +117,7 @@ apply one transaction
 write one install.json last
 ```
 
-One assistant failure → entire install/update rollback.
+One assistant failure → entire install/update/configure rollback.
 
 #### `ekp update`
 
@@ -113,14 +125,27 @@ Synchronizes an existing managed project to the resources bundled with the **cur
 
 User-facing contract:
 
-- **Composition:** `project.yaml` + `configuration_sha256` bind intent; update does **not** redetect components, rewrite config, or add/remove assistants
+- **Composition:** `project.yaml` + semantic `configuration_sha256` bind intent; update does **not** redetect components, rewrite config, or add/remove assistants
 - **Legacy-profile:** `manifest.profile` remains authoritative; update does not redetect or switch profile
-- configuration drift (yaml hash ≠ bound hash), including assistant list edits → status `CONFIGURATION_DRIFT` and update **refuses** silent reconfiguration
+- configuration drift (semantic yaml hash ≠ bound hash), including assistant list edits → status `CONFIGURATION_DRIFT` and update **refuses** silent reconfiguration
+- Restore the installed configuration first; use `ekp configure` for intentional changes from a healthy state
 - `HEALTHY` only when **all** managed assistant files are healthy
 - same-version missing managed files can be repaired when healthy/bound
 - modified owned files are conflicts
 - new unmanaged collisions are conflicts
 - `--dry-run` previews without mutation; `--yes` skips confirmation only
+
+#### `ekp configure` (upcoming v0.20)
+
+Changes the **exact** desired component and assistant sets of an existing **HEALTHY composition** installation (desired-state, not add/remove deltas).
+
+- Requires running package version match (VERSION_MISMATCH → update first)
+- Refuses INCOMPLETE / MODIFIED / CONFIGURATION_DRIFT / INVALID / legacy-profile / not installed
+- Noninteractive (`--yes` or `--dry-run`): both dimensions must be supplied (`>=1 --component`, `>=1 --assistant`)
+- Interactive: missing dimensions use **current** persisted intent as defaults (blank keeps current; never Cursor injection; never detection)
+- Flow: prepare once → render plan → confirm → apply the **same** prepared plan (`install.json` last)
+- Manual `project.yaml` editing remains drift — configure does **not** mean “edit YAML then ask EKP to adopt it”
+- Does not download or upgrade the EKP package
 
 #### `ekp uninstall`
 
@@ -134,14 +159,14 @@ Removes EKP-owned managed files using the ownership manifest:
 - **`.ekp/project.yaml` is preserved** when present (config-only project → `NOT_INSTALLED`)
 - conservative directory cleanup may leave empty assistant / `.ekp` directories when ownership was not proven
 
-#### Not supported in `v0.19`
+#### Not supported yet
 
 - remote package/release acquisition from inside `ekp update`
-- automatic reconfiguration / `ekp configure` / assistant add-remove after install
-- monorepo / workspace orchestration
+- monorepo / workspace orchestration (deferred to v0.21)
 - PyPI publication as the distribution channel
 - combinatorial profiles such as `cursor-symfony-frontend`
 - automatic assistant enablement from tool detection signals
+- configure for legacy-profile installs (composition-only)
 ---
 
 ## Path B — Manual assembly
