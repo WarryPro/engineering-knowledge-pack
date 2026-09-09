@@ -7,6 +7,7 @@ from ekp.detection.render import render_human, render_json
 from ekp.detection.service import DetectionService
 from ekp.install.deploy.registry import build_default_deploy_registry
 from ekp.install.service import InstallRequest, InstallService
+from ekp.lifecycle.configure_cli import run_configure_cli
 from ekp.lifecycle.uninstall import UninstallRequest, UninstallService
 from ekp.lifecycle.update import UpdateRequest, UpdateService
 from ekp.paths import get_ekp_root
@@ -151,6 +152,57 @@ def main(argv=None):
         help="Show update plan without writing files",
     )
 
+    configure_parser = subparsers.add_parser(
+        "configure",
+        help="Change the managed project configuration",
+        description=(
+            "Change the exact component and assistant intent of an existing "
+            "healthy composition installation.\n\n"
+            "Desired-state semantics: every --component / --assistant flag "
+            "together defines the exact desired sets (not add/remove deltas).\n\n"
+            "With --yes or --dry-run, both component and assistant sets must "
+            "be supplied."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    configure_parser.add_argument(
+        "--path",
+        default=".",
+        help="Project directory to configure (default: current directory)",
+    )
+    configure_parser.add_argument(
+        "--component",
+        action="append",
+        dest="components",
+        metavar="ID",
+        help=(
+            "Repeatable exact desired component ID "
+            "(with --yes/--dry-run, at least one is required)"
+        ),
+    )
+    configure_parser.add_argument(
+        "--assistant",
+        action="append",
+        dest="assistants",
+        metavar="ID",
+        help=(
+            "Repeatable exact desired assistant ID "
+            "(supported: {}; with --yes/--dry-run, at least one is required)".format(
+                _supported_assistants_help()
+            )
+        ),
+    )
+    configure_parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip confirmation prompts (does not bypass safety checks)",
+    )
+    configure_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show configure plan without writing files (noninteractive)",
+    )
+
     args = parser.parse_args(argv)
 
     if args.command == "version":
@@ -249,6 +301,27 @@ def main(argv=None):
             return 2
         except OSError as exc:
             print("Update failed: {}".format(exc), file=sys.stderr)
+            return 5
+
+        if result.message:
+            stream = sys.stderr if result.exit_code != 0 else sys.stdout
+            print(result.message, file=stream)
+        return result.exit_code
+
+    if args.command == "configure":
+        try:
+            result = run_configure_cli(
+                path=args.path,
+                components=args.components,
+                assistants=args.assistants,
+                assume_yes=args.yes,
+                dry_run=args.dry_run,
+            )
+        except (FileNotFoundError, NotADirectoryError) as exc:
+            print(str(exc), file=sys.stderr)
+            return 2
+        except OSError as exc:
+            print("Configure failed: {}".format(exc), file=sys.stderr)
             return 5
 
         if result.message:

@@ -19,6 +19,7 @@ REQUIRED_COMMANDS = (
     "version",
     "install",
     "status",
+    "configure",
     "update",
     "uninstall",
 )
@@ -1255,6 +1256,71 @@ with tempfile.TemporaryDirectory() as mismatch_dir:
         assert not (cursor_default / "CLAUDE.md").exists()
         assert not (cursor_default / ".github" / "copilot-instructions.md").exists()
         print("installed_wheel_public_cursor_default_ok", 110)
+
+        # Public configure: SF+FE Cursor (110) → Copilot+Claude (16).
+        configure_root = tmp_path / "public-configure"
+        configure_root.mkdir()
+        write_symfony(configure_root)
+        (configure_root / "package.json").write_text(
+            '{"dependencies":{"react":"^18.0.0","typescript":"^5.0.0"}}',
+            encoding="utf-8",
+        )
+        (configure_root / "tsconfig.json").write_text("{}", encoding="utf-8")
+        (configure_root / "src" / "components").mkdir(parents=True, exist_ok=True)
+        proc = run_ekp(
+            ekp,
+            [
+                "install",
+                "--component",
+                "symfony",
+                "--component",
+                "frontend",
+                "--assistant",
+                "cursor",
+                "--yes",
+            ],
+            configure_root,
+        )
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert len(load_manifest(configure_root)["managed_files"]) == 110
+        assert load_status(ekp, configure_root)["state"] == "healthy"
+        proc = subprocess.run(
+            [str(ekp), "configure", "--help"], capture_output=True, text=True
+        )
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert "desired" in proc.stdout.lower() or "--component" in proc.stdout
+        assert "With --yes or --dry-run" in proc.stdout
+        proc = run_ekp(
+            ekp,
+            [
+                "configure",
+                "--component",
+                "symfony",
+                "--component",
+                "frontend",
+                "--assistant",
+                "copilot",
+                "--assistant",
+                "claude",
+                "--yes",
+            ],
+            configure_root,
+        )
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        conf_manifest = load_manifest(configure_root)
+        assert sorted(conf_manifest["adapters"]) == ["claude", "copilot"]
+        assert len(conf_manifest["managed_files"]) == 16
+        assert load_status(ekp, configure_root)["state"] == "healthy"
+        assert not (configure_root / ".cursor" / "rules").exists() or not list(
+            (configure_root / ".cursor" / "rules").glob("*.mdc")
+        )
+        proc = run_ekp(ekp, ["update", "--yes"], configure_root)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert load_status(ekp, configure_root)["state"] == "healthy"
+        proc = run_ekp(ekp, ["uninstall", "--yes"], configure_root)
+        assert proc.returncode == 0, proc.stderr + proc.stdout
+        assert load_status(ekp, configure_root)["state"] == "not_installed"
+        print("installed_wheel_public_configure_ok", 16)
 
         legacy = tmp_path / "legacy-profile"
         legacy.mkdir()
