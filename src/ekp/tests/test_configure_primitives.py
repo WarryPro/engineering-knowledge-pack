@@ -437,17 +437,16 @@ class ConfigureTransitionApplyTests(unittest.TestCase):
             self.assertIsNone(plan.expected_configuration_sha256)
 
 
-class PublicConfigureAbsenceTests(unittest.TestCase):
-    def test_no_configure_cli_subcommand(self):
+class PublicConfigureBoundaryTests(unittest.TestCase):
+    def test_configure_cli_subcommand_present(self):
         import inspect
 
         from ekp import cli
 
         source = inspect.getsource(cli)
-        self.assertNotIn('add_parser("configure"', source)
-        self.assertNotRegex(source, r'add_parser\(\s*"configure"')
+        self.assertRegex(source, r'add_parser\(\s*"configure"')
 
-    def test_no_configure_service_module(self):
+    def test_no_configure_service_module_under_install(self):
         import importlib.util
 
         spec = importlib.util.find_spec("ekp.install.configure")

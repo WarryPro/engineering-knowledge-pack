@@ -56,7 +56,8 @@ from ekp.version import get_version
 _COMPOSITION_DRIFT_MESSAGE = (
     "Project configuration has changed since EKP was installed.\n\n"
     "Automatic reconfiguration is not supported by `ekp update`.\n"
-    "Restore the installed configuration or use the future reconfiguration workflow."
+    "Restore the installed configuration first. Use `ekp configure` "
+    "for intentional changes from a healthy state."
 )
 
 _OWNERSHIP_CORRUPTION_MESSAGE = (

@@ -685,19 +685,22 @@ class ConfigureLifecycleParityTests(ConfigureServiceHelpers):
             self.assertEqual(list(snap.config.components), ["core"])
 
 
-class ConfigurePublicAbsenceTests(unittest.TestCase):
-    def test_cli_still_has_no_configure(self):
+class ConfigurePublicPresenceTests(unittest.TestCase):
+    def test_cli_exposes_configure(self):
         import inspect
 
         from ekp import cli
 
         source = inspect.getsource(cli)
-        self.assertNotRegex(source, r'add_parser\(\s*"configure"')
+        self.assertRegex(source, r'add_parser\(\s*"configure"')
 
     def test_configure_service_is_lifecycle_not_cli(self):
         from ekp.lifecycle.configure import ConfigureService as CS
 
         self.assertTrue(callable(CS().configure))
+        self.assertTrue(callable(CS().inspect))
+        self.assertTrue(callable(CS().prepare))
+        self.assertTrue(callable(CS().apply))
 
 
 if __name__ == "__main__":

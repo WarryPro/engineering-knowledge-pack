@@ -1,4 +1,4 @@
-"""Desired-state ConfigureService (internal / programmatic; no public CLI)."""
+"""Desired-state ConfigureService (programmatic engine; public CLI in configure_cli)."""
 
 from __future__ import annotations
 
@@ -77,6 +77,18 @@ class ConfigureRequest:
 
 
 @dataclass
+class ConfigureInspectResult:
+    """Preflight eligibility + current intent without assembly or mutation."""
+
+    eligible: bool
+    exit_code: int = EXIT_SUCCESS
+    message: str = ""
+    project_root: Optional[Path] = None
+    current_config: Optional[ProjectConfig] = None
+    status_state: Optional[StatusState] = None
+
+
+@dataclass
 class ConfigurePreparedOperation:
     """Prepared configure transition: same LifecyclePlan for confirm → apply.
 
@@ -149,6 +161,111 @@ class ConfigureService:
 
     def _deploy_registry_or_default(self) -> DeployRegistry:
         return self._deploy_registry or build_default_deploy_registry()
+
+    def inspect(self, path: str = ".") -> ConfigureInspectResult:
+        """Eligibility + current ProjectConfig without assembly or mutation.
+
+        Call before interactive prompts. Does not prepare a transition plan.
+        """
+        project_root = resolve_project_root(path)
+        running_version = get_version()
+        eligibility = self._check_eligibility(project_root, running_version)
+        if eligibility is not None:
+            status = self.status.inspect(StatusRequest(path=str(project_root)))
+            return ConfigureInspectResult(
+                eligible=False,
+                exit_code=eligibility.exit_code,
+                message=eligibility.message,
+                project_root=project_root,
+                status_state=status.state,
+            )
+
+        # Composition + version already validated by eligibility HEALTHY path;
+        # still refuse legacy and load current config.
+        snapshot = ManifestStore(project_root).load_with_fingerprint()
+        if snapshot is None:
+            return ConfigureInspectResult(
+                eligible=False,
+                exit_code=InstallSelectionError.exit_code,
+                message=(
+                    "EKP is not installed in this project.\nRun `ekp install` first."
+                ),
+                project_root=project_root,
+                status_state=StatusState.NOT_INSTALLED,
+            )
+        if snapshot.manifest.effective_mode != INSTALL_MODE_COMPOSITION:
+            return ConfigureInspectResult(
+                eligible=False,
+                exit_code=InstallSelectionError.exit_code,
+                message=(
+                    "`ekp configure` is available only for composition installations.\n"
+                    "This project uses legacy-profile mode."
+                ),
+                project_root=project_root,
+                status_state=StatusState.HEALTHY,
+            )
+        if snapshot.manifest.ekp_version != running_version:
+            return ConfigureInspectResult(
+                eligible=False,
+                exit_code=InstallSelectionError.exit_code,
+                message=(
+                    "This project was installed with a different EKP version.\n"
+                    "Run `ekp update` first, then run `ekp configure`."
+                ),
+                project_root=project_root,
+                status_state=StatusState.VERSION_MISMATCH,
+            )
+
+        registry = self._registry_or_load()
+        try:
+            file_snap = ProjectConfigStore(
+                project_root, registry=registry
+            ).load_file_snapshot()
+        except ProjectConfigError as exc:
+            return ConfigureInspectResult(
+                eligible=False,
+                exit_code=InstallSelectionError.exit_code,
+                message="Project configuration is invalid: {}".format(exc),
+                project_root=project_root,
+                status_state=StatusState.INVALID,
+            )
+        if file_snap is None:
+            return ConfigureInspectResult(
+                eligible=False,
+                exit_code=InstallSelectionError.exit_code,
+                message="Composition configure requires .ekp/project.yaml.",
+                project_root=project_root,
+                status_state=StatusState.INVALID,
+            )
+        if file_snap.configuration_sha256 != snapshot.manifest.configuration_sha256:
+            return ConfigureInspectResult(
+                eligible=False,
+                exit_code=InstallSelectionError.exit_code,
+                message=(
+                    "Project configuration has changed outside EKP.\n"
+                    "`ekp configure` will not adopt configuration drift.\n"
+                    "Restore the installed configuration first."
+                ),
+                project_root=project_root,
+                status_state=StatusState.CONFIGURATION_DRIFT,
+            )
+        if set(file_snap.config.assistants) != set(snapshot.manifest.adapters):
+            return ConfigureInspectResult(
+                eligible=False,
+                exit_code=InstallSelectionError.exit_code,
+                message=(
+                    "Project assistants do not match manifest adapters.\n"
+                    "configure refuses inconsistent ownership state."
+                ),
+                project_root=project_root,
+                status_state=StatusState.INVALID,
+            )
+        return ConfigureInspectResult(
+            eligible=True,
+            project_root=project_root,
+            current_config=file_snap.config,
+            status_state=StatusState.HEALTHY,
+        )
 
     def configure(self, request: ConfigureRequest) -> ConfigureResult:
         """Prepare and apply (or dry-run / NOOP) in one call."""
@@ -249,15 +366,13 @@ class ConfigureService:
         manifest = snapshot.manifest
         if manifest.effective_mode != INSTALL_MODE_COMPOSITION:
             raise InstallSelectionError(
-                "configure requires a composition installation.\n"
-                "Legacy profile installs cannot be reconfigured; reinstall with components."
+                "`ekp configure` is available only for composition installations.\n"
+                "This project uses legacy-profile mode."
             )
         if manifest.ekp_version != running_version:
             raise InstallSelectionError(
-                "Installed EKP version {} does not match running version {}.\n"
-                "Run `ekp update` before configure.".format(
-                    manifest.ekp_version, running_version
-                )
+                "This project was installed with a different EKP version.\n"
+                "Run `ekp update` first, then run `ekp configure`."
             )
 
         store = ProjectConfigStore(project_root, registry=registry)
@@ -274,8 +389,9 @@ class ConfigureService:
 
         if file_snap.configuration_sha256 != manifest.configuration_sha256:
             raise InstallSelectionError(
-                "Project configuration drifted from the ownership manifest.\n"
-                "configure refuses to adopt or rewrite drifted intent."
+                "Project configuration has changed outside EKP.\n"
+                "`ekp configure` will not adopt configuration drift.\n"
+                "Restore the installed configuration first."
             )
         current_assistants = set(file_snap.config.assistants)
         manifest_adapters = set(manifest.adapters)
@@ -527,34 +643,33 @@ class ConfigureService:
             return ConfigureResult(
                 exit_code=InstallSelectionError.exit_code,
                 message=(
-                    "Project configuration drifted from the ownership manifest.\n"
-                    "configure refuses drifted installations."
+                    "Project configuration has changed outside EKP.\n"
+                    "`ekp configure` will not adopt configuration drift.\n"
+                    "Restore the installed configuration first."
                 ),
             )
         if status.state == StatusState.VERSION_MISMATCH:
             return ConfigureResult(
                 exit_code=InstallSelectionError.exit_code,
                 message=(
-                    "Installed EKP version {} does not match running version {}.\n"
-                    "Run `ekp update` before configure.".format(
-                        status.installed_version, running_version
-                    )
+                    "This project was installed with a different EKP version.\n"
+                    "Run `ekp update` first, then run `ekp configure`."
                 ),
             )
         if status.state == StatusState.INCOMPLETE:
             return ConfigureResult(
                 exit_code=InstallSelectionError.exit_code,
                 message=(
-                    "Installation is incomplete; configure refused.\n"
-                    "Do not use configure to repair missing managed files."
+                    "The EKP installation is incomplete.\n"
+                    "Run `ekp update` to repair it before reconfiguring."
                 ),
             )
         if status.state == StatusState.MODIFIED:
             return ConfigureResult(
                 exit_code=InstallSelectionError.exit_code,
                 message=(
-                    "Managed files were modified; configure refused.\n"
-                    "Do not use configure to delete or overwrite modified ownership."
+                    "One or more EKP-managed files were modified.\n"
+                    "Resolve or restore them before reconfiguring."
                 ),
             )
         if status.state != StatusState.HEALTHY:
