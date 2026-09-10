@@ -6,14 +6,14 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 
 ## Using EKP in a consumer project
 
-Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **v0.19 Consumer managed deployment supports Cursor, GitHub Copilot, Claude, and Google Antigravity** (same technology composition; assistant-specific outputs). You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
+Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **Current v0.20 Consumer deployment supports Cursor, GitHub Copilot, Claude, and Google Antigravity** (same technology composition; assistant-specific outputs). You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
 
-**Latest public release:** `v0.19.0`. **`v0.20.0`:** release candidate on staging — not yet published.
+**Latest public release:** `v0.20.0`
 
 Published install (latest public release):
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.19.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.20.0
 ```
 
 ### Composition model (v0.19+)
@@ -157,7 +157,7 @@ Other flags: `--path`, `--dry-run`, `--yes` (confirmation only — not a safety 
 
 ```bash
 # upgrade the package on your machine (acquisition)
-pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.19.0
+pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.20.0
 
 # then synchronize an existing managed project (project update)
 cd my-project
@@ -190,7 +190,7 @@ ekp uninstall
 - `--yes` skips confirmation prompts, not safety checks
 - `--dry-run` shows the plan without writing files
 
-### Support matrix (v0.19 Consumer + v0.20 configure)
+### Support matrix (v0.20)
 
 | Assistant | Generation | Deploy | Install | Status | Update | Configure | Repair | Uninstall |
 |-----------|------------|--------|---------|--------|--------|-----------|--------|-----------|
@@ -291,8 +291,8 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 
 ## Release status
 
-- **Latest public release:** `v0.19.0`
-- **`v0.20.0`:** release candidate on staging — not yet published. Safe Reconfiguration — public `ekp configure` desired-state workflow for HEALTHY composition installs
+- **Latest public release:** `v0.20.0`
+- **`v0.20.0`:** Safe Reconfiguration — published — public `ekp configure` desired-state workflow for HEALTHY composition installs
 - **v0.19.0:** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
 - **v0.18.0:** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle at publication time
 - **v0.17.0:** Offline Evaluation MVP (L0) — repository-only evaluation infrastructure (8 scenarios, selection-equivalent renderer v2, provider-neutral import, blind scoring/reporting, offline CI); not a Consumer CLI dependency; no real-model L1 evidence pack
@@ -336,7 +336,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.19` multi-assistant (release candidate)** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; Windows + Ubuntu CI; remote acquisition / PyPI deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.20` Safe Reconfiguration** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; Windows + Ubuntu CI; remote acquisition / PyPI deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics
