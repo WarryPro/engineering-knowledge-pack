@@ -534,7 +534,15 @@ class ProjectConfigLoadCreateTests(unittest.TestCase):
         path = get_ekp_root() / "schema" / "project-config.schema.json"
         self.assertTrue(path.is_file())
         schema = json.loads(path.read_text(encoding="utf-8"))
-        self.assertEqual(schema["properties"]["schema_version"]["const"], 1)
+        self.assertIn("oneOf", schema)
+        self.assertEqual(
+            schema["$defs"]["schema1"]["properties"]["schema_version"]["const"],
+            1,
+        )
+        self.assertEqual(
+            schema["$defs"]["schema2"]["properties"]["schema_version"]["const"],
+            2,
+        )
 
 
 class ProjectConfigPathSafetyTests(unittest.TestCase):
