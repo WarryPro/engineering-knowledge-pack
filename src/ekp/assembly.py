@@ -152,6 +152,27 @@ class AssemblyService:
             _temp_ctx=temp_ctx,
         )
 
+    def prepare_project_composition(
+        self,
+        config,
+        *,
+        registry=None,
+        resource_root: Optional[Path] = None,
+    ):
+        """
+        Pure project composition preparation (AZ-B).
+
+        Resolves root/workspace scopes into a ScopedKnowledgeInventory without
+        generating indexes, invoking adapters, or writing output files.
+        Existing ``assemble_composition`` remains the schema1 adapter path.
+        """
+        from ekp.composition import ComponentRegistry, resolve_project_composition
+
+        if registry is None:
+            root = Path(resource_root or get_ekp_root())
+            registry = ComponentRegistry.load(root)
+        return resolve_project_composition(config, registry)
+
     def _prepare_workspace(
         self,
         workspace_dir: Optional[Path],
