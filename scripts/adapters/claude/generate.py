@@ -57,3 +57,74 @@ def generate(profile_name="ekp-core", output_dir=None, profile=None, repo_root=N
         written.append(str(target))
 
     return sorted(written)
+
+
+def generate_scoped(project_resolution, output_dir, repo_root=None):
+    # type: (object, Path, Path) -> list
+    """
+    Generate one Claude bundle for GLOBAL + workspace ``.claude/rules``.
+
+    Workspace knowledge goes only to path-scoped rules, never Skills.
+    """
+    from common.document_body import render_document_unit_body
+    from common.scoped_gen import (
+        build_invocation_markdown_cache,
+        ephemeral_global_profile,
+        global_knowledge_paths,
+        units_for_paths,
+        workspace_knowledge_paths,
+        workspace_path_order,
+        write_claimed_text,
+    )
+    from common.workspace_names import workspace_scoped_filename
+
+    root = repo_root or get_repo_root()
+    output_dir = Path(output_dir)
+    inventory = project_resolution.inventory
+
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    claimed = set()
+    written = []
+
+    global_paths = global_knowledge_paths(inventory)
+    if global_paths:
+        profile = ephemeral_global_profile(global_paths, outputs=["claude"])
+        for path in generate(
+            profile_name="project-composition",
+            output_dir=output_dir,
+            profile=profile,
+            repo_root=root,
+        ):
+            rel = Path(path).relative_to(output_dir).as_posix()
+            claimed.add(rel)
+            written.append(path)
+
+    get_markdown = build_invocation_markdown_cache(root, inventory)
+    rules_prefix = ".claude/rules"
+    for workspace_path in workspace_path_order(inventory):
+        paths = workspace_knowledge_paths(inventory, workspace_path)
+        if not paths:
+            continue
+        units = units_for_paths(paths, root, get_markdown)
+        for unit in units:
+            filename = workspace_scoped_filename(
+                workspace_path, unit.source_path, "md"
+            )
+            relpath = "{}/{}".format(rules_prefix, filename)
+            body = render_document_unit_body(unit)
+            content = (
+                "---\n"
+                "paths:\n"
+                '  - "{}/**"\n'
+                "---\n"
+                "\n"
+                "{}"
+            ).format(workspace_path, body.lstrip("\n"))
+            written.append(
+                write_claimed_text(output_dir, relpath, content, claimed)
+            )
+
+    return sorted(written)

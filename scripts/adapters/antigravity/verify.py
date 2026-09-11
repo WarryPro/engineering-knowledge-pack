@@ -1,12 +1,12 @@
 """Antigravity bundle verification.
 
 File generation does **not** prove Antigravity activation. Official docs
-did not establish a file-based Always On / Manual / Model Decision / Glob
-frontmatter contract. A human must run the empirical activation check
-documented in ``docs/adapter-architecture.md``.
+establish Glob frontmatter for workspace rules; global rules remain plain
+Markdown without invented Always On activation fields.
 """
 
 import json
+import re
 from pathlib import Path
 
 from antigravity.grouping import (
@@ -19,6 +19,9 @@ from antigravity.manifest import MANIFEST_NAME
 
 ADAPTER_NAME = "antigravity"
 CURSOR_LEAKAGE = ("alwaysApply:", "always_apply:")
+FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+TRIGGER_RE = re.compile(r"^trigger:\s*glob\s*$", re.MULTILINE)
+GLOBS_RE = re.compile(r"^globs:\s*(\S+)\s*$", re.MULTILINE)
 
 
 class AntigravityVerifyError(Exception):
@@ -47,15 +50,9 @@ def verify_antigravity_bundle(bundle_dir):
             "Missing Antigravity rules directory: {}".format(rules_dir)
         )
 
-    orchestrator = rules_dir / ORCHESTRATOR_FILENAME
-    if not orchestrator.is_file():
-        errors.append("Missing orchestrator rule: {}".format(ORCHESTRATOR_FILENAME))
-
-    foundation = rules_dir / FOUNDATION_FILENAME
-    if not foundation.is_file():
-        errors.append("Missing foundation rule: {}".format(FOUNDATION_FILENAME))
-
     generated = []
+    workspace_rules = 0
+    global_rules = 0
     for path in _relative_files(adapter_dir):
         rel = path.relative_to(adapter_dir).as_posix()
         if rel == MANIFEST_NAME:
@@ -77,9 +74,34 @@ def verify_antigravity_bundle(bundle_dir):
             )
 
         if content.lstrip().startswith("---"):
-            errors.append(
-                "{}: invented YAML frontmatter is not allowed".format(rel)
-            )
+            match = FRONTMATTER_RE.match(content)
+            if not match:
+                errors.append("{}: malformed YAML frontmatter".format(rel))
+            else:
+                front = match.group(1)
+                if not TRIGGER_RE.search(front) or not GLOBS_RE.search(front):
+                    errors.append(
+                        "{}: only verified Glob frontmatter is allowed".format(rel)
+                    )
+                else:
+                    workspace_rules += 1
+                    # Reject extra activation fields beyond trigger/globs.
+                    for line in front.splitlines():
+                        stripped = line.strip()
+                        if not stripped:
+                            continue
+                        if stripped.startswith("trigger:") or stripped.startswith(
+                            "globs:"
+                        ):
+                            continue
+                        errors.append(
+                            "{}: unsupported Antigravity frontmatter field".format(
+                                rel
+                            )
+                        )
+                        break
+        else:
+            global_rules += 1
 
         for leak in CURSOR_LEAKAGE:
             if leak in content:
@@ -87,6 +109,16 @@ def verify_antigravity_bundle(bundle_dir):
 
         if "> **Source:**" not in content:
             errors.append("{}: missing Source reference".format(rel))
+
+    if global_rules:
+        orchestrator = rules_dir / ORCHESTRATOR_FILENAME
+        if not orchestrator.is_file():
+            errors.append(
+                "Missing orchestrator rule: {}".format(ORCHESTRATOR_FILENAME)
+            )
+        foundation = rules_dir / FOUNDATION_FILENAME
+        if not foundation.is_file():
+            errors.append("Missing foundation rule: {}".format(FOUNDATION_FILENAME))
 
     if not generated:
         errors.append("No Antigravity rule files generated in {}".format(rules_dir))

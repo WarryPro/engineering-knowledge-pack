@@ -46,6 +46,20 @@ class CompositionAssemblyRequest:
 
 
 @dataclass
+class ScopedProjectAssemblyRequest:
+    """Structured input for schema2 scoped project assembly (AZ-C)."""
+
+    config: object
+    assistants: Optional[List[str]] = None
+    verify: bool = True
+    clean: bool = True
+    resource_root: Optional[Path] = None
+    workspace_dir: Optional[Path] = None
+    output_root: Optional[Path] = None
+    profile_name: str = "project-composition"
+
+
+@dataclass
 class AssemblyResult:
     """Structured output from profile or composition assembly."""
 
@@ -58,6 +72,7 @@ class AssemblyResult:
     workspace_dir: Optional[Path] = None
     output_root: Optional[Path] = None
     composition: Optional["ResolvedComposition"] = None
+    project_resolution: Optional[object] = None
     _temp_ctx: object = field(default=None, repr=False, compare=False)
 
 
@@ -172,6 +187,64 @@ class AssemblyService:
             root = Path(resource_root or get_ekp_root())
             registry = ComponentRegistry.load(root)
         return resolve_project_composition(config, registry)
+
+    def assemble_scoped_project(
+        self, request: ScopedProjectAssemblyRequest
+    ) -> AssemblyResult:
+        """
+        Schema2 scoped assembly: prepare composition once, then generate_scoped.
+
+        Does not touch install/configure/update/status/CLI lifecycle paths.
+        """
+        from ekp.composition import PROJECT_COMPOSITION_PROFILE
+
+        resource_root = Path(request.resource_root or get_ekp_root())
+        workspace_dir, output_root, temp_ctx = self._prepare_workspace(
+            request.workspace_dir,
+            request.output_root,
+            resource_root,
+        )
+
+        assistants = list(request.assistants or [])
+        if not assistants:
+            assistants = list(getattr(request.config, "assistants", ()) or [])
+        if not assistants:
+            raise RuntimeError("Scoped assembly requires at least one assistant")
+
+        resolution = self.prepare_project_composition(
+            request.config,
+            resource_root=resource_root,
+        )
+
+        self._generate_indexes(resource_root, workspace_dir)
+        profile_name = request.profile_name or PROJECT_COMPOSITION_PROFILE
+        manifest, adapters = self._run_assemble_scoped(
+            project_resolution=resolution,
+            assistants=assistants,
+            profile_name=profile_name,
+            resource_root=resource_root,
+            workspace_dir=workspace_dir,
+            output_root=output_root,
+            clean=request.clean,
+            verify=request.verify,
+        )
+
+        bundle_path = output_root / profile_name
+        rules_count = manifest.get("rules_count") if isinstance(manifest, dict) else None
+
+        return AssemblyResult(
+            profile=profile_name,
+            adapters=adapters,
+            bundle_path=bundle_path,
+            rules_count=rules_count,
+            manifest=manifest,
+            resource_root=resource_root,
+            workspace_dir=workspace_dir,
+            output_root=output_root,
+            composition=resolution.root,
+            project_resolution=resolution,
+            _temp_ctx=temp_ctx,
+        )
 
     def _prepare_workspace(
         self,
@@ -288,3 +361,38 @@ class AssemblyService:
 
         adapters = list(profile.get("outputs") or [])
         return manifest, adapters
+
+    def _run_assemble_scoped(
+        self,
+        project_resolution,
+        assistants: List[str],
+        profile_name: str,
+        resource_root: Path,
+        workspace_dir: Path,
+        output_root: Path,
+        clean: bool,
+        verify: bool,
+    ):
+        self._ensure_import_paths(resource_root)
+
+        from assemble import AssembleError, assemble_project_resolution
+        from common.paths import clear_path_context, set_path_context
+
+        set_path_context(repo_root=resource_root, dist_dir=workspace_dir)
+        try:
+            manifest = assemble_project_resolution(
+                project_resolution=project_resolution,
+                assistants=assistants,
+                profile_name=profile_name,
+                clean=clean,
+                verify=verify,
+                repo_root=resource_root,
+                dist_dir=workspace_dir,
+                bundle_root=output_root,
+            )
+        except AssembleError as exc:
+            raise RuntimeError(str(exc)) from exc
+        finally:
+            clear_path_context()
+
+        return manifest, list(assistants)

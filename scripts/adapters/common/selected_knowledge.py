@@ -85,32 +85,36 @@ def flow_directive_lines(flow_text):
     return directives
 
 
-def collect_selected_units(profile, repo_root):
-    # type: (dict, object) -> list
+def collect_selected_units_for_paths(
+    knowledge_paths,
+    repo_root,
+    adapter_priorities=None,
+    get_markdown=None,
+    require_orchestrator=True,
+):
+    # type: (list, object, list, object, bool) -> list
     """
-    Build deterministic knowledge units for a loaded profile.
+    Build deterministic knowledge units for an ordered knowledge path list.
 
-    High-priority concepts follow shared adapter-manifest selection.
-    Decision flows are included whenever present on a profile document.
+    ``get_markdown`` may be a shared cache callable so the same canonical
+    source is read once across multiple scopes in one adapter invocation.
     """
     from common.paths import get_dist_path, get_repo_root
 
     root = repo_root or get_repo_root()
-    knowledge_paths = list(profile.get("knowledge") or [])
-    if not knowledge_paths:
-        raise ValueError("Profile has no resolved knowledge paths.")
+    paths = list(knowledge_paths or [])
+    if not paths:
+        return []
 
-    knowledge_set = set(knowledge_paths)
-    if ORCHESTRATOR_PATH not in knowledge_set:
+    knowledge_set = set(paths)
+    if require_orchestrator and ORCHESTRATOR_PATH not in knowledge_set:
         raise ValueError("Profile must include orchestrator document.")
 
     concept_index, manifest = load_generation_indexes(get_dist_path())
-    get_markdown = markdown_cache_for_profile(root, knowledge_paths)
-    manifest_rules = select_manifest_rules(
-        manifest,
-        knowledge_paths,
-        profile.get("adapter_priorities") or ["high"],
-    )
+    if get_markdown is None:
+        get_markdown = markdown_cache_for_profile(root, paths)
+    priorities = list(adapter_priorities or ["high"])
+    manifest_rules = select_manifest_rules(manifest, paths, priorities)
 
     selected_ids_by_source = {}
     for entry in manifest_rules:
@@ -121,7 +125,7 @@ def collect_selected_units(profile, repo_root):
         selected_ids_by_source.setdefault(source_path, []).append(concept_id)
 
     units = []
-    for source_path in knowledge_paths:
+    for source_path in paths:
         markdown = get_markdown(source_path)
         flow = extract_decision_flow(markdown, source_path)
         extracted = extract_concepts(markdown, source_path)
@@ -165,6 +169,25 @@ def collect_selected_units(profile, repo_root):
     # concept_index is loaded so generation fails closed if indexes are missing.
     _ = concept_index
     return units
+
+
+def collect_selected_units(profile, repo_root):
+    # type: (dict, object) -> list
+    """
+    Build deterministic knowledge units for a loaded profile.
+
+    High-priority concepts follow shared adapter-manifest selection.
+    Decision flows are included whenever present on a profile document.
+    """
+    knowledge_paths = list(profile.get("knowledge") or [])
+    if not knowledge_paths:
+        raise ValueError("Profile has no resolved knowledge paths.")
+    return collect_selected_units_for_paths(
+        knowledge_paths,
+        repo_root,
+        adapter_priorities=profile.get("adapter_priorities") or ["high"],
+        require_orchestrator=True,
+    )
 
 
 def foundation_content(markdown):

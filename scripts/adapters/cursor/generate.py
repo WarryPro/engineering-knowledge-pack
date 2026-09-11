@@ -144,6 +144,80 @@ def generate(profile_name="cursor-core", output_dir=None, profile=None, repo_roo
     return sorted(written)
 
 
+def generate_scoped(project_resolution, output_dir, repo_root=None):
+    # type: (object, Path, Path) -> list
+    """
+    Generate one Cursor bundle for GLOBAL + all workspace scopes.
+
+    GLOBAL knowledge reuses existing concept-level ``generate()``.
+    WORKSPACE knowledge is document-grouped (one .mdc per source).
+    """
+    from common.document_body import render_document_unit_body
+    from common.scoped_gen import (
+        ScopedGenerationError,
+        build_invocation_markdown_cache,
+        claim_relative_path,
+        ephemeral_global_profile,
+        global_knowledge_paths,
+        units_for_paths,
+        workspace_knowledge_paths,
+        workspace_path_order,
+        write_claimed_text,
+    )
+    from common.workspace_names import workspace_scoped_filename
+    from cursor.mdc_writer import render_workspace_mdc
+
+    root = repo_root or get_repo_root()
+    output_dir = Path(output_dir)
+    inventory = project_resolution.inventory
+
+    if output_dir.exists():
+        for existing in output_dir.glob("*.mdc"):
+            existing.unlink()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    claimed = set()
+    written = []
+
+    global_paths = global_knowledge_paths(inventory)
+    if global_paths:
+        profile = ephemeral_global_profile(global_paths, outputs=["cursor"])
+        global_written = generate(
+            profile_name="project-composition",
+            output_dir=output_dir,
+            profile=profile,
+            repo_root=root,
+        )
+        for path in global_written:
+            rel = Path(path).name
+            claim_relative_path(claimed, rel)
+            written.append(path)
+
+    get_markdown = build_invocation_markdown_cache(root, inventory)
+    for workspace_path in workspace_path_order(inventory):
+        paths = workspace_knowledge_paths(inventory, workspace_path)
+        if not paths:
+            continue
+        units = units_for_paths(paths, root, get_markdown)
+        for unit in units:
+            filename = workspace_scoped_filename(
+                workspace_path, unit.source_path, "mdc"
+            )
+            if filename in claimed:
+                raise ScopedGenerationError(
+                    "Duplicate Cursor workspace rule path: {}".format(filename)
+                )
+            body = render_document_unit_body(unit)
+            content = render_workspace_mdc(
+                "{}/**".format(workspace_path), body
+            )
+            written.append(
+                write_claimed_text(output_dir, filename, content, claimed)
+            )
+
+    return sorted(written)
+
+
 # Backward-compatible alias for callers expecting load_profile on this module.
 def load_profile(profile_path):
     # type: (Path) -> dict

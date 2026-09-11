@@ -77,3 +77,23 @@ def write_mdc_file(output_path, rule, source_path, heading_title, preferences=No
     content = render_mdc(rule, source_path, heading_title, preferences=preferences)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(content, encoding="utf-8")
+
+
+def render_workspace_mdc(globs_pattern, body_markdown):
+    # type: (str, str) -> str
+    """
+    Workspace-scoped Cursor rule frontmatter + document body.
+
+    Scope is determined by ``globs``; no ``description`` is emitted (AZ-C).
+    """
+    lines = [
+        "---",
+        "globs: {}".format(globs_pattern),
+        "alwaysApply: false",
+        "---",
+        "",
+    ]
+    body = body_markdown.lstrip("\n")
+    if not body.endswith("\n"):
+        body = body + "\n"
+    return "\n".join(lines) + body

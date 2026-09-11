@@ -223,6 +223,107 @@ def assemble_resolved_profile(
     return primary_manifest
 
 
+def assemble_project_resolution(
+    project_resolution,
+    assistants,
+    profile_name="project-composition",
+    clean=False,
+    verify=False,
+    repo_root=None,
+    dist_dir=None,
+    bundle_root=None,
+    registry=None,
+):
+    # type: (object, list, str, bool, bool, Path, Path, Path, object) -> dict
+    """
+    Assemble schema2 scoped adapter bundles from a ProjectCompositionResolution.
+
+    Dispatches each assistant once through ``generate_scoped``. Does not flatten
+    scopes into a schema1 profile.
+    """
+    from common.scoped_gen import ScopedGenerationError
+
+    root = repo_root or get_repo_root()
+    indexes_dir = dist_dir or (root / "dist")
+    bundles_dir = bundle_root or indexes_dir
+    missing = verify_indexes(indexes_dir)
+    if missing:
+        raise AssembleError(
+            "Missing required indexes in dist/: {}\n{}".format(
+                ", ".join(missing), GENERATE_INDEX_HINT
+            )
+        )
+
+    adapter_names = list(assistants or [])
+    if not adapter_names:
+        raise AssembleError("Scoped assembly requires at least one assistant")
+
+    adapter_registry = registry or build_default_registry()
+    requested = []
+    for adapter_name in adapter_names:
+        try:
+            adapter = adapter_registry.get(adapter_name)
+        except AdapterNotImplementedError as exc:
+            raise AssembleError(str(exc))
+        if not adapter.get("generate_scoped"):
+            raise AssembleError(
+                "Adapter '{}' does not support generate_scoped".format(adapter_name)
+            )
+        requested.append((adapter_name, adapter))
+
+    bundle_dir = bundles_dir / profile_name
+    if clean and bundle_dir.exists():
+        shutil.rmtree(bundle_dir)
+
+    primary_manifest = None
+    cursor_manifest = None
+    assembled_names = []
+
+    for adapter_name, adapter in requested:
+        adapter_dir = bundle_dir / adapter_name
+        try:
+            adapter["generate_scoped"](
+                project_resolution,
+                adapter_dir,
+                root,
+            )
+        except ScopedGenerationError as exc:
+            raise AssembleError(str(exc))
+        except ValueError as exc:
+            raise AssembleError(str(exc))
+
+        manifest = adapter["build_manifest"](profile_name, adapter_dir)
+        if adapter_name == CURSOR_ADAPTER:
+            write_bundle_manifest(bundle_dir, manifest)
+            cursor_manifest = manifest
+        else:
+            write_json(adapter_dir / ADAPTER_MANIFEST_NAME, manifest)
+        primary_manifest = manifest
+        assembled_names.append(adapter_name)
+
+        if verify:
+            try:
+                adapter["verify"](bundle_dir)
+            except (
+                CursorVerifyError,
+                CopilotVerifyError,
+                AntigravityVerifyError,
+                ClaudeVerifyError,
+            ) as exc:
+                raise AssembleError(str(exc))
+            except AssembleError:
+                raise
+            except Exception as exc:
+                raise AssembleError(str(exc))
+
+    assemble_manifest = build_assemble_manifest(profile_name, assembled_names)
+    write_json(bundle_dir / ASSEMBLE_MANIFEST_NAME, assemble_manifest)
+
+    if cursor_manifest is not None:
+        return cursor_manifest
+    return primary_manifest
+
+
 def assemble(
     profile_name,
     clean=False,

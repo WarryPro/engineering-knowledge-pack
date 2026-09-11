@@ -18,13 +18,21 @@ class AdapterRegistry(object):
     def __init__(self):
         self._adapters = {}
 
-    def register(self, name, generate_fn, verify_fn, build_manifest_fn):
-        # type: (str, object, object, object) -> None
+    def register(
+        self,
+        name,
+        generate_fn,
+        verify_fn,
+        build_manifest_fn,
+        generate_scoped_fn=None,
+    ):
+        # type: (str, object, object, object, object) -> None
         if name not in KNOWN_ADAPTERS:
             raise ValueError("Unknown adapter name: {}".format(name))
         self._adapters[name] = {
             "name": name,
             "generate": generate_fn,
+            "generate_scoped": generate_scoped_fn,
             "verify": verify_fn,
             "build_manifest": build_manifest_fn,
             "implemented": True,
@@ -61,15 +69,19 @@ def build_default_registry():
     # type: () -> AdapterRegistry
     """Construct the default adapter registry with operational adapters."""
     from antigravity.generate import generate as antigravity_generate
+    from antigravity.generate import generate_scoped as antigravity_generate_scoped
     from antigravity.manifest import build_adapter_manifest as antigravity_build_manifest
     from antigravity.verify import verify_antigravity_bundle
     from claude.generate import generate as claude_generate
+    from claude.generate import generate_scoped as claude_generate_scoped
     from claude.manifest import build_adapter_manifest as claude_build_manifest
     from claude.verify import verify_claude_bundle
     from copilot.generate import generate as copilot_generate
+    from copilot.generate import generate_scoped as copilot_generate_scoped
     from copilot.manifest import build_adapter_manifest as copilot_build_manifest
     from copilot.verify import verify_copilot_bundle
     from cursor.generate import generate as cursor_generate
+    from cursor.generate import generate_scoped as cursor_generate_scoped
     from cursor.manifest import build_bundle_manifest as cursor_build_manifest
     from cursor.verify import verify_cursor_bundle
 
@@ -79,23 +91,27 @@ def build_default_registry():
         generate_fn=cursor_generate,
         verify_fn=verify_cursor_bundle,
         build_manifest_fn=cursor_build_manifest,
+        generate_scoped_fn=cursor_generate_scoped,
     )
     registry.register(
         "copilot",
         generate_fn=copilot_generate,
         verify_fn=verify_copilot_bundle,
         build_manifest_fn=copilot_build_manifest,
+        generate_scoped_fn=copilot_generate_scoped,
     )
     registry.register(
         "antigravity",
         generate_fn=antigravity_generate,
         verify_fn=verify_antigravity_bundle,
         build_manifest_fn=antigravity_build_manifest,
+        generate_scoped_fn=antigravity_generate_scoped,
     )
     registry.register(
         "claude",
         generate_fn=claude_generate,
         verify_fn=verify_claude_bundle,
         build_manifest_fn=claude_build_manifest,
+        generate_scoped_fn=claude_generate_scoped,
     )
     return registry

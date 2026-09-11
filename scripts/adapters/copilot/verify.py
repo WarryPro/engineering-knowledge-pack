@@ -44,14 +44,10 @@ def verify_copilot_bundle(bundle_dir):
         )
 
     always_on = adapter_dir / COPILOT_INSTRUCTIONS_RELPATH
-    if not always_on.is_file():
-        errors.append(
-            "Missing repository-wide instructions: {}".format(
-                COPILOT_INSTRUCTIONS_RELPATH
-            )
-        )
+    has_always_on = always_on.is_file()
 
     generated = []
+    path_specific = 0
     for path in _relative_files(adapter_dir):
         rel = path.relative_to(adapter_dir).as_posix()
         if rel == MANIFEST_NAME:
@@ -85,6 +81,7 @@ def verify_copilot_bundle(bundle_dir):
             )
             continue
 
+        path_specific += 1
         match = FRONTMATTER_RE.match(content)
         if not match:
             errors.append("{}: missing YAML frontmatter".format(rel))
@@ -93,6 +90,13 @@ def verify_copilot_bundle(bundle_dir):
             errors.append("{}: frontmatter missing applyTo".format(rel))
         if "alwaysApply" in match.group(1):
             errors.append("{}: Cursor alwaysApply must not appear".format(rel))
+
+    if not has_always_on and path_specific == 0:
+        errors.append(
+            "Missing repository-wide instructions: {}".format(
+                COPILOT_INSTRUCTIONS_RELPATH
+            )
+        )
 
     if not generated:
         errors.append("No Copilot instruction files generated in {}".format(adapter_dir))
