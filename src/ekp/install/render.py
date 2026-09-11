@@ -177,12 +177,43 @@ def _composition_from_plan(plan):
     return None
 
 
+def _composition_intent_lines(plan) -> list:
+    config = plan.project_config
+    composition = _composition_from_plan(plan)
+    lines = [
+        "Schema:              {}".format(config.schema_version),
+        "",
+    ]
+    if config.components:
+        lines.append("Root components:")
+        for item in config.components:
+            lines.append("  {}".format(item))
+    else:
+        lines.append("Root components:     none")
+    lines.append("")
+    if composition is not None and composition.resolved_components:
+        lines.append("Resolved root components:")
+        for item in composition.resolved_components:
+            lines.append("  {}".format(item))
+        lines.append("")
+    if getattr(config, "workspaces", None):
+        lines.append("Workspaces:")
+        for ws in config.workspaces:
+            lines.append(
+                "  {} - {}".format(ws.path, ", ".join(ws.components))
+            )
+        lines.append("")
+    lines.append("Assistants:")
+    for item in plan.assistants:
+        lines.append("  {}".format(assistant_display_label(item)))
+    lines.append("")
+    return lines
+
+
 def render_composition_dry_run(plan) -> str:
     from ekp.composition import PROJECT_COMPOSITION_PROFILE
     from ekp.install.intent import MODE_COMPOSITION
 
-    config = plan.project_config
-    composition = _composition_from_plan(plan)
     lines = [
         "EKP composition installation plan",
         "",
@@ -191,20 +222,8 @@ def render_composition_dry_run(plan) -> str:
         "Configuration:       {}".format(plan.config_action),
         "configuration_sha256: {}".format(plan.configuration_sha256),
         "",
-        "Requested components:",
     ]
-    for item in config.components:
-        lines.append("  {}".format(item))
-    lines.append("")
-    lines.append("Resolved components:")
-    if composition is not None:
-        for item in composition.resolved_components:
-            lines.append("  {}".format(item))
-    lines.append("")
-    lines.append("Assistants:")
-    for item in plan.assistants:
-        lines.append("  {}".format(assistant_display_label(item)))
-    lines.append("")
+    lines.extend(_composition_intent_lines(plan))
     lines.extend(_managed_files_block(plan))
     lines.append("")
     lines.append(
@@ -222,25 +241,11 @@ def render_composition_dry_run(plan) -> str:
 
 
 def render_composition_confirmation(plan) -> str:
-    config = plan.project_config
-    composition = _composition_from_plan(plan)
     lines = [
         "EKP composition installation",
         "",
-        "Requested components:",
     ]
-    for item in config.components:
-        lines.append("  {}".format(item))
-    lines.append("")
-    lines.append("Resolved components:")
-    if composition is not None:
-        for item in composition.resolved_components:
-            lines.append("  {}".format(item))
-    lines.append("")
-    lines.append("Assistants:")
-    for item in plan.assistants:
-        lines.append("  {}".format(assistant_display_label(item)))
-    lines.append("")
+    lines.extend(_composition_intent_lines(plan))
     lines.extend(_managed_files_block(plan))
     lines.append("Config:       {}".format(plan.config_action))
     lines.append("")
@@ -249,15 +254,29 @@ def render_composition_confirmation(plan) -> str:
 
 
 def render_composition_success(plan) -> str:
-    return (
-        "EKP installation complete.\n\n"
-        "Mode: composition\n"
-        "Assistants: {}\n"
-        "Managed files: {}\n"
-        "Config: {}\n"
-        "Manifest: .ekp/install.json".format(
-            ", ".join(plan.assistants),
-            plan.managed_file_count,
-            plan.config_action,
-        )
+    config = plan.project_config
+    lines = [
+        "EKP installation complete.",
+        "",
+        "Mode: composition",
+        "Schema: {}".format(config.schema_version),
+    ]
+    if config.components:
+        lines.append("Root components: {}".format(", ".join(config.components)))
+    else:
+        lines.append("Root components: none")
+    if getattr(config, "workspaces", None):
+        lines.append("Workspaces:")
+        for ws in config.workspaces:
+            lines.append(
+                "  {} - {}".format(ws.path, ", ".join(ws.components))
+            )
+    lines.extend(
+        [
+            "Assistants: {}".format(", ".join(plan.assistants)),
+            "Managed files: {}".format(plan.managed_file_count),
+            "Config: {}".format(plan.config_action),
+            "Manifest: .ekp/install.json",
+        ]
     )
+    return "\n".join(lines)

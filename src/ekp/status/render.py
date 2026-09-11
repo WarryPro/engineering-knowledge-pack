@@ -36,18 +36,51 @@ def render_human(result: StatusResult) -> str:
     ]
 
     if result.mode == INSTALL_MODE_COMPOSITION:
-        lines.append("Requested components:")
-        for item in result.requested_components:
-            lines.append("  {}".format(item))
+        if result.requested_components:
+            lines.append("Requested components:")
+            for item in result.requested_components:
+                lines.append("  {}".format(item))
+        else:
+            lines.append("Root components: none")
         lines.append("")
-        lines.append("Resolved components:")
-        for item in result.resolved_components:
-            lines.append("  {}".format(item))
-        lines.append("")
+        if result.resolved_components:
+            lines.append("Resolved components:")
+            for item in result.resolved_components:
+                lines.append("  {}".format(item))
+            lines.append("")
         lines.append("Assistants:")
         for item in result.assistants:
             lines.append("  {}".format(item))
         lines.append("")
+        if result.workspaces:
+            lines.append("Workspaces:")
+            for ws in result.workspaces:
+                lines.append("  {}".format(ws.path))
+                lines.append(
+                    "    Requested: {}".format(
+                        ", ".join(ws.requested_components) or "(none)"
+                    )
+                )
+                lines.append(
+                    "    Resolved: {}".format(
+                        ", ".join(ws.resolved_components) or "(none)"
+                    )
+                )
+                if ws.assistant_output_counts:
+                    managed = ", ".join(
+                        "{}={}".format(assistant, count)
+                        for assistant, count in sorted(
+                            ws.assistant_output_counts.items()
+                        )
+                    )
+                    lines.append("    Managed: {}".format(managed))
+                if ws.issues:
+                    lines.append("    Issues:")
+                    for issue in ws.issues:
+                        lines.append("      - {}".format(issue))
+                else:
+                    lines.append("    Issues: none")
+            lines.append("")
         if result.configuration_drift:
             lines.append("Configuration:     DRIFT")
         else:
