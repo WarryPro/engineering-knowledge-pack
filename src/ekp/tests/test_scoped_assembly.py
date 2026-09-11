@@ -433,6 +433,130 @@ class Schema1ParitySmokeTests(unittest.TestCase):
         )
         self.assertEqual(len(written), 65)
 
+    def test_schema1_generate_needs_no_external_cache(self):
+        from cursor.generate import generate as cursor_generate
+        from copilot.generate import generate as copilot_generate
+        from claude.generate import generate as claude_generate
+        from antigravity.generate import generate as antigravity_generate
+
+        if verify_indexes(get_dist_path()):
+            self.skipTest("dist indexes not available")
+
+        cursor_generate(
+            profile_name="cursor-core",
+            output_dir=Path(self.temp) / "cursor-alone",
+        )
+        # Non-cursor adapters use ekp-core knowledge set via profile load.
+        for name, fn in (
+            ("copilot", copilot_generate),
+            ("claude", claude_generate),
+            ("antigravity", antigravity_generate),
+        ):
+            fn(
+                profile_name="ekp-core",
+                output_dir=Path(self.temp) / name,
+            )
+
+
+class SharedScopedSourceCacheTests(unittest.TestCase):
+    """AZ-C-FIX: one disk read per canonical source per generate_scoped call."""
+
+    SOURCE = "knowledge/engineering/engineering-principles.md"
+
+    @classmethod
+    def setUpClass(cls):
+        if verify_indexes(get_dist_path()):
+            raise unittest.SkipTest("dist indexes not available")
+        cls.registry = ComponentRegistry.load()
+
+    def setUp(self):
+        self.temp = tempfile.mkdtemp(prefix="ekp-azc-fix-")
+
+    def tearDown(self):
+        clear_path_context()
+        shutil.rmtree(self.temp, ignore_errors=True)
+
+    def _multi_scope_resolution(self):
+        config = ProjectConfig(
+            2,
+            ("core",),
+            ("cursor", "copilot", "claude", "antigravity"),
+            (
+                WorkspaceIntent("apps/api", ("core",)),
+                WorkspaceIntent("apps/web", ("core",)),
+                WorkspaceIntent("apps/mobile", ("core",)),
+                WorkspaceIntent("packages/shared", ("core",)),
+            ),
+        )
+        return resolve_project_composition(config, self.registry)
+
+    def _count_reads_for_adapter(self, generate_scoped_fn):
+        resolution = self._multi_scope_resolution()
+        sources = set(resolution.inventory.unique_source_paths())
+        self.assertIn(self.SOURCE, sources)
+        # Source appears in GLOBAL + four workspaces.
+        appearances = [
+            item
+            for item in resolution.inventory.items
+            if item.source_path == self.SOURCE
+        ]
+        self.assertEqual(len(appearances), 5)
+
+        from common.selection import read_knowledge_document
+
+        reads = []
+
+        def tracking_reader(repo_root, relative_path):
+            if relative_path == self.SOURCE:
+                reads.append(relative_path)
+            return read_knowledge_document(repo_root, relative_path)
+
+        output_dir = Path(self.temp) / "out" / generate_scoped_fn.__module__
+        with mock.patch(
+            "common.selection.read_knowledge_document",
+            side_effect=tracking_reader,
+        ):
+            set_path_context(repo_root=REPO_ROOT, dist_dir=get_dist_path())
+            try:
+                generate_scoped_fn(
+                    resolution,
+                    output_dir,
+                    REPO_ROOT,
+                )
+            finally:
+                clear_path_context()
+        return len(reads)
+
+    def test_cursor_reads_shared_source_once(self):
+        from cursor.generate import generate_scoped
+
+        self.assertEqual(self._count_reads_for_adapter(generate_scoped), 1)
+
+    def test_copilot_reads_shared_source_once(self):
+        from copilot.generate import generate_scoped
+
+        self.assertEqual(self._count_reads_for_adapter(generate_scoped), 1)
+
+    def test_claude_reads_shared_source_once(self):
+        from claude.generate import generate_scoped
+
+        self.assertEqual(self._count_reads_for_adapter(generate_scoped), 1)
+
+    def test_antigravity_reads_shared_source_once(self):
+        from antigravity.generate import generate_scoped
+
+        self.assertEqual(self._count_reads_for_adapter(generate_scoped), 1)
+
+    def test_all_four_assembly_reads_once_per_assistant(self):
+        """Cross-assistant: each invocation reads once; not one shared process cache."""
+        from cursor.generate import generate_scoped as cursor_scoped
+        from copilot.generate import generate_scoped as copilot_scoped
+        from claude.generate import generate_scoped as claude_scoped
+        from antigravity.generate import generate_scoped as anti_scoped
+
+        for fn in (cursor_scoped, copilot_scoped, claude_scoped, anti_scoped):
+            self.assertEqual(self._count_reads_for_adapter(fn), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

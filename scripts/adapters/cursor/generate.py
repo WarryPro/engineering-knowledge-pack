@@ -31,33 +31,18 @@ FOUNDATION_PATH = "knowledge/engineering/engineering-principles.md"
 ADAPTER_NAME = "cursor"
 
 
-def generate(profile_name="cursor-core", output_dir=None, profile=None, repo_root=None):
-    # type: (str, Path, dict, Path) -> list
+def _render_global(output_dir, profile, repo_root, get_markdown=None):
+    # type: (Path, dict, Path, object) -> list
     """
-    Generate Cursor .mdc rules for a profile.
+    Render GLOBAL/schema1 Cursor concept-level rules into ``output_dir``.
 
-    Pipeline: extract → selection → normalization → Cursor writer.
-
-    Returns a sorted list of written file paths.
+    Does not clear the output directory. Callers own cleanup.
     """
-    root = repo_root or get_repo_root()
-    if profile is None:
-        profile = load_profile_by_name(profile_name, repo_root=root)
-
+    root = repo_root
     concept_index, manifest = load_generation_indexes(get_dist_path())
-
-    if output_dir is None:
-        output_dir = get_dist_path() / profile_name / ADAPTER_NAME
-    else:
-        output_dir = Path(output_dir)
-
-    if output_dir.exists():
-        for existing in output_dir.glob("*.mdc"):
-            existing.unlink()
-    output_dir.mkdir(parents=True, exist_ok=True)
-
     knowledge_set = set(profile["knowledge"])
-    get_markdown = markdown_cache_for_profile(root, profile["knowledge"])
+    if get_markdown is None:
+        get_markdown = markdown_cache_for_profile(root, profile["knowledge"])
     written = []
 
     if ORCHESTRATOR_PATH not in knowledge_set:
@@ -144,13 +129,38 @@ def generate(profile_name="cursor-core", output_dir=None, profile=None, repo_roo
     return sorted(written)
 
 
+def generate(profile_name="cursor-core", output_dir=None, profile=None, repo_root=None):
+    # type: (str, Path, dict, Path) -> list
+    """
+    Generate Cursor .mdc rules for a profile.
+
+    Pipeline: extract → selection → normalization → Cursor writer.
+
+    Returns a sorted list of written file paths.
+    """
+    root = repo_root or get_repo_root()
+    if profile is None:
+        profile = load_profile_by_name(profile_name, repo_root=root)
+
+    if output_dir is None:
+        output_dir = get_dist_path() / profile_name / ADAPTER_NAME
+    else:
+        output_dir = Path(output_dir)
+
+    if output_dir.exists():
+        for existing in output_dir.glob("*.mdc"):
+            existing.unlink()
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    return _render_global(output_dir, profile, root, get_markdown=None)
+
+
 def generate_scoped(project_resolution, output_dir, repo_root=None):
     # type: (object, Path, Path) -> list
     """
     Generate one Cursor bundle for GLOBAL + all workspace scopes.
 
-    GLOBAL knowledge reuses existing concept-level ``generate()``.
-    WORKSPACE knowledge is document-grouped (one .mdc per source).
+    One shared source cache serves GLOBAL and every WORKSPACE render.
     """
     from common.document_body import render_document_unit_body
     from common.scoped_gen import (
@@ -178,22 +188,17 @@ def generate_scoped(project_resolution, output_dir, repo_root=None):
 
     claimed = set()
     written = []
+    get_markdown = build_invocation_markdown_cache(root, inventory)
 
     global_paths = global_knowledge_paths(inventory)
     if global_paths:
         profile = ephemeral_global_profile(global_paths, outputs=["cursor"])
-        global_written = generate(
-            profile_name="project-composition",
-            output_dir=output_dir,
-            profile=profile,
-            repo_root=root,
-        )
-        for path in global_written:
-            rel = Path(path).name
-            claim_relative_path(claimed, rel)
+        for path in _render_global(
+            output_dir, profile, root, get_markdown=get_markdown
+        ):
+            claim_relative_path(claimed, Path(path).name)
             written.append(path)
 
-    get_markdown = build_invocation_markdown_cache(root, inventory)
     for workspace_path in workspace_path_order(inventory):
         paths = workspace_knowledge_paths(inventory, workspace_path)
         if not paths:

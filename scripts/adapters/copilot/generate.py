@@ -11,10 +11,10 @@ if str(ADAPTERS_DIR) not in sys.path:
 
 from common.paths import get_dist_path, get_repo_root
 from common.profile_loader import load_profile_by_name
-from common.selected_knowledge import collect_selected_units
+from common.selected_knowledge import collect_selected_units_for_paths
 
-from copilot.grouping import group_by_name, partition_units
-from copilot.writer import planned_files
+from copilot.grouping import group_by_name, instruction_relpath, partition_units
+from copilot.writer import planned_files, render_path_instructions
 
 ADAPTER_NAME = "copilot"
 
@@ -23,6 +23,26 @@ def _write_text(path, content):
     # type: (Path, str) -> None
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
+
+
+def _render_global(output_dir, profile, repo_root, get_markdown=None):
+    # type: (Path, dict, Path, object) -> list
+    """Render GLOBAL/schema1 Copilot files. Does not clear ``output_dir``."""
+    units = collect_selected_units_for_paths(
+        list(profile.get("knowledge") or []),
+        repo_root,
+        adapter_priorities=profile.get("adapter_priorities") or ["high"],
+        get_markdown=get_markdown,
+        require_orchestrator=True,
+    )
+    always_on, grouped = partition_units(units)
+    planned = planned_files(always_on, grouped, group_by_name)
+    written = []
+    for relpath, content, _sources in planned:
+        target = output_dir / relpath
+        _write_text(target, content)
+        written.append(str(target))
+    return sorted(written)
 
 
 def generate(profile_name="ekp-core", output_dir=None, profile=None, repo_root=None):
@@ -46,17 +66,7 @@ def generate(profile_name="ekp-core", output_dir=None, profile=None, repo_root=N
         shutil.rmtree(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    units = collect_selected_units(profile, root)
-    always_on, grouped = partition_units(units)
-    planned = planned_files(always_on, grouped, group_by_name)
-
-    written = []
-    for relpath, content, _sources in planned:
-        target = output_dir / relpath
-        _write_text(target, content)
-        written.append(str(target))
-
-    return sorted(written)
+    return _render_global(output_dir, profile, root, get_markdown=None)
 
 
 def generate_scoped(project_resolution, output_dir, repo_root=None):
@@ -64,6 +74,7 @@ def generate_scoped(project_resolution, output_dir, repo_root=None):
     """
     Generate one Copilot bundle for GLOBAL + all workspace scopes.
 
+    One shared source cache serves GLOBAL and every WORKSPACE render.
     Workspace knowledge never enters ``copilot-instructions.md``.
     """
     from common.scoped_gen import (
@@ -79,8 +90,6 @@ def generate_scoped(project_resolution, output_dir, repo_root=None):
         prefix_apply_to_patterns,
         workspace_scoped_filename,
     )
-    from copilot.writer import render_path_instructions
-    from copilot.grouping import instruction_relpath
 
     root = repo_root or get_repo_root()
     output_dir = Path(output_dir)
@@ -92,21 +101,17 @@ def generate_scoped(project_resolution, output_dir, repo_root=None):
 
     claimed = set()
     written = []
+    get_markdown = build_invocation_markdown_cache(root, inventory)
 
     global_paths = global_knowledge_paths(inventory)
     if global_paths:
         profile = ephemeral_global_profile(global_paths, outputs=["copilot"])
-        for path in generate(
-            profile_name="project-composition",
-            output_dir=output_dir,
-            profile=profile,
-            repo_root=root,
+        for path in _render_global(
+            output_dir, profile, root, get_markdown=get_markdown
         ):
-            rel = Path(path).relative_to(output_dir).as_posix()
-            claimed.add(rel)
+            claimed.add(Path(path).relative_to(output_dir).as_posix())
             written.append(path)
 
-    get_markdown = build_invocation_markdown_cache(root, inventory)
     for workspace_path in workspace_path_order(inventory):
         paths = workspace_knowledge_paths(inventory, workspace_path)
         if not paths:
@@ -115,7 +120,6 @@ def generate_scoped(project_resolution, output_dir, repo_root=None):
         always_on, grouped = partition_units(units)
 
         if always_on:
-            # Workspace always-on cannot use repository-wide instructions.
             general_group = {
                 "name": "general",
                 "filename": workspace_scoped_filename(

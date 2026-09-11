@@ -17,11 +17,11 @@ def inventory_source_paths(inventory):
     return list(inventory.unique_source_paths())
 
 
-def build_invocation_markdown_cache(repo_root, inventory):
-    # type: (object, object) -> object
+def build_invocation_markdown_cache(repo_root, inventory, reader=None):
+    # type: (object, object, object) -> object
     """One markdown cache for all unique sources in one adapter invocation."""
     return build_source_markdown_cache(
-        repo_root, inventory_source_paths(inventory)
+        repo_root, inventory_source_paths(inventory), reader=reader
     )
 
 
