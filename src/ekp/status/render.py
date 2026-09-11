@@ -148,6 +148,17 @@ def result_to_dict(result: StatusResult) -> Dict[str, Any]:
         payload["configuration_sha256"] = result.configuration_sha256
         payload["current_configuration_sha256"] = result.current_configuration_sha256
         payload["configuration_drift"] = bool(result.configuration_drift)
+        if result.workspaces:
+            payload["workspaces"] = [
+                {
+                    "path": ws.path,
+                    "requested_components": list(ws.requested_components),
+                    "resolved_components": list(ws.resolved_components),
+                    "assistant_output_counts": dict(ws.assistant_output_counts),
+                    "issues": list(ws.issues),
+                }
+                for ws in result.workspaces
+            ]
 
     return payload
 

@@ -8,7 +8,7 @@ from typing import Iterable, List, Sequence
 ASSISTANT_SYMLINK_ROOTS = {
     "cursor": (".cursor", ".cursor/rules"),
     "copilot": (".github", ".github/instructions"),
-    "claude": (".claude", ".claude/skills", "CLAUDE.md"),
+    "claude": (".claude", ".claude/skills", ".claude/rules", "CLAUDE.md"),
     "antigravity": (".agents", ".agents/rules"),
 }
 

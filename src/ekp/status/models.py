@@ -32,6 +32,17 @@ class ManagedFileStatus:
 
 
 @dataclass
+class WorkspaceStatusDiagnostic:
+    """Ephemeral per-workspace status diagnostics (not persisted)."""
+
+    path: str
+    requested_components: List[str] = field(default_factory=list)
+    resolved_components: List[str] = field(default_factory=list)
+    assistant_output_counts: dict = field(default_factory=dict)
+    issues: List[str] = field(default_factory=list)
+
+
+@dataclass
 class StatusResult:
     """Complete read-only status inspection result."""
 
@@ -59,6 +70,7 @@ class StatusResult:
     resolved_components: List[str] = field(default_factory=list)
     assistants: List[str] = field(default_factory=list)
     configuration_drift: Optional[bool] = None
+    workspaces: List[WorkspaceStatusDiagnostic] = field(default_factory=list)
 
     @property
     def exit_code(self) -> int:

@@ -6,9 +6,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional, Sequence, Set
 
-from ekp.assembly import AssemblyService, CompositionAssemblyRequest
+from ekp.assembly import (
+    AssemblyService,
+    CompositionAssemblyRequest,
+    ScopedProjectAssemblyRequest,
+)
 from ekp.composition import PROJECT_COMPOSITION_PROFILE, ComponentRegistry
 from ekp.config.models import (
+    PROJECT_SCHEMA_VERSION_1,
+    PROJECT_SCHEMA_VERSION_2,
     ProjectConfig,
     ProjectConfigError,
     ProjectConfigFileSnapshot,
@@ -32,6 +38,7 @@ from ekp.install.errors import (
 )
 from ekp.install.intent import (
     build_composition_intent,
+    build_project_lifecycle_intent,
     intent_to_project_config,
 )
 from ekp.install.manifest import (
@@ -68,11 +75,20 @@ from ekp.version import get_version
 
 @dataclass
 class ConfigureRequest:
-    """Exact desired-state configure request (both dimensions required)."""
+    """Exact desired-state configure request (schema1 CLI compatibility)."""
 
     path: str
     components: Sequence[str]
     assistants: Sequence[str]
+    dry_run: bool = False
+
+
+@dataclass
+class ConfigureProjectRequest:
+    """Exact desired ProjectConfig configure request (schema1 or schema2)."""
+
+    path: str
+    desired_config: ProjectConfig
     dry_run: bool = False
 
 
@@ -270,6 +286,16 @@ class ConfigureService:
     def configure(self, request: ConfigureRequest) -> ConfigureResult:
         """Prepare and apply (or dry-run / NOOP) in one call."""
         prepared_result = self.prepare(request)
+        return self._finish_configure(prepared_result, dry_run=request.dry_run)
+
+    def configure_project(self, request: ConfigureProjectRequest) -> ConfigureResult:
+        """Prepare and apply from an exact desired ProjectConfig."""
+        prepared_result = self.prepare_project(request)
+        return self._finish_configure(prepared_result, dry_run=request.dry_run)
+
+    def _finish_configure(
+        self, prepared_result: ConfigureResult, *, dry_run: bool
+    ) -> ConfigureResult:
         if prepared_result.exit_code != EXIT_SUCCESS:
             if prepared_result.prepared is not None:
                 prepared_result.prepared.close()
@@ -278,7 +304,7 @@ class ConfigureService:
         prepared = prepared_result.prepared
         assert prepared is not None
 
-        if request.dry_run or prepared.noop:
+        if dry_run or prepared.noop:
             prepared.close()
             return ConfigureResult(
                 exit_code=EXIT_SUCCESS,
@@ -298,7 +324,18 @@ class ConfigureService:
         prepared operation — never re-plan after confirmation.
         """
         try:
-            return self._prepare(request)
+            return self._prepare_from_schema1_request(request)
+        except InstallError as exc:
+            return ConfigureResult(exit_code=exc.exit_code, message=exc.message)
+
+    def prepare_project(self, request: ConfigureProjectRequest) -> ConfigureResult:
+        """Build a LifecyclePlan from an exact desired ProjectConfig."""
+        try:
+            return self._prepare_from_desired_config(
+                path=request.path,
+                desired_config=request.desired_config,
+                dry_run=request.dry_run,
+            )
         except InstallError as exc:
             return ConfigureResult(exit_code=exc.exit_code, message=exc.message)
 
@@ -313,13 +350,11 @@ class ConfigureService:
             prepared.close()
             raise
 
-    def _prepare(self, request: ConfigureRequest) -> ConfigureResult:
+    def _prepare_from_schema1_request(self, request: ConfigureRequest) -> ConfigureResult:
         project_root = resolve_project_root(request.path)
-        running_version = get_version()
         registry = self._registry_or_load()
         deploy_registry = self._deploy_registry_or_default()
 
-        # Desired IDs first — refuse empty/unknown before any mutation path.
         desired_components = list(request.components)
         desired_assistants = list(request.assistants)
         if not desired_components:
@@ -333,18 +368,39 @@ class ConfigureService:
                 "Use uninstall to remove EKP entirely."
             )
 
-        try:
-            intent = build_composition_intent(
-                desired_components,
-                registry,
-                assistants=desired_assistants,
-                deploy_registry=deploy_registry,
-            )
-        except InstallSelectionError:
-            raise
-
+        intent = build_composition_intent(
+            desired_components,
+            registry,
+            assistants=desired_assistants,
+            deploy_registry=deploy_registry,
+        )
         desired_config = intent_to_project_config(intent)
-        desired_semantic = configuration_sha256(desired_config, registry)
+        return self._prepare_from_desired_config(
+            path=request.path,
+            desired_config=desired_config,
+            dry_run=request.dry_run,
+        )
+
+    def _prepare_from_desired_config(
+        self,
+        *,
+        path: str,
+        desired_config: ProjectConfig,
+        dry_run: bool,
+    ) -> ConfigureResult:
+        project_root = resolve_project_root(path)
+        running_version = get_version()
+        registry = self._registry_or_load()
+        deploy_registry = self._deploy_registry_or_default()
+
+        lifecycle = build_project_lifecycle_intent(
+            desired_config,
+            registry,
+            deploy_registry=deploy_registry,
+            project_root=project_root,
+        )
+        desired_config = lifecycle.config
+        desired_semantic = lifecycle.configuration_sha256
 
         eligibility = self._check_eligibility(project_root, running_version)
         if eligibility is not None:
@@ -415,7 +471,7 @@ class ConfigureService:
                 manifest_sha256=snapshot.sha256,
                 commit_manifest=False,
                 new_manifest=None,
-                dry_run=request.dry_run,
+                dry_run=dry_run,
                 transition_kind="configure",
                 expected_old_configuration_sha256=file_snap.configuration_sha256,
                 new_configuration_sha256=desired_semantic,
@@ -443,15 +499,7 @@ class ConfigureService:
         new_bytes = render_project_config_yaml(desired_config).encode("utf-8")
         new_content_sha = project_config_content_sha256(new_bytes)
 
-        assembly_result = self.assembly.assemble_composition(
-            CompositionAssemblyRequest(
-                components=list(desired_config.components),
-                outputs=list(desired_config.assistants),
-                verify=True,
-                clean=True,
-                resource_root=self._resource_root or registry.resource_root,
-            )
-        )
+        assembly_result = self._assemble_desired(desired_config, registry)
         try:
             desired_files = self._collect_desired_files(
                 assembly_result.bundle_path, desired_config.assistants
@@ -462,7 +510,7 @@ class ConfigureService:
                 running_version=running_version,
                 desired=desired_files,
                 bundle_path=assembly_result.bundle_path,
-                dry_run=request.dry_run,
+                dry_run=dry_run,
                 old_file_snapshot=file_snap,
                 desired_config=desired_config,
                 desired_semantic_hash=desired_semantic,
@@ -497,12 +545,36 @@ class ConfigureService:
                 desired_configuration_sha256=desired_semantic,
                 old_configuration_sha256=file_snap.configuration_sha256,
             )
-        except Exception:
+        finally:
             if assembly_result is not None:
                 temp_ctx = getattr(assembly_result, "_temp_ctx", None)
                 if temp_ctx is not None:
                     temp_ctx.cleanup()
-            raise
+
+    def _assemble_desired(self, desired_config: ProjectConfig, registry: ComponentRegistry):
+        resource_root = self._resource_root or registry.resource_root
+        if desired_config.schema_version == PROJECT_SCHEMA_VERSION_2:
+            return self.assembly.assemble_scoped_project(
+                ScopedProjectAssemblyRequest(
+                    config=desired_config,
+                    assistants=list(desired_config.assistants),
+                    verify=True,
+                    clean=True,
+                    resource_root=resource_root,
+                )
+            )
+        return self.assembly.assemble_composition(
+            CompositionAssemblyRequest(
+                components=list(desired_config.components),
+                outputs=list(desired_config.assistants),
+                verify=True,
+                clean=True,
+                resource_root=resource_root,
+            )
+        )
+
+    def _prepare(self, request: ConfigureRequest) -> ConfigureResult:
+        return self._prepare_from_schema1_request(request)
 
     def _apply(self, prepared: ConfigurePreparedOperation) -> ConfigureResult:
         if prepared._closed:

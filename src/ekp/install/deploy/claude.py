@@ -21,11 +21,15 @@ from ekp.install.errors import InstallAssemblyError
 CLAUDE_ADAPTER = "claude"
 CLAUDE_MD = "CLAUDE.md"
 CLAUDE_SKILLS_DIR = ".claude/skills"
+CLAUDE_RULES_DIR = ".claude/rules"
 SKILL_FILENAME = "SKILL.md"
 
 
 class ClaudeDeployer(Deployer):
-    """Map ``<bundle>/claude/...`` → project root / ``.claude/skills/...`` (identity)."""
+    """Map Claude bundle outputs to project paths (identity).
+
+    Accepts GLOBAL ``CLAUDE.md`` + skills and/or schema2 ``.claude/rules/*.md``.
+    """
 
     @property
     def assistant_id(self) -> str:
@@ -37,6 +41,7 @@ class ClaudeDeployer(Deployer):
         unexpected: List[str] = []
         saw_claude_md = False
         skill_count = 0
+        rule_count = 0
 
         for source in list_assistant_files(adapter_dir):
             rel = source.relative_to(adapter_dir).as_posix()
@@ -46,6 +51,32 @@ class ClaudeDeployer(Deployer):
 
             if rel == CLAUDE_MD:
                 saw_claude_md = True
+                items.append(
+                    desired_file(
+                        relative_path=rel,
+                        adapter=CLAUDE_ADAPTER,
+                        source_path=source,
+                    )
+                )
+                continue
+
+            if rel.startswith(CLAUDE_RULES_DIR + "/"):
+                parts = Path(rel).parts
+                # Expected: .claude / rules / <name>.md
+                if (
+                    len(parts) != 3
+                    or parts[0] != ".claude"
+                    or parts[1] != "rules"
+                    or not parts[2].endswith(".md")
+                ):
+                    unexpected.append(rel)
+                    continue
+                rule_name = parts[2][:-3]
+                if not safe_path_component(rule_name):
+                    raise InstallAssemblyError(
+                        "Unsafe generated Claude rule name: {}".format(rule_name)
+                    )
+                rule_count += 1
                 items.append(
                     desired_file(
                         relative_path=rel,
@@ -87,12 +118,22 @@ class ClaudeDeployer(Deployer):
             raise InstallAssemblyError(
                 "Unexpected Claude bundle files: {}".format(", ".join(unexpected))
             )
-        if not saw_claude_md:
+        # Schema1/global: CLAUDE.md + skills. Schema2 workspace-only: rules alone.
+        if saw_claude_md or skill_count:
+            if not saw_claude_md:
+                raise InstallAssemblyError(
+                    "Assembled Claude output is missing CLAUDE.md: {}".format(
+                        adapter_dir
+                    )
+                )
+            if skill_count == 0:
+                raise InstallAssemblyError(
+                    "Assembled Claude output has no skills: {}".format(adapter_dir)
+                )
+        elif rule_count == 0:
             raise InstallAssemblyError(
-                "Assembled Claude output is missing CLAUDE.md: {}".format(adapter_dir)
-            )
-        if skill_count == 0:
-            raise InstallAssemblyError(
-                "Assembled Claude output has no skills: {}".format(adapter_dir)
+                "Assembled Claude output has neither global files nor rules: {}".format(
+                    adapter_dir
+                )
             )
         return require_non_empty(items, CLAUDE_ADAPTER, adapter_dir)

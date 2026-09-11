@@ -149,15 +149,15 @@ def render_success(plan: InstallPlan, *, noop: bool = False) -> str:
 
 
 def _managed_files_block(plan) -> list:
-    intent = plan.intent
+    assistants = plan.assistants
     lines = ["Managed files:"]
-    if len(intent.assistants) == 1 and intent.assistants[0] == "cursor":
+    if len(assistants) == 1 and assistants[0] == "cursor":
         lines.append("  Cursor rules  {}".format(plan.rules_count))
         lines.append("  Total         {}".format(plan.managed_file_count))
         return lines
 
-    width = max(len(assistant_display_label(a)) for a in intent.assistants)
-    for assistant_id in intent.assistants:
+    width = max(len(assistant_display_label(a)) for a in assistants)
+    for assistant_id in assistants:
         label = assistant_display_label(assistant_id)
         count = plan.assistant_counts.get(assistant_id, 0)
         lines.append(
@@ -169,12 +169,20 @@ def _managed_files_block(plan) -> list:
     return lines
 
 
+def _composition_from_plan(plan):
+    if getattr(plan, "lifecycle_intent", None) is not None:
+        return plan.lifecycle_intent.composition
+    if plan.intent is not None:
+        return plan.intent.composition
+    return None
+
+
 def render_composition_dry_run(plan) -> str:
     from ekp.composition import PROJECT_COMPOSITION_PROFILE
     from ekp.install.intent import MODE_COMPOSITION
 
-    intent = plan.intent
-    composition = intent.composition
+    config = plan.project_config
+    composition = _composition_from_plan(plan)
     lines = [
         "EKP composition installation plan",
         "",
@@ -185,7 +193,7 @@ def render_composition_dry_run(plan) -> str:
         "",
         "Requested components:",
     ]
-    for item in intent.components:
+    for item in config.components:
         lines.append("  {}".format(item))
     lines.append("")
     lines.append("Resolved components:")
@@ -194,7 +202,7 @@ def render_composition_dry_run(plan) -> str:
             lines.append("  {}".format(item))
     lines.append("")
     lines.append("Assistants:")
-    for item in intent.assistants:
+    for item in plan.assistants:
         lines.append("  {}".format(assistant_display_label(item)))
     lines.append("")
     lines.extend(_managed_files_block(plan))
@@ -214,14 +222,14 @@ def render_composition_dry_run(plan) -> str:
 
 
 def render_composition_confirmation(plan) -> str:
-    intent = plan.intent
-    composition = intent.composition
+    config = plan.project_config
+    composition = _composition_from_plan(plan)
     lines = [
         "EKP composition installation",
         "",
         "Requested components:",
     ]
-    for item in intent.components:
+    for item in config.components:
         lines.append("  {}".format(item))
     lines.append("")
     lines.append("Resolved components:")
@@ -230,7 +238,7 @@ def render_composition_confirmation(plan) -> str:
             lines.append("  {}".format(item))
     lines.append("")
     lines.append("Assistants:")
-    for item in intent.assistants:
+    for item in plan.assistants:
         lines.append("  {}".format(assistant_display_label(item)))
     lines.append("")
     lines.extend(_managed_files_block(plan))
@@ -241,7 +249,6 @@ def render_composition_confirmation(plan) -> str:
 
 
 def render_composition_success(plan) -> str:
-    intent = plan.intent
     return (
         "EKP installation complete.\n\n"
         "Mode: composition\n"
@@ -249,7 +256,7 @@ def render_composition_success(plan) -> str:
         "Managed files: {}\n"
         "Config: {}\n"
         "Manifest: .ekp/install.json".format(
-            ", ".join(intent.assistants),
+            ", ".join(plan.assistants),
             plan.managed_file_count,
             plan.config_action,
         )

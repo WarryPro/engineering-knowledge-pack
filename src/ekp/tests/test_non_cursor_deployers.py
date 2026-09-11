@@ -160,12 +160,41 @@ class ClaudeDeployerTests(unittest.TestCase):
             with self.assertRaises(InstallAssemblyError):
                 self.deployer.collect_desired_files(bundle)
 
-    def test_unexpected_rules_output(self):
+    def test_unexpected_nested_rules_output(self):
         with tempfile.TemporaryDirectory() as tmp:
             bundle = self._valid_bundle(Path(tmp))
-            _write(bundle / "claude" / ".claude" / "rules" / "x.md", "nope\n")
+            _write(
+                bundle / "claude" / ".claude" / "rules" / "nested" / "x.md",
+                "nope\n",
+            )
             with self.assertRaises(InstallAssemblyError):
                 self.deployer.collect_desired_files(bundle)
+
+    def test_rules_are_collected(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = self._valid_bundle(Path(tmp))
+            _write(
+                bundle / "claude" / ".claude" / "rules" / "apps-api-abcd123456-x.md",
+                "rule\n",
+            )
+            desired = self.engine.normalize_desired_files(
+                self.deployer.collect_desired_files(bundle)
+            )
+            paths = [item.relative_path for item in desired]
+            self.assertIn(".claude/rules/apps-api-abcd123456-x.md", paths)
+
+    def test_rules_only_bundle_allowed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bundle = Path(tmp) / "bundle"
+            _write(
+                bundle / "claude" / ".claude" / "rules" / "ws-rule.md",
+                "rule\n",
+            )
+            desired = self.deployer.collect_desired_files(bundle)
+            self.assertEqual(
+                [item.relative_path for item in desired],
+                [".claude/rules/ws-rule.md"],
+            )
 
     def test_source_symlink_escape(self):
         with tempfile.TemporaryDirectory() as tmp:

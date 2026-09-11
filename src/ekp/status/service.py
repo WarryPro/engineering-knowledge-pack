@@ -6,8 +6,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
-from ekp.composition import ComponentRegistry, resolve_composition
-from ekp.config.models import ProjectConfigError
+from ekp.composition import (
+    ComponentRegistry,
+    resolve_composition,
+    resolve_project_composition,
+)
+from ekp.config.models import PROJECT_SCHEMA_VERSION_2, ProjectConfigError
 from ekp.config.project import ProjectConfigStore
 from ekp.install.deploy.hashing import sha256_file
 from ekp.install.deploy.registry import build_default_deploy_registry
@@ -20,8 +24,14 @@ from ekp.install.manifest import (
 from ekp.install.paths import check_symlink_boundary, resolve_project_root, resolve_under_root
 from ekp.lifecycle.uninstall import validate_lifecycle_manifest
 from ekp.paths import get_ekp_root
-from ekp.status.models import ManagedFileStatus, StatusResult, StatusState
+from ekp.status.models import (
+    ManagedFileStatus,
+    StatusResult,
+    StatusState,
+    WorkspaceStatusDiagnostic,
+)
 from ekp.version import get_version
+from ekp.workspace_identity import workspace_filename_prefix
 
 
 @dataclass
@@ -171,6 +181,7 @@ class StatusService:
             "resolved_components": [],
             "assistants": [],
             "configuration_drift": None,
+            "workspaces": [],
         }
 
         try:
@@ -261,9 +272,26 @@ class StatusService:
         current_hash = snapshot.configuration_sha256
         drift = current_hash != bound_hash
         assistants = list(snapshot.config.assistants)
+        workspace_diags: List[WorkspaceStatusDiagnostic] = []
         try:
-            composition = resolve_composition(snapshot.config.components, registry)
-            resolved = list(composition.resolved_components)
+            if snapshot.config.schema_version == PROJECT_SCHEMA_VERSION_2:
+                resolution = resolve_project_composition(snapshot.config, registry)
+                if resolution.root is not None:
+                    resolved = list(resolution.root.resolved_components)
+                else:
+                    resolved = []
+                workspace_diags = self._workspace_diagnostics(
+                    resolution,
+                    assistants=assistants,
+                    managed_files=manifest.managed_files,
+                    missing_paths=missing_paths,
+                    modified_paths=modified_paths,
+                )
+            else:
+                composition = resolve_composition(
+                    snapshot.config.components, registry
+                )
+                resolved = list(composition.resolved_components)
         except Exception:
             resolved = []
 
@@ -275,6 +303,7 @@ class StatusService:
             "resolved_components": resolved,
             "assistants": assistants,
             "configuration_drift": drift,
+            "workspaces": workspace_diags,
         }
 
         # Hash match + assistant-set mismatch => ownership corruption (INVALID).
@@ -328,6 +357,50 @@ class StatusService:
         )
 
     @staticmethod
+    def _workspace_diagnostics(
+        resolution,
+        *,
+        assistants: List[str],
+        managed_files,
+        missing_paths: List[str],
+        modified_paths: List[str],
+    ) -> List[WorkspaceStatusDiagnostic]:
+        missing_set = set(missing_paths)
+        modified_set = set(modified_paths)
+        diagnostics: List[WorkspaceStatusDiagnostic] = []
+        for workspace in resolution.workspaces:
+            prefix = workspace_filename_prefix(workspace.path)
+            counts = {assistant: 0 for assistant in assistants}
+            issues: List[str] = []
+            for managed in managed_files:
+                name = Path(managed.relative_path).name
+                if not name.startswith(prefix):
+                    continue
+                counts[managed.adapter] = counts.get(managed.adapter, 0) + 1
+                if managed.relative_path in missing_set:
+                    issues.append(
+                        "missing managed file: {}".format(managed.relative_path)
+                    )
+                if managed.relative_path in modified_set:
+                    issues.append(
+                        "modified managed file: {}".format(managed.relative_path)
+                    )
+            diagnostics.append(
+                WorkspaceStatusDiagnostic(
+                    path=workspace.path,
+                    requested_components=list(
+                        workspace.composition.requested_components
+                    ),
+                    resolved_components=list(
+                        workspace.composition.resolved_components
+                    ),
+                    assistant_output_counts=counts,
+                    issues=issues,
+                )
+            )
+        return diagnostics
+
+    @staticmethod
     def _empty_composition_fields(mode: str) -> dict:
         return {
             "mode": mode,
@@ -337,6 +410,7 @@ class StatusService:
             "resolved_components": [],
             "assistants": [],
             "configuration_drift": None,
+            "workspaces": [],
         }
 
     def _inspect_managed_files(

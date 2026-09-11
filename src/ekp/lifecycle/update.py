@@ -6,9 +6,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Set
 
-from ekp.assembly import AssemblyRequest, AssemblyService, CompositionAssemblyRequest
+from ekp.assembly import (
+    AssemblyRequest,
+    AssemblyService,
+    CompositionAssemblyRequest,
+    ScopedProjectAssemblyRequest,
+)
 from ekp.composition import ComponentRegistry
-from ekp.config.models import ProjectConfigError
+from ekp.config.models import PROJECT_SCHEMA_VERSION_2, ProjectConfigError
 from ekp.config.project import ProjectConfigStore
 from ekp.install.cursor_deploy import CURSOR_ADAPTER, CursorDeployService
 from ekp.install.deploy.engine import SharedDeploymentEngine
@@ -22,6 +27,7 @@ from ekp.install.errors import (
     InstallFilesystemError,
     InstallSelectionError,
 )
+from ekp.install.intent import build_project_lifecycle_intent
 from ekp.install.manifest import (
     INSTALL_MODE_COMPOSITION,
     InstallManifest,
@@ -257,16 +263,36 @@ class UpdateService:
                 message=_OWNERSHIP_CORRUPTION_MESSAGE,
             )
 
+        # Revalidate schema2 workspace filesystem before assembly.
+        try:
+            build_project_lifecycle_intent(
+                config,
+                registry,
+                project_root=project_root,
+            )
+        except InstallSelectionError as exc:
+            return UpdateResult(exit_code=exc.exit_code, message=exc.message)
+
         assembly_result = None
         try:
-            assembly_result = self.assembly.assemble_composition(
-                CompositionAssemblyRequest(
-                    components=list(config.components),
-                    outputs=assistants,
-                    verify=True,
-                    clean=True,
+            if config.schema_version == PROJECT_SCHEMA_VERSION_2:
+                assembly_result = self.assembly.assemble_scoped_project(
+                    ScopedProjectAssemblyRequest(
+                        config=config,
+                        assistants=assistants,
+                        verify=True,
+                        clean=True,
+                    )
                 )
-            )
+            else:
+                assembly_result = self.assembly.assemble_composition(
+                    CompositionAssemblyRequest(
+                        components=list(config.components),
+                        outputs=assistants,
+                        verify=True,
+                        clean=True,
+                    )
+                )
             desired = self._composition_desired_files(
                 assembly_result.bundle_path, assistants
             )
