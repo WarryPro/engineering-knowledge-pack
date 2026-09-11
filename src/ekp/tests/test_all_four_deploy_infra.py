@@ -161,7 +161,7 @@ class AllFourDeployInfraTests(unittest.TestCase):
                 self.assertEqual(sha256_file(project / rel), digest)
 
             self.engine.rollback(
-                applied.created_files, applied.created_dirs, applied.preexisting_dirs
+                applied.created_files, applied.rollback_created_dirs or applied.created_dirs, applied.preexisting_dirs
             )
 
             for rel, digest in before.items():
@@ -197,7 +197,7 @@ class AllFourDeployInfraTests(unittest.TestCase):
             github_abs = (project / ".github").resolve()
             self.assertIn(github_abs, applied.preexisting_dirs)
             self.engine.rollback(
-                applied.created_files, applied.created_dirs, applied.preexisting_dirs
+                applied.created_files, applied.rollback_created_dirs or applied.created_dirs, applied.preexisting_dirs
             )
             self.assertFalse((project / ".github" / "copilot-instructions.md").exists())
             self.assertTrue((project / ".github" / "workflows" / "build.yml").is_file())
@@ -241,7 +241,7 @@ class AllFourDeployInfraTests(unittest.TestCase):
             for rel in sources:
                 self.assertTrue((project / rel).is_file())
             self.engine.rollback(
-                applied.created_files, applied.created_dirs, applied.preexisting_dirs
+                applied.created_files, applied.rollback_created_dirs or applied.created_dirs, applied.preexisting_dirs
             )
             for rel in sources:
                 self.assertFalse((project / rel).exists())

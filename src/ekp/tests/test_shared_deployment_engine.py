@@ -202,7 +202,9 @@ class SharedDeploymentEngineTests(unittest.TestCase):
             self.assertTrue(target.is_file())
             self.assertEqual(sha256_file(target), sha256_file(source))
             self.engine.rollback(
-                applied.created_files, applied.created_dirs, applied.preexisting_dirs
+                applied.created_files,
+                applied.rollback_created_dirs or applied.created_dirs,
+                applied.preexisting_dirs,
             )
             self.assertFalse(target.exists())
             self.assertTrue(keep.is_file())
@@ -229,11 +231,48 @@ class SharedDeploymentEngineTests(unittest.TestCase):
             self.assertTrue(marker.is_file())
             # Rollback should remove created files/dirs but keep preexisting .agents
             self.engine.rollback(
-                applied.created_files, applied.created_dirs, applied.preexisting_dirs
+                applied.created_files,
+                applied.rollback_created_dirs or applied.created_dirs,
+                applied.preexisting_dirs,
             )
             self.assertFalse((project / ".agents" / "rules" / "one.md").exists())
+            self.assertFalse((project / ".agents" / "rules").exists())
             self.assertTrue(parent.is_dir())
             self.assertTrue(marker.is_file())
+            self.assertEqual(applied.created_directory_names, [".agents/rules"])
+
+    def test_user_sentinel_preserves_parent_on_rollback(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            project = root / "project"
+            project.mkdir()
+            source = root / "rule.md"
+            source.write_text("rule\n", encoding="utf-8")
+            desired = [_desired(".github/instructions/one.instructions.md", "copilot", source)]
+            ops, conflicts = self.engine.plan_first_install(project, desired)
+            self.assertEqual(conflicts, [])
+            dirs = self.engine.directories_to_create(project, ops)
+            plan = self._plan(project, ops, dirs)
+            applied = self.engine.apply_managed_files(plan)
+            self.assertTrue((project / ".github").is_dir())
+            self.assertTrue((project / ".github" / "instructions").is_dir())
+            # Inject user content into the transaction-created parent before rollback.
+            sentinel = project / ".github" / "user-sentinel.txt"
+            sentinel.write_text("user-bytes\n", encoding="utf-8")
+            self.engine.rollback(
+                applied.created_files,
+                applied.rollback_created_dirs or applied.created_dirs,
+                applied.preexisting_dirs,
+            )
+            self.assertFalse(
+                (project / ".github" / "instructions" / "one.instructions.md").exists()
+            )
+            self.assertFalse((project / ".github" / "instructions").exists())
+            self.assertTrue((project / ".github").is_dir())
+            self.assertEqual(sentinel.read_text(encoding="utf-8"), "user-bytes\n")
+            self.assertEqual(
+                applied.created_directory_names, [".github/instructions"]
+            )
 
     def test_create_race_refuses_overwrite(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -329,14 +368,21 @@ class SharedDeploymentEngineTests(unittest.TestCase):
             keep = project / "foreign.txt"
             keep.write_text("stay\n", encoding="utf-8")
             self.engine.rollback(
-                applied.created_files, applied.created_dirs, applied.preexisting_dirs
+                applied.created_files,
+                applied.rollback_created_dirs or applied.created_dirs,
+                applied.preexisting_dirs,
             )
             self.assertFalse(target.exists())
-            # Only tracked created dirs are removed; parent dirs created via
-            # mkdir(parents=True) may remain empty (existing ownership semantics).
+            # Full transaction-created chain (implicit parents included) must go.
             self.assertFalse((project / "docs" / "nested").exists())
+            self.assertFalse((project / "docs").exists())
             self.assertTrue(keep.is_file())
             self.assertTrue(project.is_dir())
+            # Manifest-facing list remains planned-leaf only.
+            self.assertEqual(applied.created_directory_names, ["docs/nested"])
+            self.assertTrue(
+                any(p.name == "docs" for p in applied.rollback_created_dirs)
+            )
 
     def test_assistant_x_synthetic_extensibility(self):
         with tempfile.TemporaryDirectory() as tmp:

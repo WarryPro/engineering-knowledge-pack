@@ -139,14 +139,14 @@ class CursorDeployService:
         except OSError as exc:
             self._engine.rollback(
                 applied.created_files,
-                applied.created_dirs,
+                applied.rollback_created_dirs or applied.created_dirs,
                 applied.preexisting_dirs,
             )
             raise InstallFilesystemError("Installation failed: {}".format(exc)) from exc
         except Exception:
             self._engine.rollback(
                 applied.created_files,
-                applied.created_dirs,
+                applied.rollback_created_dirs or applied.created_dirs,
                 applied.preexisting_dirs,
             )
             raise
@@ -155,7 +155,7 @@ class CursorDeployService:
         """Best-effort rollback of files/dirs created by ``apply_managed_files``."""
         self._engine.rollback(
             applied.created_files,
-            applied.created_dirs,
+            applied.rollback_created_dirs or applied.created_dirs,
             applied.preexisting_dirs,
         )
 

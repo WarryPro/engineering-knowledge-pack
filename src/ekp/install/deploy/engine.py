@@ -20,7 +20,12 @@ class AppliedManagedFiles:
     """Result of writing managed adapter files without an ownership manifest."""
 
     created_files: List[Path] = field(default_factory=list)
+    # Planned leaf directories that did not exist before apply (manifest ownership).
     created_dirs: List[Path] = field(default_factory=list)
+    # Every directory actually created by this transaction, including implicit
+    # parents from ``mkdir(parents=True)``. Transaction-local rollback state only;
+    # not written to install.json.
+    rollback_created_dirs: List[Path] = field(default_factory=list)
     preexisting_dirs: set = field(default_factory=set)
     managed_files: List[ManagedFile] = field(default_factory=list)
     created_directory_names: List[str] = field(default_factory=list)
@@ -191,6 +196,24 @@ class SharedDeploymentEngine:
             resolve_under_root(project_root, relative)
         return sorted(needed)
 
+    @staticmethod
+    def missing_directory_chain(project_root: Path, relative: str) -> List[Path]:
+        """Absolute paths of segments under ``relative`` that do not yet exist.
+
+        Discover **before** ``mkdir``. Shallowest → deepest. Never infer
+        pre-existence after creation.
+        """
+        parts = Path(relative).parts
+        if not parts or parts == (".",):
+            return []
+        missing: List[Path] = []
+        for index in range(len(parts)):
+            cumulative = Path(*parts[: index + 1]).as_posix()
+            target = resolve_under_root(project_root, cumulative)
+            if not target.exists() and not target.is_symlink():
+                missing.append(target)
+        return missing
+
     def apply_managed_files(
         self,
         plan: InstallPlan,
@@ -211,6 +234,8 @@ class SharedDeploymentEngine:
 
         created_files: List[Path] = []
         created_dirs: List[Path] = []
+        rollback_created_dirs: List[Path] = []
+        rollback_seen: set = set()
         preexisting_dirs = {
             resolve_under_root(plan.project_root, item)
             for item in directory_relatives
@@ -220,9 +245,17 @@ class SharedDeploymentEngine:
         try:
             for relative in directory_relatives:
                 target_dir = resolve_under_root(plan.project_root, relative)
+                # Record every segment mkdir(parents=True) will create — before create.
+                for segment in self.missing_directory_chain(
+                    plan.project_root, relative
+                ):
+                    if segment not in rollback_seen:
+                        rollback_created_dirs.append(segment)
+                        rollback_seen.add(segment)
                 existed = target_dir.exists()
                 target_dir.mkdir(parents=True, exist_ok=True)
                 if not existed:
+                    # Manifest ownership remains planned-leaf only.
                     created_dirs.append(target_dir)
 
             for operation in plan.files_to_write:
@@ -251,6 +284,17 @@ class SharedDeploymentEngine:
                                 operation.relative_path
                             )
                         )
+
+                # ExclusiveTempFile.create may mkdir(parents=True) on the file parent;
+                # capture any still-missing ancestors before that call.
+                parent_relative = Path(operation.relative_path).parent.as_posix()
+                if parent_relative and parent_relative != ".":
+                    for segment in self.missing_directory_chain(
+                        plan.project_root, parent_relative
+                    ):
+                        if segment not in rollback_seen:
+                            rollback_created_dirs.append(segment)
+                            rollback_seen.add(segment)
 
                 temp = ExclusiveTempFile.create(target.parent)
                 try:
@@ -301,17 +345,26 @@ class SharedDeploymentEngine:
             return AppliedManagedFiles(
                 created_files=created_files,
                 created_dirs=created_dirs,
+                rollback_created_dirs=rollback_created_dirs,
                 preexisting_dirs=preexisting_dirs,
                 managed_files=managed_files,
                 created_directory_names=sorted(set(created_directory_names)),
             )
         except OSError as exc:
             if rollback_on_error:
-                self.rollback(created_files, created_dirs, preexisting_dirs)
+                self.rollback(
+                    created_files,
+                    rollback_created_dirs,
+                    preexisting_dirs,
+                )
             raise InstallFilesystemError("Installation failed: {}".format(exc)) from exc
         except Exception:
             if rollback_on_error:
-                self.rollback(created_files, created_dirs, preexisting_dirs)
+                self.rollback(
+                    created_files,
+                    rollback_created_dirs,
+                    preexisting_dirs,
+                )
             raise
 
     def rollback(
@@ -326,7 +379,14 @@ class SharedDeploymentEngine:
                     path.unlink()
             except OSError:
                 pass
-        for path in reversed(created_dirs):
+        # Deepest-first: prefer explicit depth sort so implicit parents (recorded
+        # shallow→deep) are removed after their children regardless of insert order.
+        ordered_dirs = sorted(
+            created_dirs,
+            key=lambda path: len(path.parts),
+            reverse=True,
+        )
+        for path in ordered_dirs:
             if path in preexisting_dirs:
                 continue
             try:

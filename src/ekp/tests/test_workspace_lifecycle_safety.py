@@ -201,6 +201,18 @@ class SafetyHelpers(unittest.TestCase):
                 "keep:{}\n".format(relative),
             )
 
+    def _assert_install_fully_rolled_back(self, project: Path, before):
+        self.assertFalse((project / ".ekp" / "install.json").exists())
+        self.assertFalse((project / PROJECT_CONFIG_RELATIVE).exists())
+        self.assertFalse((project / ".ekp").exists())
+        for relative in (".cursor", ".github", ".claude", ".agents"):
+            self.assertFalse(
+                (project / relative).exists(),
+                msg="leftover assistant root after rollback: {}".format(relative),
+            )
+        self.assertEqual(_fingerprint(project), before)
+        self._assert_workspace_sentinels(project)
+
 
 class TransitionMatrixTests(SafetyHelpers):
     def test_schema1_to_schema1_noop(self):
@@ -587,22 +599,6 @@ class InstallRollbackTests(SafetyHelpers):
                 )
             self.assertNotEqual(result.exit_code, EXIT_SUCCESS)
             self._assert_install_fully_rolled_back(project, before)
-
-    def _assert_install_fully_rolled_back(self, project: Path, before):
-        self.assertFalse((project / ".ekp" / "install.json").exists())
-        self.assertFalse((project / PROJECT_CONFIG_RELATIVE).exists())
-        # Empty assistant dirs may remain after file rollback; no managed files.
-        for relative in (
-            ".cursor/rules",
-            ".github/instructions",
-            ".claude/rules",
-            ".agents/rules",
-        ):
-            root = project / Path(*relative.split("/"))
-            if root.is_dir():
-                self.assertEqual(list(root.rglob("*")), [])
-        self.assertEqual(_fingerprint(project), before)
-        self._assert_workspace_sentinels(project)
 
 
 class ConfigureRollbackTests(SafetyHelpers):
@@ -1084,6 +1080,166 @@ class DryRunAndUpdateProofTests(SafetyHelpers):
             self.assertEqual(resolve_c.call_count, 0)
             self.assertEqual(assemble_scoped.call_count, 0)
             self.assertEqual(assemble_composition.call_count, 0)
+
+
+class DirectoryRollbackClosureTests(SafetyHelpers):
+    """AZ-D-ROLLBACK-CLOSURE — complete cleanup of transaction-created dirs."""
+
+    def test_clean_project_four_assistant_manifest_failure(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = _make_monorepo(tmp)
+            before = _fingerprint(project)
+            for relative in (".cursor", ".github", ".claude", ".agents", ".ekp"):
+                self.assertFalse((project / relative).exists())
+            service = self._install_service()
+
+            def boom_create(self_, manifest):
+                raise InstallConflictError("injected manifest create failure")
+
+            with mock.patch.object(ManifestStore, "create", boom_create):
+                result = service.install_project_config(project, _reference_config())
+            self.assertNotEqual(result.exit_code, EXIT_SUCCESS, result.message)
+            for relative in (".cursor", ".github", ".claude", ".agents", ".ekp"):
+                self.assertFalse(
+                    (project / relative).exists(),
+                    msg="leftover root: {}".format(relative),
+                )
+            self.assertFalse((project / ".ekp" / "install.json").exists())
+            self.assertFalse((project / PROJECT_CONFIG_RELATIVE).exists())
+            self.assertEqual(_fingerprint(project), before)
+            self._assert_workspace_sentinels(project)
+
+    def test_preexisting_assistant_roots_preserved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = _make_monorepo(tmp)
+            sentinels = {}
+            for relative in (".cursor", ".github", ".claude", ".agents"):
+                root = project / relative
+                root.mkdir(parents=True)
+                marker = root / "USER_ROOT_SENTINEL.txt"
+                payload = "keep-root:{}\n".format(relative)
+                marker.write_bytes(payload.encode("utf-8"))
+                sentinels[relative] = payload
+            before = _fingerprint(project)
+            service = self._install_service()
+
+            def boom(plan, applied):
+                raise InstallFilesystemError("injected after managed files")
+
+            service._after_managed_files_hook = boom
+            result = service.install_project_config(
+                project, _cursor_symfony_empty_root()
+            )
+            self.assertNotEqual(result.exit_code, EXIT_SUCCESS)
+            for relative, payload in sentinels.items():
+                root = project / relative
+                self.assertTrue(root.is_dir())
+                self.assertEqual(
+                    (root / "USER_ROOT_SENTINEL.txt").read_bytes(),
+                    payload.encode("utf-8"),
+                )
+            # EKP-only children removed.
+            self.assertFalse((project / ".cursor" / "rules").exists())
+            self.assertFalse((project / PROJECT_CONFIG_RELATIVE).exists())
+            self.assertFalse((project / ".ekp" / "install.json").exists())
+            self.assertFalse((project / ".ekp").exists())
+            self._assert_workspace_sentinels(project)
+            self.assertEqual(_fingerprint(project), before)
+
+    def test_ekp_preexisting_retained(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = _make_monorepo(tmp)
+            ekp = project / ".ekp"
+            ekp.mkdir()
+            foreign = ekp / "foreign-notes.txt"
+            foreign.write_text("do-not-delete\n", encoding="utf-8")
+            before = _fingerprint(project)
+            service = self._install_service()
+
+            def boom(plan, applied):
+                raise InstallFilesystemError("injected after managed files")
+
+            service._after_managed_files_hook = boom
+            result = service.install_project_config(
+                project, _cursor_symfony_empty_root()
+            )
+            self.assertNotEqual(result.exit_code, EXIT_SUCCESS)
+            self.assertTrue(ekp.is_dir())
+            self.assertEqual(
+                foreign.read_text(encoding="utf-8"), "do-not-delete\n"
+            )
+            self.assertFalse((project / PROJECT_CONFIG_RELATIVE).exists())
+            self.assertFalse((project / ".ekp" / "install.json").exists())
+            self.assertFalse((project / ".cursor").exists())
+            self.assertEqual(_fingerprint(project), before)
+
+    def test_partial_deployment_failure_cleans_roots(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = _make_monorepo(tmp)
+            before = _fingerprint(project)
+            service = self._install_service()
+            import ekp.install.deploy.engine as engine_mod
+
+            real_create = engine_mod.exclusive_create_from_temp
+            writes = {"n": 0}
+
+            def boom_create(temp_path, target):
+                writes["n"] += 1
+                if writes["n"] >= 2:
+                    raise InstallFilesystemError(
+                        "injected mid managed-file deployment"
+                    )
+                return real_create(temp_path, target)
+
+            with mock.patch.object(
+                engine_mod, "exclusive_create_from_temp", boom_create
+            ):
+                result = service.install_project_config(project, _reference_config())
+            self.assertNotEqual(result.exit_code, EXIT_SUCCESS)
+            self.assertGreaterEqual(writes["n"], 2)
+            self._assert_install_fully_rolled_back(project, before)
+
+    def test_schema1_cursor_rollback_cleans_cursor_root(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = Path(tmp) / "project"
+            project.mkdir()
+            before = _fingerprint(project)
+            service = self._install_service()
+
+            def boom(plan, applied):
+                raise InstallFilesystemError("injected after schema1 managed files")
+
+            service._after_managed_files_hook = boom
+            result = service.install_project_config(
+                project, ProjectConfig(1, ("frontend",), ("cursor",), ())
+            )
+            self.assertNotEqual(result.exit_code, EXIT_SUCCESS)
+            self.assertFalse((project / ".cursor").exists())
+            self.assertFalse((project / ".ekp").exists())
+            self.assertFalse((project / ".ekp" / "install.json").exists())
+            self.assertEqual(_fingerprint(project), before)
+
+    def test_successful_manifest_created_directories_leaf_only(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            project = _make_monorepo(tmp)
+            result = self._install(project, _cursor_symfony_empty_root())
+            self.assertEqual(result.exit_code, EXIT_SUCCESS)
+            manifest = ManifestStore(project).load()
+            created = set(manifest.created_directories)
+            # Planned leaf dirs may appear; bare parents alone are not required.
+            self.assertNotIn("apps/api", created)
+            for relative in WORKSPACE_DIRS:
+                self.assertNotIn(relative, created)
+            # Successful install retains assistant roots (not a rollback case).
+            self.assertTrue((project / ".cursor").is_dir())
+            self.assertIn(".ekp", created)
+            # Leaf ownership for cursor rules is expected when newly created.
+            self.assertTrue(
+                any(
+                    item == ".cursor/rules" or item.startswith(".cursor/")
+                    for item in created
+                )
+            )
 
 
 if __name__ == "__main__":
