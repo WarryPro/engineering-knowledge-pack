@@ -13,59 +13,81 @@ knowledge/
     ↓ deploy          →  consumer project (Consumer CLI or manual copy — see deployment.md)
 ```
 
-### Consumer CLI deployment layer (`v0.19` multi-assistant + `v0.20` configure)
+### Consumer CLI deployment layer (`v0.19` multi-assistant + `v0.20` configure + upcoming (unreleased) `v0.21` workspaces)
 
-For application developers, the Consumer CLI composes technology components once, generates assistant bundles, then deploys selected assistants through a shared lifecycle:
+For application developers, the Consumer CLI composes technology components (root and/or workspaces), generates assistant bundles, then deploys selected assistants through a shared lifecycle:
 
 ```
 Detection
   → Component Proposal
-  → Composition (dependency closure)
-  → ProjectConfig (.ekp/project.yaml intent: components + assistants)
-  → Assembly (canonical knowledge union)
-  → AdapterRegistry (assistant bundles)
+  → Composition (dependency closure per scope)
+  → ProjectConfig (.ekp/project.yaml intent: schema1 or schema2)
+  → ScopedKnowledgeInventory (GLOBAL + WORKSPACE)
+  → AdapterRegistry (one generate_scoped / assistant → one bundle)
   → DeployRegistry (DesiredManagedFile mapping)
   → SharedDeploymentEngine / TransactionApplier
-  → Manifest / Lifecycle (.ekp/install.json)
+  → Manifest / Lifecycle (.ekp/install.json — one project-wide manifest)
 ```
 
 ```
 Canonical knowledge (knowledge/, components/, schema/)
       ↓
-ComponentRegistry + resolve_composition
+ComponentRegistry + resolve_project_composition (per-scope)
       ↓
-AssemblyService (composed knowledge paths)
+ScopedKnowledgeInventory (GLOBAL / WORKSPACE)
       ↓
-AdapterRegistry → assistant bundles
+AdapterRegistry → one scoped bundle per assistant
       ↓
 DeployRegistry → DesiredManagedFile[]
       ↓
 Consumer CLI
 ├── detect / component proposal
-├── install (composition default; --assistant repeatable; --profile legacy)
-├── status (incl. CONFIGURATION_DRIFT; HEALTHY only when all managed files healthy)
-├── configure (v0.20 — exact desired-state intent change; HEALTHY composition only)
+├── install (composition default; --assistant; --workspace schema2; --profile legacy)
+├── status (one top-level state; nested workspace diagnostics; no WORKSPACE_* states)
+├── configure (exact desired-state; schema1↔schema2; HEALTHY composition only)
 └── lifecycle
-    ├── update (bound to project.yaml semantic hash; no redetect; no assistant reconfiguration)
-    └── uninstall (preserves project.yaml)
+    ├── update (bound to project.yaml semantic hash; no redetect; no workspace rediscovery)
+    └── uninstall (project-wide; preserves project.yaml)
       ↓
 safe multi-assistant deployment + .ekp/project.yaml + .ekp/install.json
       ↓
 consumer project
 ```
 
-**Boundaries (ADR-0010 / ADR-0011 / ADR-0012):**
+**Boundaries (ADR-0010 / ADR-0011 / ADR-0012 historical; workspace pipeline is upcoming (unreleased) v0.21):**
 
 | Artifact | Role |
 |----------|------|
 | `components/*.yaml` | Composition source of truth (requires + direct knowledge) |
-| `.ekp/project.yaml` | User/project requested intent (components + assistants) |
-| `.ekp/install.json` | Operational ownership (`mode`, `configuration_sha256`, multi-adapter inventory) |
-| `AdapterRegistry` | Assistant-specific **generation** |
+| `.ekp/project.yaml` | User/project requested intent (schema1 components+assistants, or schema2 + workspaces) |
+| `.ekp/install.json` | Operational ownership (`mode`, `configuration_sha256`, multi-adapter inventory; manifest `schema_version` remains 1) |
+| `AdapterRegistry` | Assistant-specific **generation** (including scoped GLOBAL/WORKSPACE mapping) |
 | `DeployRegistry` | Assistant-specific **Consumer filesystem mapping** |
 | `cursor-*` / `ekp-*` profiles | Compatibility / packaging presets — not the default Consumer composition graph |
 
-**Hard invariants:** STACK ≠ ASSISTANT; Adapter ≠ Deployer; one technology composition → one `project.yaml` → one `install.json` → one lifecycle. Components never encode Cursor/Copilot/Claude/Antigravity.
+**Hard invariants:** STACK ≠ ASSISTANT; Adapter ≠ Deployer; one technology composition graph → one `project.yaml` → one `install.json` → one lifecycle. Components never encode Cursor/Copilot/Claude/Antigravity. Assistants are project-global even when knowledge is workspace-scoped.
+
+**Scope mapping (upcoming (unreleased) v0.21):**
+
+| Scope | Meaning |
+|-------|---------|
+| GLOBAL | Root `components` (schema2 may be empty) → always-on / project-level assistant outputs |
+| WORKSPACE | Per-workspace `components` → path-scoped assistant outputs at the **project** assistant roots |
+
+Adapter mapping for WORKSPACE knowledge:
+
+| Assistant | Mapping |
+|-----------|---------|
+| Cursor | `.cursor/rules/*.mdc` with `globs` + `alwaysApply: false` |
+| Copilot | `.github/instructions/*.instructions.md` with workspace-prefixed `applyTo` |
+| Claude | `.claude/rules/*.md` (GLOBAL remains `CLAUDE.md` + Skills) |
+| Antigravity | `.agents/rules/*.md` with verified Glob frontmatter (`trigger: glob` / `globs: path/**` only) |
+
+**Persist contract:**
+
+- ProjectConfig: schema1 **or** schema2 (schema1 remains first-class)
+- InstallManifest: schema1; `configuration_sha256` hashes **requested** intent
+- ManagedFile entries: path + adapter + sha256 (workspace scope is **not** stored on manifest entries)
 
 Key lifecycle concepts:
 
@@ -73,21 +95,21 @@ Key lifecycle concepts:
 - **LifecyclePlan** — planned CREATE / WRITE / DELETE / NOOP operations bound to a manifest snapshot
 - **TransactionApplier** — backup, apply-time revalidation, rollback, and recovery workspace retention
 - **ManifestStore** — ownership persistence with compare-and-swap for update and last-step removal for uninstall
-- **configuration_sha256** — **semantic** normalized project intent (schema1-compatible; persisted in manifest)
+- **configuration_sha256** — **semantic** normalized project intent (schema1-compatible hashing rules for schema1; schema2 includes workspaces; persisted in manifest)
 - **project.yaml content SHA-256** — **physical** exact-byte identity used only for transactional CAS / rollback (not a persistent user-facing schema field)
 
-### Safe Reconfiguration flow (v0.20)
+### Safe Reconfiguration flow (v0.20; workspace-aware in upcoming (unreleased) v0.21)
 
 Authorized intentional intent change for a HEALTHY composition install:
 
 ```text
 current ProjectConfig
   ↓
-desired ProjectConfig (exact component + assistant sets)
+desired ProjectConfig (exact component + assistant [+ workspace] sets)
   ↓
 semantic hash transition (configuration_sha256)
   ↓
-assemble desired composition (once)
+assemble desired composition (once; scoped when schema2)
   ↓
 desired managed inventory
   ↓
@@ -100,7 +122,7 @@ managed-file delta (CREATE / WRITE / DELETE / NOOP)
 install.json LAST
 ```
 
-Public CLI: `ekp configure` — prepare once, render, confirm, apply the **same** prepared plan. Manual `project.yaml` edits remain drift and are refused. Workspaces / monorepos are deferred to v0.21 (ADR-0012).
+Public CLI: `ekp configure` — prepare once, render, confirm, apply the **same** prepared plan. Manual `project.yaml` edits remain drift and are refused. Workspace / monorepo support is **upcoming (unreleased) v0.21** (ADR-0012 remains historical for the v0.20 decision boundary).
 
 Package vs project version:
 
@@ -280,7 +302,7 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 - Validator v2.3 with graph rules, namespaces, index generation, reports
 - Adapters: Cursor (all 15 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
 - Assemble pipeline with `--verify` (CI verifies all 15 profiles)
-- Consumer CLI (`v0.19`) — multi-assistant composition detect/install/status/update/uninstall (Cursor default; Copilot / Claude / Antigravity via `--assistant`); legacy `--profile` retained
+- Consumer CLI (`v0.19` published; upcoming (unreleased) `v0.21` workspaces) — multi-assistant composition detect/install/status/update/uninstall/configure (Cursor default; Copilot / Claude / Antigravity via `--assistant`; schema2 `--workspace`); legacy `--profile` retained
 
 **Planned / deferred:**
 
@@ -288,6 +310,7 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
 - Antigravity / Claude on stack profiles (deferred; remain `ekp-core` pilot)
 - Promote `ekp-core` from four-adapter pilot (deferred)
+- Public publication of v0.21 Workspace / Monorepo Support (implementation complete; release pending)
 
 ## Related
 

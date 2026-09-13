@@ -24,10 +24,10 @@ Related:
 ### Install the package (machine)
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.18.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.20.0
 ```
 
-Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself. `ekp update` never downloads a release — it applies resources from the currently running package.
+Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Latest public release:** `v0.20.0`. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself. `ekp update` never downloads a release — it applies resources from the currently running package.
 
 ### Deploy into a project (composition default)
 
@@ -50,11 +50,50 @@ ekp status          # read-only installation health
 | `--path <dir>` | Target project directory (default: current directory) |
 | `--component <id>` | Explicit technology component (repeatable; composition mode) |
 | `--assistant <id>` | Explicit managed assistant (repeatable; composition mode; default Cursor when omitted) |
-| `--profile <name>` | Explicit Cursor profile preset (legacy compatibility; mutually exclusive with `--component` / `--assistant`) |
+| `--workspace <path> <component>` | Explicit workspace technology scope (repeatable; **upcoming (unreleased) v0.21**; forces schema2) |
+| `--no-root-components` | Explicit empty root components for schema2 (**upcoming (unreleased) v0.21**) |
+| `--no-workspaces` | Configure only: remove all workspaces → schema1 (**upcoming (unreleased) v0.21**) |
+| `--profile <name>` | Explicit Cursor profile preset (legacy compatibility; mutually exclusive with `--component` / `--assistant` / workspace flags) |
 | `--yes` | Skip confirmation prompts (does not bypass safety checks) |
 | `--dry-run` | Show plan without writing files |
 
 Legacy presets remain: `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`, `cursor-nativescript`, `cursor-flutter`.
+
+### Workspace / monorepo (**upcoming (unreleased) v0.21**)
+
+Explicit workspace intent under one project lifecycle. Not available on published `@v0.20.0`.
+
+```bash
+# schema2: workspaces present; omitted --component → empty root
+ekp install \
+  --workspace apps/api symfony \
+  --workspace apps/web frontend \
+  --assistant cursor \
+  --yes
+
+# explicit empty root
+ekp install --no-root-components --workspace apps/api symfony --assistant cursor --yes
+
+# schema1 unchanged when --workspace is omitted
+ekp install --component symfony --assistant cursor --yes
+```
+
+Behavior:
+
+- Install with `--workspace` → ProjectConfig **schema2**; without → **schema1**
+- Empty root only valid with ≥1 workspace
+- Assistants are project-global
+- No autodetection of monorepo layouts; declared workspace directories must already exist
+- Schema1 remains first-class (no mandatory conversion)
+
+Scoped assistant outputs (GLOBAL vs WORKSPACE):
+
+| Assistant | GLOBAL | WORKSPACE |
+|-----------|--------|-----------|
+| Cursor | `.cursor/rules/*.mdc` | same dir; `globs` + `alwaysApply: false` |
+| Copilot | `.github/copilot-instructions.md` / `.github/instructions/*.instructions.md` | instructions with workspace-prefixed `applyTo` (do not claim all Copilot surfaces identical) |
+| Claude | `CLAUDE.md` + `.claude/skills/*/SKILL.md` | `.claude/rules/*.md` |
+| Antigravity | `.agents/rules/*.md` | `.agents/rules/*.md` with `trigger: glob` / `globs: path/**` only |
 
 ### What gets written
 
@@ -64,11 +103,12 @@ Composition install (per selected assistants):
 <project>/.cursor/rules/*.mdc                         # Cursor
 <project>/.github/copilot-instructions.md             # Copilot
 <project>/.github/instructions/*.instructions.md
-<project>/CLAUDE.md                                   # Claude
+<project>/CLAUDE.md                                   # Claude (GLOBAL)
 <project>/.claude/skills/*/SKILL.md
+<project>/.claude/rules/*.md                          # Claude WORKSPACE (v0.21)
 <project>/.agents/rules/*.md                          # Antigravity
-<project>/.ekp/project.yaml                           # requested intent (components + assistants)
-<project>/.ekp/install.json                           # ownership manifest (mode=composition, configuration_sha256)
+<project>/.ekp/project.yaml                           # requested intent (schema1 or schema2)
+<project>/.ekp/install.json                           # ownership manifest (schema_version 1; mode=composition; configuration_sha256)
 ```
 
 Legacy `--profile` install writes Cursor rules + `install.json` only (no EKP-created `project.yaml`).
@@ -77,7 +117,7 @@ Legacy `--profile` install writes Cursor rules + `install.json` only (no EKP-cre
 
 Manual copying into assistant paths (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
 
-### Project lifecycle (`v0.19` + `v0.20` configure)
+### Project lifecycle (`v0.19` + `v0.20` configure + upcoming (unreleased) `v0.21` workspaces)
 
 Typical flow:
 
@@ -95,18 +135,18 @@ project update (`ekp update`) — synchronize persisted intent to current packag
 configure (`ekp configure`) — intentionally change persisted intent (HEALTHY composition only)
     ↓
 uninstall (`ekp uninstall`) when removing EKP ownership
-         (project.yaml preserved if present)
+         (project.yaml preserved if present; project-wide, not per-workspace)
 ```
 
 **Distinct responsibilities:**
 
 | Command | Responsibility |
 |---------|----------------|
-| `ekp install` | Create initial managed ownership from selected intent |
-| `ekp status` | Inspect health / drift / version mismatch (no mutation) |
-| `ekp update` | Synchronize **persisted** intent to the currently running package |
-| `ekp configure` | Intentionally replace exact component + assistant desired state |
-| `ekp uninstall` | Remove managed ownership; preserve `project.yaml` |
+| `ekp install` | Create initial managed ownership from selected intent (schema1 or schema2) |
+| `ekp status` | Inspect health / drift / version mismatch (no mutation); one top-level state; optional workspace diagnostics underneath |
+| `ekp update` | Synchronize **persisted** intent to the currently running package (no redetect / no workspace rediscovery) |
+| `ekp configure` | Intentionally replace exact desired state (components, assistants, and workspaces when applicable) |
+| `ekp uninstall` | Remove managed ownership project-wide; preserve `project.yaml` |
 
 #### Transactional multi-assistant behavior
 
@@ -125,7 +165,7 @@ Synchronizes an existing managed project to the resources bundled with the **cur
 
 User-facing contract:
 
-- **Composition:** `project.yaml` + semantic `configuration_sha256` bind intent; update does **not** redetect components, rewrite config, or add/remove assistants
+- **Composition:** `project.yaml` + semantic `configuration_sha256` bind intent; update does **not** redetect components/workspaces, rewrite config, or add/remove assistants
 - **Legacy-profile:** `manifest.profile` remains authoritative; update does not redetect or switch profile
 - configuration drift (semantic yaml hash ≠ bound hash), including assistant list edits → status `CONFIGURATION_DRIFT` and update **refuses** silent reconfiguration
 - Restore the installed configuration first; use `ekp configure` for intentional changes from a healthy state
@@ -135,13 +175,16 @@ User-facing contract:
 - new unmanaged collisions are conflicts
 - `--dry-run` previews without mutation; `--yes` skips confirmation only
 
-#### `ekp configure` (v0.20 Safe Reconfiguration)
+#### `ekp configure` (v0.20 Safe Reconfiguration + upcoming (unreleased) v0.21 workspaces)
 
-Changes the **exact** desired component and assistant sets of an existing **HEALTHY composition** installation (desired-state, not add/remove deltas).
+Changes the **exact** desired configuration of an existing **HEALTHY composition** installation (desired-state, not add/remove deltas).
 
 - Requires running package version match (VERSION_MISMATCH → update first)
 - Refuses INCOMPLETE / MODIFIED / CONFIGURATION_DRIFT / INVALID / legacy-profile / not installed
-- Noninteractive (`--yes` or `--dry-run`): both dimensions must be supplied (`>=1 --component`, `>=1 --assistant`)
+- Noninteractive (`--yes` or `--dry-run`) requirements depend on desired schema:
+  - **Schema1:** ≥1 `--component` and ≥1 `--assistant`
+  - **Schema2:** ≥1 `--workspace`, ≥1 `--assistant`, and explicit root (`--component` … **or** `--no-root-components`)
+  - **Schema2→schema1:** `--no-workspaces` + ≥1 `--component` + ≥1 `--assistant`
 - Interactive: missing dimensions use **current** persisted intent as defaults (blank keeps current; never Cursor injection; never detection)
 - Flow: prepare once → render plan → confirm → apply the **same** prepared plan (`install.json` last)
 - Manual `project.yaml` editing remains drift — configure does **not** mean “edit YAML then ask EKP to adopt it”
@@ -157,16 +200,23 @@ Removes EKP-owned managed files using the ownership manifest:
 - unmanaged content is ignored
 - ownership manifest is removed last
 - **`.ekp/project.yaml` is preserved** when present (config-only project → `NOT_INSTALLED`)
+- project-wide (not per-workspace) for schema2 installs
 - conservative directory cleanup may leave empty assistant / `.ekp` directories when ownership was not proven
 
-#### Not supported yet
+#### Upcoming (unreleased) v0.21 non-goals
 
-- remote package/release acquisition from inside `ekp update`
-- monorepo / workspace orchestration (deferred to v0.21)
+- Workspace / monorepo autodetection (`pnpm-workspace`, `nx`, `turbo`, package.json workspaces, etc.)
+- Per-workspace assistant selection or per-workspace uninstall/update commands
+- Nested / overlapping workspaces; workspace rename command; scaffolding missing workspace directories
+- Writing managed files under workspace package trees (outputs stay at project assistant roots)
+- Mandatory schema1→schema2 migration; legacy-profile → composition migration
+- Force overwrite / drift adoption of hand-edited `project.yaml`
+- Remote knowledge or remote package/release acquisition from inside `ekp update`
 - PyPI publication as the distribution channel
-- combinatorial profiles such as `cursor-symfony-frontend`
-- automatic assistant enablement from tool detection signals
-- configure for legacy-profile installs (composition-only)
+- Combinatorial profiles such as `cursor-symfony-frontend`
+- Automatic assistant enablement from tool detection signals
+- Configure for legacy-profile installs (composition-only)
+- Skills / Agents / MCP expansion (not part of v0.21)
 ---
 
 ## Path B — Manual assembly

@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Workspace / Monorepo Support (upcoming (unreleased) v0.21)** — explicit workspace technology intent under one project lifecycle with scoped assistant generation
+- ProjectConfig **schema2** (`schema_version: 2`) with `workspaces: [{path, components}]`; empty root (`components: []`) allowed when ≥1 workspace
+- Repeatable `ekp install` / `ekp configure` `--workspace PATH COMPONENT`; `--no-root-components`; configure-only `--no-workspaces`
+- Install asymmetry: `--workspace` present + omitted `--component` → empty-root schema2; no `--workspace` → schema1
+- GLOBAL vs WORKSPACE scoped outputs: Cursor `globs` + `alwaysApply: false`; Copilot workspace-prefixed `applyTo`; Claude `.claude/rules/*.md`; Antigravity verified Glob frontmatter (`trigger: glob` / `globs: path/**`)
+- Per-scope composition → `ScopedKnowledgeInventory` → one `generate_scoped` invocation per assistant → one bundle → DeployRegistry → one project-wide `install.json`
+
+### Lifecycle / Safety
+
+- One project-wide install/configure/update transaction; `install.json` last; TOCTOU / exact `project.yaml` CAS; complete failed-install directory rollback
+- Workspace directories must already exist and are never owned/scaffolded by EKP (no creation, no symlink segments, no overlap/ancestor pairs)
+- No monorepo autodetection (package-manager workspace files are ignored as intent)
+- Assistants remain project-global; uninstall remains project-wide and manifest-driven (not per-workspace)
+- `ekp update` synchronizes persisted intent only — no redetect / no workspace rediscovery
+- `ekp status` keeps one top-level state machine; workspace diagnostics are nested (no `WORKSPACE_*` states)
+- Configure is HEALTHY-only desired-state: schema1↔schema2; schema2 noninteractive requires ≥1 workspace + ≥1 assistant + explicit root (`--component` or `--no-root-components`); schema2→schema1 via `--no-workspaces` + ≥1 component + ≥1 assistant
+- Windows host separators (`\`) normalize at the CLI boundary to `/`; persisted/hash/rendered paths stay `/`-only
+
+### Compatibility
+
+- Schema1 remains first-class; no mandatory conversion to schema2
+- v0.18 / v0.19 / v0.20 composition projects remain lifecycle-compatible; legacy-profile remains the historical Cursor path
+- InstallManifest `schema_version` remains **1**; `configuration_sha256` hashes requested intent; managed entries store path + adapter + sha256 (workspace scope is not a manifest field)
+- Published Consumer install URL remains `@v0.20.0` until v0.21 is released
+
+### Scope
+
+- Workspace autodetection, per-workspace assistants, nested workspaces, and workspace rename remain out of scope
+- Skills / Agents / MCP expansion is not part of v0.21
+- Distribution / PyPI / product UX deferred to v0.22
+- Hardening / RC deferred to v0.23
+- Publication of v0.21 (staging / CI / GitHub Release) still pending
+
 ## [0.20.0] - 2026-09-10
 
 ### Added
