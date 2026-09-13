@@ -50,16 +50,16 @@ ekp status          # read-only installation health
 | `--path <dir>` | Target project directory (default: current directory) |
 | `--component <id>` | Explicit technology component (repeatable; composition mode) |
 | `--assistant <id>` | Explicit managed assistant (repeatable; composition mode; default Cursor when omitted) |
-| `--workspace <path> <component>` | Explicit workspace technology scope (repeatable; **upcoming (unreleased) v0.21**; forces schema2) |
-| `--no-root-components` | Explicit empty root components for schema2 (**upcoming (unreleased) v0.21**) |
-| `--no-workspaces` | Configure only: remove all workspaces → schema1 (**upcoming (unreleased) v0.21**) |
+| `--workspace <path> <component>` | Explicit workspace technology scope (repeatable; **v0.21.0 — release candidate validated on staging; not yet published**; forces schema2) |
+| `--no-root-components` | Explicit empty root components for schema2 (**v0.21.0 — release candidate validated on staging; not yet published**) |
+| `--no-workspaces` | Configure only: remove all workspaces → schema1 (**v0.21.0 — release candidate validated on staging; not yet published**) |
 | `--profile <name>` | Explicit Cursor profile preset (legacy compatibility; mutually exclusive with `--component` / `--assistant` / workspace flags) |
 | `--yes` | Skip confirmation prompts (does not bypass safety checks) |
 | `--dry-run` | Show plan without writing files |
 
 Legacy presets remain: `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`, `cursor-nativescript`, `cursor-flutter`.
 
-### Workspace / monorepo (**upcoming (unreleased) v0.21**)
+### Workspace / monorepo (**v0.21.0 — release candidate validated on staging; not yet published**)
 
 Explicit workspace intent under one project lifecycle. Not available on published `@v0.20.0`.
 
@@ -117,7 +117,7 @@ Legacy `--profile` install writes Cursor rules + `install.json` only (no EKP-cre
 
 Manual copying into assistant paths (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
 
-### Project lifecycle (`v0.19` + `v0.20` configure + upcoming (unreleased) `v0.21` workspaces)
+### Project lifecycle (`v0.19` + `v0.20` configure + `v0.21.0` release candidate workspaces)
 
 Typical flow:
 
@@ -175,7 +175,7 @@ User-facing contract:
 - new unmanaged collisions are conflicts
 - `--dry-run` previews without mutation; `--yes` skips confirmation only
 
-#### `ekp configure` (v0.20 Safe Reconfiguration + upcoming (unreleased) v0.21 workspaces)
+#### `ekp configure` (v0.20 Safe Reconfiguration + v0.21.0 release candidate workspaces)
 
 Changes the **exact** desired configuration of an existing **HEALTHY composition** installation (desired-state, not add/remove deltas).
 
@@ -203,7 +203,7 @@ Removes EKP-owned managed files using the ownership manifest:
 - project-wide (not per-workspace) for schema2 installs
 - conservative directory cleanup may leave empty assistant / `.ekp` directories when ownership was not proven
 
-#### Upcoming (unreleased) v0.21 non-goals
+#### v0.21.0 release candidate non-goals
 
 - Workspace / monorepo autodetection (`pnpm-workspace`, `nx`, `turbo`, package.json workspaces, etc.)
 - Per-workspace assistant selection or per-workspace uninstall/update commands

@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0]
+
 ### Added
 
-- **Workspace / Monorepo Support (upcoming (unreleased) v0.21)** — explicit workspace technology intent under one project lifecycle with scoped assistant generation
+- **Workspace / Monorepo Support** — explicit workspace technology intent under one project lifecycle with scoped assistant generation
 - ProjectConfig **schema2** (`schema_version: 2`) with `workspaces: [{path, components}]`; empty root (`components: []`) allowed when ≥1 workspace
 - Repeatable `ekp install` / `ekp configure` `--workspace PATH COMPONENT`; `--no-root-components`; configure-only `--no-workspaces`
 - Install asymmetry: `--workspace` present + omitted `--component` → empty-root schema2; no `--workspace` → schema1
@@ -32,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Schema1 remains first-class; no mandatory conversion to schema2
 - v0.18 / v0.19 / v0.20 composition projects remain lifecycle-compatible; legacy-profile remains the historical Cursor path
 - InstallManifest `schema_version` remains **1**; `configuration_sha256` hashes requested intent; managed entries store path + adapter + sha256 (workspace scope is not a manifest field)
-- Published Consumer install URL remains `@v0.20.0` until v0.21 is released
+- Published Consumer install URL remains `@v0.20.0` until v0.21.0 is published
 
 ### Scope
 
@@ -40,7 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Skills / Agents / MCP expansion is not part of v0.21
 - Distribution / PyPI / product UX deferred to v0.22
 - Hardening / RC deferred to v0.23
-- Publication of v0.21 (staging / CI / GitHub Release) still pending
 
 ## [0.20.0] - 2026-09-10
 

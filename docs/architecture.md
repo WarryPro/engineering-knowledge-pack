@@ -13,7 +13,7 @@ knowledge/
     ↓ deploy          →  consumer project (Consumer CLI or manual copy — see deployment.md)
 ```
 
-### Consumer CLI deployment layer (`v0.19` multi-assistant + `v0.20` configure + upcoming (unreleased) `v0.21` workspaces)
+### Consumer CLI deployment layer (`v0.19` multi-assistant + `v0.20` configure + `v0.21.0` release candidate workspaces)
 
 For application developers, the Consumer CLI composes technology components (root and/or workspaces), generates assistant bundles, then deploys selected assistants through a shared lifecycle:
 
@@ -54,7 +54,7 @@ safe multi-assistant deployment + .ekp/project.yaml + .ekp/install.json
 consumer project
 ```
 
-**Boundaries (ADR-0010 / ADR-0011 / ADR-0012 historical; workspace pipeline is upcoming (unreleased) v0.21):**
+**Boundaries (ADR-0010 / ADR-0011 / ADR-0012 historical; workspace pipeline is v0.21.0 — release candidate validated on staging; not yet published):**
 
 | Artifact | Role |
 |----------|------|
@@ -67,7 +67,7 @@ consumer project
 
 **Hard invariants:** STACK ≠ ASSISTANT; Adapter ≠ Deployer; one technology composition graph → one `project.yaml` → one `install.json` → one lifecycle. Components never encode Cursor/Copilot/Claude/Antigravity. Assistants are project-global even when knowledge is workspace-scoped.
 
-**Scope mapping (upcoming (unreleased) v0.21):**
+**Scope mapping (v0.21.0 — release candidate validated on staging; not yet published):**
 
 | Scope | Meaning |
 |-------|---------|
@@ -98,7 +98,7 @@ Key lifecycle concepts:
 - **configuration_sha256** — **semantic** normalized project intent (schema1-compatible hashing rules for schema1; schema2 includes workspaces; persisted in manifest)
 - **project.yaml content SHA-256** — **physical** exact-byte identity used only for transactional CAS / rollback (not a persistent user-facing schema field)
 
-### Safe Reconfiguration flow (v0.20; workspace-aware in upcoming (unreleased) v0.21)
+### Safe Reconfiguration flow (v0.20; workspace-aware in v0.21.0 release candidate)
 
 Authorized intentional intent change for a HEALTHY composition install:
 
@@ -122,7 +122,7 @@ managed-file delta (CREATE / WRITE / DELETE / NOOP)
 install.json LAST
 ```
 
-Public CLI: `ekp configure` — prepare once, render, confirm, apply the **same** prepared plan. Manual `project.yaml` edits remain drift and are refused. Workspace / monorepo support is **upcoming (unreleased) v0.21** (ADR-0012 remains historical for the v0.20 decision boundary).
+Public CLI: `ekp configure` — prepare once, render, confirm, apply the **same** prepared plan. Manual `project.yaml` edits remain drift and are refused. Workspace / monorepo support is **v0.21.0 — release candidate validated on staging; not yet published** (ADR-0012 remains historical for the v0.20 decision boundary).
 
 Package vs project version:
 
@@ -302,7 +302,7 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 - Validator v2.3 with graph rules, namespaces, index generation, reports
 - Adapters: Cursor (all 15 profiles), Copilot on six stack `ekp-*` profiles (`ekp-php`, `ekp-typescript`, `ekp-symfony`, `ekp-frontend`, `ekp-devops`, `ekp-nativescript`) plus `ekp-core`, Antigravity / Claude (`ekp-core` pilot)
 - Assemble pipeline with `--verify` (CI verifies all 15 profiles)
-- Consumer CLI (`v0.19` published; upcoming (unreleased) `v0.21` workspaces) — multi-assistant composition detect/install/status/update/uninstall/configure (Cursor default; Copilot / Claude / Antigravity via `--assistant`; schema2 `--workspace`); legacy `--profile` retained
+- Consumer CLI (`v0.19` published; v0.21.0 workspaces — release candidate validated on staging; not yet published) — multi-assistant composition detect/install/status/update/uninstall/configure (Cursor default; Copilot / Claude / Antigravity via `--assistant`; schema2 `--workspace`); legacy `--profile` retained
 
 **Planned / deferred:**
 
@@ -310,7 +310,7 @@ Knowledge frontmatter is validated against `schema/knowledge-frontmatter.schema.
 - Graph role `technology` (V1) if V2 exceptions proliferate (deferred)
 - Antigravity / Claude on stack profiles (deferred; remain `ekp-core` pilot)
 - Promote `ekp-core` from four-adapter pilot (deferred)
-- Public publication of v0.21 Workspace / Monorepo Support (implementation complete; release pending)
+- Public publication of v0.21 Workspace / Monorepo Support (v0.21.0 — release candidate validated on staging; not yet published)
 
 ## Related
 

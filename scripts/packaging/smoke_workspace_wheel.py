@@ -16,7 +16,7 @@ from pathlib import Path
 
 GOLDEN_A = "09cf2e9312aa182a2fc6438080bc4a9c687838077e4e7aeffe56c448e8655b14"
 GOLDEN_C = "2320ef8549f08599beb643f9bb1d04de9304cda1531ec11d44d033fb44dae1de"
-EXPECTED_VERSION = "0.21.0.dev0"
+EXPECTED_VERSION = "0.21.0"
 REF_COUNTS = {"cursor": 105, "copilot": 16, "claude": 37, "antigravity": 38}
 
 

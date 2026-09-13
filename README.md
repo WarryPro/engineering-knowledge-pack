@@ -91,7 +91,7 @@ Published **v0.20** (schema1 / global root composition) managed outputs:
 | Claude | `CLAUDE.md`, `.claude/skills/*/SKILL.md` |
 | Google Antigravity | `.agents/rules/*.md` |
 
-**Upcoming (unreleased) v0.21** adds scoped destinations for GLOBAL vs WORKSPACE knowledge (same project root; workspace files are not written under `apps/...`):
+**v0.21.0 — release candidate validated on staging; not yet published** adds scoped destinations for GLOBAL vs WORKSPACE knowledge (same project root; workspace files are not written under `apps/...`):
 
 | Assistant | GLOBAL | WORKSPACE |
 |-----------|--------|-----------|
@@ -120,7 +120,7 @@ assistants:
   - antigravity
 ```
 
-Schema2 with root + workspaces (**upcoming (unreleased) v0.21**):
+Schema2 with root + workspaces (**v0.21.0 — release candidate validated on staging; not yet published**):
 
 ```yaml
 schema_version: 2
@@ -157,9 +157,9 @@ workspaces:
 - User/project-owned — update does not rewrite it; uninstall preserves it
 - Operational ownership and hashes live in `.ekp/install.json` (`mode=composition`, `schema_version: 1`, `configuration_sha256` = semantic requested intent)
 
-### Workspace / Monorepo Support — upcoming (unreleased) v0.21
+### Workspace / Monorepo Support — v0.21.0 — release candidate validated on staging; not yet published
 
-Explicit workspace technology intent under one EKP project lifecycle. **Not published** — do not expect these flags on `pipx` `@v0.20.0`.
+Explicit workspace technology intent under one EKP project lifecycle. **Not yet published** — do not expect these flags on `pipx` `@v0.20.0`.
 
 ```bash
 # Schema2 install: workspaces present → schema_version 2
@@ -200,7 +200,7 @@ Lifecycle (same commands; workspace-aware when schema2):
 | `ekp configure` | Desired-state replacement (schema1↔schema2 transitions allowed when HEALTHY) |
 | `ekp uninstall` | Project-wide removal of managed ownership (not per-workspace) |
 
-### Reconfigure a healthy composition (v0.20 + upcoming v0.21 workspaces)
+### Reconfigure a healthy composition (v0.20 + v0.21.0 release candidate workspaces)
 
 `ekp configure` sets the **exact** desired configuration (not add/remove deltas). Eligible only for **HEALTHY composition** installs at the running package version.
 
@@ -312,7 +312,7 @@ ekp uninstall
 
 Configure applies to **composition** installs only (not legacy-profile). Manual assemble (Path B) remains available for contributor/profile workflows. See [`docs/deployment.md`](docs/deployment.md).
 
-**Upcoming (unreleased) v0.21:** workspace / monorepo support is implemented in-tree and locally validated, but **not** part of the published `@v0.20.0` Consumer package. Treat workspace CLI flags and schema2 as unavailable until a public v0.21 release.
+**v0.21.0 — release candidate validated on staging; not yet published:** workspace / monorepo support is supported in the v0.21.0 release candidate, but **not** part of the published `@v0.20.0` Consumer package. Treat workspace CLI flags and schema2 as unavailable on `@v0.20.0`.
 
 ---
 
@@ -405,7 +405,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 ## Release status
 
 - **Latest public release:** `v0.20.0`
-- **Upcoming (unreleased) v0.21:** Workspace / Monorepo Support — implementation complete, local validation complete; publication pending staging/CI/release (not installable via `@v0.20.0`)
+- **v0.21.0 — release candidate validated on staging; not yet published:** Workspace / Monorepo Support (not installable via `@v0.20.0`)
 - **`v0.20.0`:** Safe Reconfiguration — published — public `ekp configure` desired-state workflow for HEALTHY composition installs
 - **v0.19.0:** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
 - **v0.18.0:** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle at publication time
@@ -450,7 +450,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.20`; v0.21 workspace impl complete / publication pending** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; workspace/monorepo (upcoming unreleased); Windows + Ubuntu CI; remote acquisition / PyPI deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.20`; v0.21.0 — release candidate validated on staging; not yet published** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; workspace/monorepo (staging RC); Windows + Ubuntu CI; remote acquisition / PyPI deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics
