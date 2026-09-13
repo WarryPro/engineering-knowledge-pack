@@ -16,6 +16,8 @@ ADAPTER_NAME = "claude"
 FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
 NAME_RE = re.compile(r"^name:\s*(.+)\s*$", re.MULTILINE)
 DESCRIPTION_RE = re.compile(r"^description:\s*(.+)\s*$", re.MULTILINE)
+PATHS_RE = re.compile(r"^paths:\s*$", re.MULTILINE)
+RULES_DIR = ".claude/rules"
 
 LEAKAGE = (
     "alwaysApply:",
@@ -50,9 +52,8 @@ def verify_claude_bundle(bundle_dir):
         )
 
     claude_md = adapter_dir / CLAUDE_MD_RELPATH
-    if not claude_md.is_file():
-        errors.append("Missing CLAUDE.md")
-    else:
+    has_claude_md = claude_md.is_file()
+    if has_claude_md:
         content = claude_md.read_text(encoding="utf-8")
         line_count = len(content.splitlines())
         if line_count > 250:
@@ -70,20 +71,13 @@ def verify_claude_bundle(bundle_dir):
                 errors.append("CLAUDE.md: cross-adapter leakage ({})".format(leak))
 
     skills_root = adapter_dir / SKILLS_DIR
-    if not skills_root.is_dir():
-        errors.append("Missing skills directory: {}".format(SKILLS_DIR))
-
-    # Pathless rules are forbidden for Claude v1.
+    has_skills_dir = skills_root.is_dir()
     rules_dir = adapter_dir / ".claude" / "rules"
-    if rules_dir.exists():
-        errors.append(
-            "Claude v1 must not generate pathless .claude/rules/ (found {})".format(
-                rules_dir
-            )
-        )
+    has_rules_dir = rules_dir.is_dir()
 
     generated = []
     skill_files = []
+    rule_files = []
     for path in _relative_files(adapter_dir):
         rel = path.relative_to(adapter_dir).as_posix()
         if rel == MANIFEST_NAME:
@@ -91,12 +85,34 @@ def verify_claude_bundle(bundle_dir):
         generated.append(rel)
         content = path.read_text(encoding="utf-8")
 
-        for leak in LEAKAGE:
-            if leak in content and rel != CLAUDE_MD_RELPATH:
-                errors.append("{}: cross-adapter leakage ({})".format(rel, leak))
-
         if rel == CLAUDE_MD_RELPATH:
             continue
+
+        if rel.startswith(RULES_DIR + "/"):
+            rule_files.append(rel)
+            match = FRONTMATTER_RE.match(content)
+            if not match:
+                errors.append("{}: missing YAML frontmatter".format(rel))
+                continue
+            front = match.group(1)
+            if not PATHS_RE.search(front):
+                errors.append("{}: workspace rules require paths:".format(rel))
+            if "alwaysApply" in front or "applyTo" in front:
+                errors.append(
+                    "{}: forbidden adapter metadata in frontmatter".format(rel)
+                )
+            if "> **Source:**" not in content:
+                errors.append("{}: missing Source reference".format(rel))
+            for leak in LEAKAGE:
+                if leak in content:
+                    errors.append(
+                        "{}: cross-adapter leakage ({})".format(rel, leak)
+                    )
+            continue
+
+        for leak in LEAKAGE:
+            if leak in content:
+                errors.append("{}: cross-adapter leakage ({})".format(rel, leak))
 
         if not rel.startswith(SKILLS_DIR + "/"):
             errors.append("{}: unexpected Claude path".format(rel))
@@ -122,8 +138,26 @@ def verify_claude_bundle(bundle_dir):
         if "> **Source:**" not in content:
             errors.append("{}: missing Source reference".format(rel))
 
-    if not skill_files:
-        errors.append("No Claude skills generated under {}".format(SKILLS_DIR))
+    # Schema1 / GLOBAL: require CLAUDE.md + skills and forbid pathless rules.
+    # Schema2 workspace-only: rules with paths: are allowed without global files.
+    if has_claude_md or has_skills_dir or skill_files:
+        if not has_claude_md:
+            errors.append("Missing CLAUDE.md")
+        if not has_skills_dir:
+            errors.append("Missing skills directory: {}".format(SKILLS_DIR))
+        if not skill_files:
+            errors.append("No Claude skills generated under {}".format(SKILLS_DIR))
+        if has_rules_dir and not rule_files:
+            errors.append(
+                "Claude v1 must not generate pathless .claude/rules/ (found {})".format(
+                    rules_dir
+                )
+            )
+
+    if not generated:
+        errors.append("No Claude files generated in {}".format(adapter_dir))
+    if not has_claude_md and not skill_files and not rule_files:
+        errors.append("Claude bundle has neither global outputs nor workspace rules")
 
     manifest_path = adapter_dir / MANIFEST_NAME
     if not manifest_path.is_file():
@@ -157,6 +191,8 @@ def verify_claude_bundle(bundle_dir):
                 errors.append("CLAUDE.md manifest kind must be 'memory'")
             if path.startswith(SKILLS_DIR + "/") and kind != "skill":
                 errors.append("{}: skill manifest kind must be 'skill'".format(path))
+            if path.startswith(RULES_DIR + "/") and kind != "rule":
+                errors.append("{}: rule manifest kind must be 'rule'".format(path))
 
     if errors:
         raise ClaudeVerifyError("\n".join(errors))

@@ -52,6 +52,8 @@ class InstallRequest:
     profile: Optional[str] = None
     components: Optional[Sequence[str]] = None
     assistants: Optional[Sequence[str]] = None
+    workspaces: Optional[Sequence[Sequence[str]]] = None
+    no_root_components: bool = False
     assume_yes: bool = False
     dry_run: bool = False
 
@@ -118,11 +120,14 @@ class InstallService:
             )
 
         registry = ComponentRegistry.load(get_ekp_root())
-        config_intent = self._intent_from_existing_project_config(
+        existing_config = self._config_from_existing_project_config(
             project_root, request, registry
         )
-        if config_intent is not None:
-            return self._install_composition(project_root, config_intent, request)
+        if existing_config is not None:
+            return self._install_project_config(project_root, existing_config, request)
+
+        if request.workspaces or request.no_root_components:
+            return self._install_workspace_project(project_root, registry, request)
 
         report = apply_resolution(self.detection_service.detect(path=str(project_root)))
         intent = select_install_intent(
@@ -145,7 +150,60 @@ class InstallService:
 
         return self._install_legacy(project_root, intent, existing_manifest, ekp_version, request)
 
-    def _intent_from_existing_project_config(
+    def _install_workspace_project(
+        self, project_root, registry, request: InstallRequest
+    ) -> InstallResult:
+        """Schema2 install from public --workspace / --no-root-components flags."""
+        from ekp.cli_workspace import build_install_project_config_from_cli
+        from ekp.detection.service import DetectionService
+        from ekp.install.intent import (
+            _resolve_assistants_for_composition,
+            _tool_signal_assistant_ids,
+        )
+
+        if request.profile:
+            raise InstallSelectionError(
+                "Cannot combine --profile with workspace install flags.\n"
+                "Legacy profile installs remain Cursor-only without --workspace "
+                "or --no-root-components."
+            )
+
+        # Assistants: resolve interactive/default without root technology detection.
+        report = None
+        signal_ids = set()
+        if request.assistants is None and not request.assume_yes:
+            report = apply_resolution(
+                self.detection_service.detect(path=str(project_root))
+            )
+            signal_ids = _tool_signal_assistant_ids(report)
+
+        assistants = _resolve_assistants_for_composition(
+            explicit_assistants=list(request.assistants)
+            if request.assistants is not None
+            else None,
+            assume_yes=request.assume_yes,
+            deploy_registry=None,
+            signal_ids=signal_ids,
+            input_fn=self.input_fn,
+            output_fn=self.output_fn,
+        )
+
+        # Workspace-explicit install never root-detects components (D83 / D84).
+        config = build_install_project_config_from_cli(
+            project_root=project_root,
+            registry=registry,
+            components=list(request.components)
+            if request.components is not None
+            else None,
+            assistants=list(assistants) if assistants is not None else None,
+            workspace_pairs=request.workspaces,
+            no_root_components=request.no_root_components,
+            no_workspaces=False,
+            profile=None,
+        )
+        return self._install_project_config(project_root, config, request)
+
+    def _config_from_existing_project_config(
         self,
         project_root: Path,
         request: InstallRequest,
@@ -194,6 +252,24 @@ class InstallService:
                 )
 
         # Authoritative config: do not redetect or prompt.
+        return config
+
+    def _intent_from_existing_project_config(
+        self,
+        project_root: Path,
+        request: InstallRequest,
+        registry: ComponentRegistry,
+    ):
+        """Compatibility wrapper returning schema1 InstallIntent when possible."""
+        config = self._config_from_existing_project_config(
+            project_root, request, registry
+        )
+        if config is None:
+            return None
+        if config.schema_version != 1:
+            raise InstallSelectionError(
+                "Existing schema2 project config requires install_project_config path"
+            )
         return build_composition_intent(
             list(config.components),
             registry,
@@ -230,6 +306,48 @@ class InstallService:
             )
 
         return None
+
+    def _install_project_config(
+        self, project_root, config, request: InstallRequest
+    ) -> InstallResult:
+        if not request.dry_run and not request.assume_yes:
+            preview = self.composition_service.install_project_config(
+                project_root, config, dry_run=True
+            )
+            if preview.exit_code != 0:
+                return InstallResult(exit_code=preview.exit_code, message=preview.message)
+            if preview.plan is None:
+                return InstallResult(
+                    exit_code=InstallSelectionError.exit_code,
+                    message=preview.message or "Unable to plan composition install.",
+                )
+            if preview.plan.has_conflicts:
+                return InstallResult(
+                    exit_code=InstallConflictError.exit_code,
+                    message=preview.message,
+                )
+            self.output_fn(render_composition_confirmation(preview.plan))
+            answer = self.input_fn("").strip().lower()
+            if answer not in ("", "y", "yes"):
+                raise InstallCancelled()
+
+        result = self.composition_service.install_project_config(
+            project_root, config, dry_run=request.dry_run
+        )
+        if result.exit_code != 0:
+            return InstallResult(exit_code=result.exit_code, message=result.message)
+
+        if request.dry_run and result.plan is not None:
+            return InstallResult(
+                exit_code=0,
+                message=render_composition_dry_run(result.plan),
+            )
+        if result.plan is not None:
+            return InstallResult(
+                exit_code=0,
+                message=render_composition_success(result.plan),
+            )
+        return InstallResult(exit_code=0, message=result.message)
 
     def _install_composition(self, project_root, intent, request: InstallRequest) -> InstallResult:
         # Plan via dry-run path first when confirmation is needed.

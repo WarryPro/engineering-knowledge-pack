@@ -6,7 +6,9 @@ from pathlib import Path
 
 from cursor.naming import orchestrator_filename
 
-FRONTMATTER_RE = re.compile(r"^---\s*\n.*?\n---\s*\n", re.DOTALL)
+FRONTMATTER_RE = re.compile(r"^---\s*\n(.*?)\n---\s*\n", re.DOTALL)
+GLOBS_RE = re.compile(r"^globs:\s*(.+)\s*$", re.MULTILINE)
+ALWAYS_APPLY_RE = re.compile(r"^alwaysApply:\s*(true|false)\s*$", re.MULTILINE)
 
 
 class CursorVerifyError(Exception):
@@ -19,6 +21,8 @@ def verify_cursor_bundle(bundle_dir):
     Verify generated Cursor bundle integrity.
 
     Expects ``bundle_dir/cursor/*.mdc`` and ``bundle_dir/bundle-manifest.json``.
+    Schema1/global bundles require the orchestrator rule. Schema2 workspace-only
+    bundles may contain only ``globs``-scoped rules.
     """
     errors = []
     cursor_dir = bundle_dir / "cursor"
@@ -32,18 +36,34 @@ def verify_cursor_bundle(bundle_dir):
     if not mdc_files:
         errors.append("No .mdc files generated in {}".format(cursor_dir))
 
-    orchestrator = cursor_dir / orchestrator_filename()
-    if not orchestrator.is_file():
-        errors.append(
-            "Missing orchestrator rule: {}".format(orchestrator.name)
-        )
-
+    workspace_only = True
     for mdc_path in mdc_files:
         content = mdc_path.read_text(encoding="utf-8")
-        if not FRONTMATTER_RE.match(content):
+        match = FRONTMATTER_RE.match(content)
+        if not match:
             errors.append("{}: missing YAML frontmatter".format(mdc_path.name))
+            continue
+        front = match.group(1)
+        globs_match = GLOBS_RE.search(front)
+        always_match = ALWAYS_APPLY_RE.search(front)
+        if globs_match:
+            if always_match and always_match.group(1) != "false":
+                errors.append(
+                    "{}: workspace rules require alwaysApply: false".format(
+                        mdc_path.name
+                    )
+                )
+        else:
+            workspace_only = False
         if "> **Source:**" not in content:
             errors.append("{}: missing Source reference".format(mdc_path.name))
+
+    if not workspace_only or not mdc_files:
+        orchestrator = cursor_dir / orchestrator_filename()
+        if not orchestrator.is_file():
+            errors.append(
+                "Missing orchestrator rule: {}".format(orchestrator.name)
+            )
 
     if not manifest_path.is_file():
         errors.append("Missing bundle manifest: {}".format(manifest_path))

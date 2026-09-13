@@ -117,14 +117,20 @@ def _join(lines):
     return "\n".join(lines).rstrip() + "\n"
 
 
-def render_unit_files(unit, base_filename):
-    # type: (object, str) -> list
+def render_unit_files(unit, base_filename, size_overhead=0):
+    # type: (object, str, int) -> list
     """
     Render one knowledge unit to one or more (filename, content) pairs.
 
     Splits on concept boundaries when content would exceed the comfortable
     character threshold. Flow content stays with part 1.
+
+    ``size_overhead`` reserves characters for callers that prepend frontmatter
+    (workspace Glob rules) so the final file stays under the Antigravity limit.
     """
+    threshold = SPLIT_THRESHOLD_CHARS - int(size_overhead or 0)
+    if threshold < 1000:
+        threshold = 1000
     header = _header_lines(unit)
     flow = _flow_blocks(unit)
     concept_blocks = [_concept_block(concept) for concept in unit.concepts]
@@ -133,7 +139,7 @@ def render_unit_files(unit, base_filename):
     for block in concept_blocks:
         combined.extend(block)
     combined_text = _join(combined)
-    if len(combined_text) <= SPLIT_THRESHOLD_CHARS:
+    if len(combined_text) <= threshold:
         return [(base_filename, combined_text)]
 
     parts = []
@@ -150,7 +156,7 @@ def render_unit_files(unit, base_filename):
 
     for block in concept_blocks:
         candidate = current + block
-        if len(_join(candidate)) > SPLIT_THRESHOLD_CHARS and current != header + flow:
+        if len(_join(candidate)) > threshold and current != header + flow:
             flush()
             part_index += 1
             current = header + block

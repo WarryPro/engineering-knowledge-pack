@@ -87,6 +87,26 @@ def main(argv=None):
         ),
     )
     install_parser.add_argument(
+        "--workspace",
+        nargs=2,
+        action="append",
+        dest="workspaces",
+        metavar=("PATH", "COMPONENT"),
+        help=(
+            "Declare a workspace technology scope (PATH COMPONENT). "
+            "Repeat to add workspaces or additional components for the same path. "
+            "Implies schema2. Mutually exclusive with --profile."
+        ),
+    )
+    install_parser.add_argument(
+        "--no-root-components",
+        action="store_true",
+        help=(
+            "Explicitly use no root components for a schema2 workspace project "
+            "(requires --workspace)"
+        ),
+    )
+    install_parser.add_argument(
         "--yes",
         action="store_true",
         help="Skip confirmation prompts (does not bypass safety checks)",
@@ -156,12 +176,14 @@ def main(argv=None):
         "configure",
         help="Change the managed project configuration",
         description=(
-            "Change the exact component and assistant intent of an existing "
-            "healthy composition installation.\n\n"
-            "Desired-state semantics: every --component / --assistant flag "
-            "together defines the exact desired sets (not add/remove deltas).\n\n"
+            "Change the exact desired configuration of an existing healthy "
+            "composition installation.\n\n"
+            "Desired-state semantics: flags together define the complete "
+            "desired ProjectConfig (not add/remove deltas).\n\n"
             "With --yes or --dry-run, both component and assistant sets must "
-            "be supplied."
+            "be explicit for the desired schema (assistants always required; "
+            "root/workspace dimensions via --component / --no-root-components "
+            "and --workspace / --no-workspaces as applicable)."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -176,8 +198,8 @@ def main(argv=None):
         dest="components",
         metavar="ID",
         help=(
-            "Repeatable exact desired component ID "
-            "(with --yes/--dry-run, at least one is required)"
+            "Repeatable exact desired root component ID "
+            "(with --yes/--dry-run, required unless --no-root-components)"
         ),
     )
     configure_parser.add_argument(
@@ -190,6 +212,34 @@ def main(argv=None):
             "(supported: {}; with --yes/--dry-run, at least one is required)".format(
                 _supported_assistants_help()
             )
+        ),
+    )
+    configure_parser.add_argument(
+        "--workspace",
+        nargs=2,
+        action="append",
+        dest="workspaces",
+        metavar=("PATH", "COMPONENT"),
+        help=(
+            "Declare a workspace technology scope (PATH COMPONENT). "
+            "Repeat to add workspaces or components. "
+            "For noninteractive configure, supplies the complete desired "
+            "workspace set."
+        ),
+    )
+    configure_parser.add_argument(
+        "--no-root-components",
+        action="store_true",
+        help=(
+            "Explicitly use no root components for a schema2 workspace project"
+        ),
+    )
+    configure_parser.add_argument(
+        "--no-workspaces",
+        action="store_true",
+        help=(
+            "Explicitly remove all workspaces and return to a schema1 root "
+            "project (configure only)"
         ),
     )
     configure_parser.add_argument(
@@ -234,6 +284,8 @@ def main(argv=None):
                     profile=args.profile,
                     components=args.components,
                     assistants=args.assistants,
+                    workspaces=args.workspaces,
+                    no_root_components=args.no_root_components,
                     assume_yes=args.yes,
                     dry_run=args.dry_run,
                 )
@@ -314,6 +366,9 @@ def main(argv=None):
                 path=args.path,
                 components=args.components,
                 assistants=args.assistants,
+                workspaces=args.workspaces,
+                no_root_components=args.no_root_components,
+                no_workspaces=args.no_workspaces,
                 assume_yes=args.yes,
                 dry_run=args.dry_run,
             )

@@ -3,34 +3,95 @@
   "$id": "https://github.com/engineering-knowledge-pack/schema/project-config.schema.json",
   "title": "EKP Project Intent Configuration",
   "description": "User/project intent for technology components and assistants (.ekp/project.yaml)",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["schema_version", "components", "assistants"],
-  "properties": {
-    "schema_version": {
-      "type": "integer",
-      "const": 1,
-      "description": "Project configuration schema version"
+  "oneOf": [
+    { "$ref": "#/$defs/schema1" },
+    { "$ref": "#/$defs/schema2" }
+  ],
+  "$defs": {
+    "componentId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
     },
-    "components": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z][a-z0-9-]*$"
-      },
-      "description": "Requested technology component ids (intent; not resolved closure)"
+    "assistantId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
     },
-    "assistants": {
-      "type": "array",
-      "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "type": "string",
-        "pattern": "^[a-z][a-z0-9-]*$"
-      },
-      "description": "Intended assistants (managed Consumer support enforced semantically)"
+    "schema1": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "components", "assistants"],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 1,
+          "description": "Project configuration schema version"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/componentId" },
+          "description": "Requested technology component ids (intent; not resolved closure)"
+        },
+        "assistants": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/assistantId" },
+          "description": "Intended assistants (managed Consumer support enforced semantically)"
+        }
+      }
+    },
+    "schema2": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "components", "assistants", "workspaces"],
+      "properties": {
+        "schema_version": {
+          "type": "integer",
+          "const": 2,
+          "description": "Project configuration schema version with workspaces"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 0,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/componentId" },
+          "description": "Root/global requested technology component ids (may be empty)"
+        },
+        "assistants": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/assistantId" },
+          "description": "Intended assistants (global to the project)"
+        },
+        "workspaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/workspace" },
+          "description": "Explicit workspace technology intents"
+        }
+      }
+    },
+    "workspace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "components"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Canonical relative workspace path using / separators"
+        },
+        "components": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/$defs/componentId" },
+          "description": "Requested technology component ids for this workspace"
+        }
+      }
     }
   }
 }

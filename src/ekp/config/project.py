@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-from typing import Any, Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import yaml
 from jsonschema import Draft202012Validator
@@ -13,15 +13,22 @@ from jsonschema import Draft202012Validator
 from ekp.composition import ComponentRegistry, CompositionError
 from ekp.config.models import (
     PROJECT_CONFIG_RELATIVE,
-    SUPPORTED_PROJECT_SCHEMA_VERSION,
+    PROJECT_SCHEMA_VERSION_1,
+    PROJECT_SCHEMA_VERSION_2,
+    SUPPORTED_PROJECT_SCHEMA_VERSIONS,
     ProjectConfig,
     ProjectConfigError,
     ProjectConfigFileSnapshot,
     ProjectConfigReplaceHandle,
     ProjectConfigRollbackError,
     ProjectConfigSnapshot,
+    WorkspaceIntent,
 )
 from ekp.config.normalization import configuration_sha256, normalize_project_config
+from ekp.config.workspaces import (
+    build_workspace_intents,
+    validate_workspace_on_filesystem,
+)
 from ekp.install.atomic import ExclusiveTempFile, exclusive_create_from_temp
 from ekp.install.paths import check_symlink_boundary, resolve_under_root
 from ekp.paths import get_ekp_root
@@ -59,16 +66,93 @@ def _load_project_config_schema(resource_root: Optional[Path] = None) -> dict:
         ) from exc
 
 
+def _yaml_double_quoted(value: str) -> str:
+    """Deterministic YAML double-quoted scalar for workspace paths."""
+    escaped = (
+        value.replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", "\\n")
+        .replace("\r", "\\r")
+        .replace("\t", "\\t")
+    )
+    return '"{}"'.format(escaped)
+
+
+def project_config_to_payload(config: ProjectConfig) -> Dict[str, Any]:
+    """Serialize a ProjectConfig into a JSON-schema-compatible mapping."""
+    payload: Dict[str, Any] = {
+        "schema_version": int(config.schema_version),
+        "components": list(config.components),
+        "assistants": list(config.assistants),
+    }
+    if config.schema_version == PROJECT_SCHEMA_VERSION_2:
+        payload["workspaces"] = [
+            {
+                "path": workspace.path,
+                "components": list(workspace.components),
+            }
+            for workspace in config.workspaces
+        ]
+    return payload
+
+
 def render_project_config_yaml(config: ProjectConfig) -> str:
-    """Deterministic YAML for initial project config creation (UTF-8 / LF)."""
-    lines = ["schema_version: {}".format(int(config.schema_version))]
-    lines.append("components:")
-    for component_id in config.components:
-        lines.append("  - {}".format(component_id))
-    lines.append("assistants:")
-    for assistant_id in config.assistants:
-        lines.append("  - {}".format(assistant_id))
-    return "\n".join(lines) + "\n"
+    """Deterministic YAML for project config create/replace (UTF-8 / LF)."""
+    if config.schema_version == PROJECT_SCHEMA_VERSION_1:
+        # Exact v0.20 schema1 byte contract — do not emit workspaces.
+        lines = ["schema_version: {}".format(int(config.schema_version))]
+        lines.append("components:")
+        for component_id in config.components:
+            lines.append("  - {}".format(component_id))
+        lines.append("assistants:")
+        for assistant_id in config.assistants:
+            lines.append("  - {}".format(assistant_id))
+        return "\n".join(lines) + "\n"
+
+    if config.schema_version == PROJECT_SCHEMA_VERSION_2:
+        lines = ["schema_version: {}".format(int(config.schema_version))]
+        if config.components:
+            lines.append("components:")
+            for component_id in config.components:
+                lines.append("  - {}".format(component_id))
+        else:
+            lines.append("components: []")
+        lines.append("assistants:")
+        for assistant_id in config.assistants:
+            lines.append("  - {}".format(assistant_id))
+        lines.append("workspaces:")
+        for workspace in sorted(config.workspaces, key=lambda item: item.path):
+            lines.append("  - path: {}".format(_yaml_double_quoted(workspace.path)))
+            lines.append("    components:")
+            for component_id in workspace.components:
+                lines.append("      - {}".format(component_id))
+        return "\n".join(lines) + "\n"
+
+    raise ProjectConfigError(
+        "unsupported project config schema_version: {}".format(config.schema_version)
+    )
+
+
+def _validate_component_ids(
+    component_ids: Sequence[str],
+    registry: ComponentRegistry,
+    *,
+    label: str,
+) -> None:
+    for component_id in component_ids:
+        if not registry.has(component_id):
+            raise ProjectConfigError(
+                "unknown component in {}: {!r}".format(label, component_id)
+            )
+        component = registry.get(component_id)
+        if not component.selectable:
+            raise ProjectConfigError(
+                "component is not selectable in {}: {!r}".format(label, component_id)
+            )
+        try:
+            registry.get(component_id)
+        except CompositionError as exc:
+            raise ProjectConfigError(str(exc)) from exc
 
 
 def validate_project_config_payload(
@@ -77,12 +161,14 @@ def validate_project_config_payload(
     *,
     schema: Optional[dict] = None,
     supported_assistants: Optional[Sequence[str]] = None,
+    project_root: Optional[Path] = None,
 ) -> ProjectConfig:
     """
     Structurally and semantically validate a project-config mapping.
 
     ``supported_assistants`` defaults to DeployRegistry production capability
-    (injected when provided). Raises ProjectConfigError for invalid configuration.
+    (injected when provided). When ``project_root`` is provided, schema2
+    workspaces are filesystem-validated against that root.
     """
     if not isinstance(payload, dict):
         raise ProjectConfigError("project config root must be a mapping/object")
@@ -97,8 +183,8 @@ def validate_project_config_payload(
             "project config schema invalid: {}".format(errors[0].message)
         )
 
-    schema_version = payload["schema_version"]
-    if schema_version != SUPPORTED_PROJECT_SCHEMA_VERSION:
+    schema_version = int(payload["schema_version"])
+    if schema_version not in SUPPORTED_PROJECT_SCHEMA_VERSIONS:
         raise ProjectConfigError(
             "unsupported project config schema_version: {}".format(schema_version)
         )
@@ -108,25 +194,34 @@ def validate_project_config_payload(
     if not assistants:
         raise ProjectConfigError("project config requires at least one assistant")
 
-    for component_id in components:
-        if not registry.has(component_id):
+    if schema_version == PROJECT_SCHEMA_VERSION_1:
+        if "workspaces" in payload:
             raise ProjectConfigError(
-                "unknown component in project config: {!r}".format(component_id)
+                "schema_version 1 project config must not declare workspaces"
             )
-        component = registry.get(component_id)
-        if not component.selectable:
+        if not components:
             raise ProjectConfigError(
-                "component is not selectable in project config: {!r}".format(
-                    component_id
-                )
+                "schema_version 1 project config requires at least one component"
             )
-
-    # Ensure the requested set forms a valid graph (unknown deps already covered).
-    try:
-        for component_id in components:
-            registry.get(component_id)
-    except CompositionError as exc:
-        raise ProjectConfigError(str(exc)) from exc
+        workspaces: Tuple[WorkspaceIntent, ...] = ()
+        _validate_component_ids(components, registry, label="project config")
+    else:
+        raw_workspaces = payload.get("workspaces")
+        if not isinstance(raw_workspaces, list) or not raw_workspaces:
+            raise ProjectConfigError(
+                "schema_version 2 project config requires at least one workspace"
+            )
+        workspaces = build_workspace_intents(raw_workspaces)
+        _validate_component_ids(components, registry, label="project config root")
+        for workspace in workspaces:
+            _validate_component_ids(
+                workspace.components,
+                registry,
+                label="workspace {!r}".format(workspace.path),
+            )
+        if project_root is not None:
+            for workspace in workspaces:
+                validate_workspace_on_filesystem(project_root, workspace.path)
 
     if supported_assistants is None:
         supported = set(_production_supported_assistants())
@@ -141,9 +236,10 @@ def validate_project_config_payload(
             )
 
     return ProjectConfig(
-        schema_version=int(schema_version),
+        schema_version=schema_version,
         components=components,
         assistants=assistants,
+        workspaces=workspaces,
     )
 
 
@@ -260,6 +356,7 @@ class ProjectConfigStore:
             payload,
             self._registry_or_load(),
             schema=self._schema(),
+            project_root=self.project_root,
         )
 
     def load(self) -> Optional[ProjectConfig]:
@@ -296,6 +393,7 @@ class ProjectConfigStore:
             payload,
             self._registry_or_load(),
             schema=self._schema(),
+            project_root=self.project_root,
         )
 
     def load_snapshot(self) -> Optional[ProjectConfigSnapshot]:
@@ -334,15 +432,11 @@ class ProjectConfigStore:
         Refuses if the file (or a symlink at that path) already exists.
         """
         registry = self._registry_or_load()
-        # Re-validate through the same semantic path used for load.
         validated = validate_project_config_payload(
-            {
-                "schema_version": config.schema_version,
-                "components": list(config.components),
-                "assistants": list(config.assistants),
-            },
+            project_config_to_payload(config),
             registry,
             schema=self._schema(),
+            project_root=self.project_root,
         )
 
         parent = self.config_path.parent
@@ -391,13 +485,10 @@ class ProjectConfigStore:
         """
         registry = self._registry_or_load()
         validated = validate_project_config_payload(
-            {
-                "schema_version": new_config.schema_version,
-                "components": list(new_config.components),
-                "assistants": list(new_config.assistants),
-            },
+            project_config_to_payload(new_config),
             registry,
             schema=self._schema(),
+            project_root=self.project_root,
         )
         new_text = render_project_config_yaml(validated)
         new_bytes = new_text.encode("utf-8")

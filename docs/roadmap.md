@@ -14,7 +14,7 @@ Development is organized into phases. Each phase produces a usable artifact; lat
 | Phase 3C — Governance foundation | **Complete** | ADRs 0005–0007, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); `ekp-flutter` deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Cursor complete; Copilot stack profiles complete (`ekp-php` through `ekp-nativescript` in `v0.6.0`–`v0.13.0`); Antigravity + Claude in `v0.4.0`/`v0.5.0` (`ekp-core` pilot only); `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.20` Safe Reconfiguration** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; Windows + Ubuntu validation; remote acquisition / PyPI deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.20`; v0.21 impl complete / publication pending** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; workspace/monorepo upcoming (unreleased); Windows + Ubuntu validation; remote acquisition / PyPI deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; 8 scenarios; blind scoring/reporting tooling; L1 real-model public evidence optional/deferred |
 
 ---
@@ -272,9 +272,9 @@ Extend the adapter layer to additional AI assistant platforms.
 
 ## Phase 6: Consumer productization
 
-**Status:** `v0.18.0` — Project Composition Engine — **release candidate / ready for publication**
+**Status:** `v0.20.0` Safe Reconfiguration **published**; **upcoming (unreleased) v0.21** Workspace / Monorepo Support — implementation complete, local validation complete, publication pending staging/CI/release
 
-Deliver consumer-facing installation and lifecycle management for Cursor without requiring a repository checkout.
+Deliver consumer-facing installation and lifecycle management without requiring a repository checkout.
 
 **Deliverables published in `v0.15.0`:**
 
@@ -292,7 +292,7 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 - [x] Cross-version project migration using the currently running package resources
 - [x] Cross-platform lifecycle validation (Consumer CLI tests; Ubuntu + Windows packaging smoke)
 
-**Deliverables in `v0.18.0` (release candidate):**
+**Deliverables in `v0.18.0` (published):**
 
 - [x] Component registry and dependency closure (`components/`)
 - [x] `.ekp/project.yaml` project intent + composition assembly
@@ -300,18 +300,27 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 - [x] Persistent composition install, status drift, update without redetect, uninstall config preservation
 - [x] Legacy `--profile` / v0.17 manifest compatibility retained
 
+**Deliverables completed for upcoming (unreleased) `v0.21` (implementation + local validation; not published):**
+
+- [x] ProjectConfig schema2 with explicit `workspaces` + empty-root support
+- [x] CLI `--workspace PATH COMPONENT`, `--no-root-components`, configure `--no-workspaces`
+- [x] Per-scope resolution → `ScopedKnowledgeInventory` → one scoped adapter invocation per assistant
+- [x] GLOBAL vs WORKSPACE assistant destinations (Cursor globs, Copilot `applyTo`, Claude rules, Antigravity Glob)
+- [x] Lifecycle: install / status (nested diagnostics) / update (persisted intent) / configure (desired-state schema1↔schema2) / project-wide uninstall
+- [x] Schema1 remains first-class (no mandatory conversion)
+- [ ] Public release / staging CI gate / GitHub Release for v0.21 — **pending**
+
 **Still deferred (remaining Phase 6 / later):**
 
 - [ ] Remote release/package acquisition
 - [ ] PyPI publication
 - [x] Multi-assistant Consumer Lifecycle (Copilot / Antigravity / Claude) — **v0.19 COMPLETE — published**
 - [x] Safe Reconfiguration (`ekp configure`) — **v0.20 COMPLETE — published**
-- [ ] Workspace / monorepo support — **v0.21**
+- [x] Workspace / monorepo support — **v0.21 COMPLETE (implementation); publication pending**
 - [ ] Distribution + product UX — **v0.22**
 - [ ] Hardening / RC — **v0.23**
-- [ ] Automatic multi-profile / monorepo orchestration (subsumed under v0.21 workspace theme)
 
-**Exit criteria (met through published `v0.20`):** A developer can install the package, detect or select components (or an explicit legacy profile), install managed files for any non-empty subset of Cursor / Copilot / Claude / Antigravity safely, inspect health including configuration drift, synchronize an existing project after upgrading the package, intentionally reconfigure composition intent from a HEALTHY state (`ekp configure`), and uninstall managed ownership while preserving project intent — without cloning EKP or running the manual assemble pipeline.
+**Exit criteria (met through published `v0.20`; extended locally for unreleased v0.21):** A developer can install the package, detect or select components (or an explicit legacy profile), install managed files for any non-empty subset of Cursor / Copilot / Claude / Antigravity safely, inspect health including configuration drift, synchronize an existing project after upgrading the package, intentionally reconfigure composition intent from a HEALTHY state (`ekp configure`), and uninstall managed ownership while preserving project intent — without cloning EKP or running the manual assemble pipeline. With upcoming (unreleased) v0.21 tooling, the same lifecycle also covers explicit workspace/monorepo intent under one project-wide manifest.
 
 ---
 
@@ -322,14 +331,14 @@ Deliver consumer-facing installation and lifecycle management for Cursor without
 | v0.18.0 | Project Composition Engine — **published baseline** |
 | v0.19 | Multi-Assistant Consumer Lifecycle — **published** |
 | v0.20 | Safe Reconfiguration — **published** |
-| v0.21 | Workspace / Monorepo Support |
+| v0.21 | Workspace / Monorepo Support — **upcoming (unreleased)** (impl complete; publication pending) |
 | v0.22 | Distribution & Product UX |
 | v0.23 | Product Hardening / RC |
 | v1.0.0 | Stable |
 
 **v0.20 — Safe Reconfiguration:** public `ekp configure` desired-state workflow for HEALTHY composition installs; transactional semantic + exact-byte config replacement; schema_version remains 1. **COMPLETE — published**.
 
-**v0.21 — Workspace / Monorepo Support (high-level):** explicit workspace/monorepo technology intent under one EKP project lifecycle with scoped assistant generation. Not implemented in v0.20.
+**v0.21 — Workspace / Monorepo Support:** explicit workspace/monorepo technology intent under one EKP project lifecycle with scoped assistant generation. **Implementation complete and locally validated; upcoming (unreleased) — publication pending staging/CI/release.** Schema1 remains first-class.
 
 Do not expand the Evaluation roadmap here; Evaluation L0 remains complete in `v0.17.0`.
 

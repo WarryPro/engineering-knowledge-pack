@@ -82,6 +82,8 @@ ekp install \
 
 ### Assistant destinations
 
+Published **v0.20** (schema1 / global root composition) managed outputs:
+
 | Assistant | Managed outputs |
 |-----------|-----------------|
 | Cursor | `.cursor/rules/*.mdc` |
@@ -89,11 +91,22 @@ ekp install \
 | Claude | `CLAUDE.md`, `.claude/skills/*/SKILL.md` |
 | Google Antigravity | `.agents/rules/*.md` |
 
+**Upcoming (unreleased) v0.21** adds scoped destinations for GLOBAL vs WORKSPACE knowledge (same project root; workspace files are not written under `apps/...`):
+
+| Assistant | GLOBAL | WORKSPACE |
+|-----------|--------|-----------|
+| Cursor | `.cursor/rules/*.mdc` | `.cursor/rules/*.mdc` with `globs` + `alwaysApply: false` |
+| GitHub Copilot | `.github/copilot-instructions.md` and/or `.github/instructions/*.instructions.md` | `.github/instructions/*.instructions.md` with workspace-prefixed `applyTo` (other Copilot surfaces are not claimed identical) |
+| Claude | `CLAUDE.md` + `.claude/skills/*/SKILL.md` | `.claude/rules/*.md` (path-scoped rules; not Skills) |
+| Google Antigravity | `.agents/rules/*.md` | `.agents/rules/*.md` with verified Glob frontmatter (`trigger: glob` / `globs: path/**` only) |
+
 Unmanaged collisions at those paths refuse install before mutation. Foreign files in `.github/`, `.claude/`, `.agents/`, or `.cursor/` that EKP does not own are left intact across install/uninstall.
 
 ### Project configuration
 
-`.ekp/project.yaml` stores user/project intent:
+`.ekp/project.yaml` stores user/project intent. **Schema1 remains first-class** — there is no mandatory conversion to schema2.
+
+Schema1 (root-only; published v0.20 shape):
 
 ```yaml
 schema_version: 1
@@ -107,23 +120,113 @@ assistants:
   - antigravity
 ```
 
-- Stores **requested** components and assistants only; dependencies are derived
-- Assistants and components are user/project intent — change them with `ekp configure`, not by editing YAML by hand
+Schema2 with root + workspaces (**upcoming (unreleased) v0.21**):
+
+```yaml
+schema_version: 2
+components:
+  - devops
+assistants:
+  - cursor
+  - claude
+workspaces:
+  - path: apps/api
+    components:
+      - symfony
+  - path: apps/web
+    components:
+      - frontend
+```
+
+Empty-root schema2 (workspaces only; root `components: []`):
+
+```yaml
+schema_version: 2
+components: []
+assistants:
+  - cursor
+workspaces:
+  - path: apps/api
+    components:
+      - symfony
+```
+
+- Stores **requested** components (and workspaces) and assistants only; dependencies are derived
+- Assistants are **project-global** (not per-workspace) — change intent with `ekp configure`, not by editing YAML by hand
 - Manual edits to `project.yaml` are **configuration drift**; neither `ekp update` nor `ekp configure` adopts drift
 - User/project-owned — update does not rewrite it; uninstall preserves it
-- Operational ownership and hashes live in `.ekp/install.json` (`mode=composition`, `configuration_sha256` = semantic intent)
+- Operational ownership and hashes live in `.ekp/install.json` (`mode=composition`, `schema_version: 1`, `configuration_sha256` = semantic requested intent)
 
-### Reconfigure a healthy composition (v0.20 Safe Reconfiguration)
+### Workspace / Monorepo Support — upcoming (unreleased) v0.21
 
-`ekp configure` sets the **exact** desired component and assistant sets (not add/remove deltas). Eligible only for **HEALTHY composition** installs at the running package version.
+Explicit workspace technology intent under one EKP project lifecycle. **Not published** — do not expect these flags on `pipx` `@v0.20.0`.
 
 ```bash
-# Noninteractive: both dimensions required with --yes or --dry-run
+# Schema2 install: workspaces present → schema_version 2
+# Omitting --component with --workspace → empty root (valid when ≥1 workspace)
+ekp install \
+  --workspace apps/api symfony \
+  --workspace apps/web frontend \
+  --assistant cursor \
+  --assistant copilot \
+  --yes
+
+# Explicit empty root
+ekp install \
+  --no-root-components \
+  --workspace apps/api symfony \
+  --assistant cursor \
+  --yes
+
+# Schema1 install: no --workspace → schema_version 1 (unchanged)
+ekp install --component symfony --component frontend --assistant cursor --yes
+```
+
+Rules of thumb:
+
+- Install **with** `--workspace` → schema2; **without** → schema1
+- Empty root is allowed only with **≥1 workspace** (schema2)
+- Assistants remain project-global
+- **No autodetection** of monorepo layouts (no package-manager workspace discovery)
+- Declared workspace directories **must already exist** as real directories under the project root
+
+Lifecycle (same commands; workspace-aware when schema2):
+
+| Command | Workspace behavior |
+|---------|-------------------|
+| `ekp install` | Creates schema1 or schema2 intent + one project-wide manifest |
+| `ekp status` | One top-level state machine; optional per-workspace diagnostics underneath (no `WORKSPACE_*` states) |
+| `ekp update` | Synchronizes **persisted** intent — no redetect, no workspace rediscovery |
+| `ekp configure` | Desired-state replacement (schema1↔schema2 transitions allowed when HEALTHY) |
+| `ekp uninstall` | Project-wide removal of managed ownership (not per-workspace) |
+
+### Reconfigure a healthy composition (v0.20 + upcoming v0.21 workspaces)
+
+`ekp configure` sets the **exact** desired configuration (not add/remove deltas). Eligible only for **HEALTHY composition** installs at the running package version.
+
+```bash
+# Schema1 noninteractive: ≥1 component + ≥1 assistant
 ekp configure \
   --component symfony \
   --component frontend \
   --assistant cursor \
   --assistant copilot \
+  --yes
+
+# Schema2 noninteractive: ≥1 workspace + ≥1 assistant + explicit root
+# (root via --component … or --no-root-components)
+ekp configure \
+  --no-root-components \
+  --workspace apps/api symfony \
+  --workspace apps/web frontend \
+  --assistant cursor \
+  --yes
+
+# Schema2 → schema1: --no-workspaces + ≥1 component + ≥1 assistant
+ekp configure \
+  --no-workspaces \
+  --component symfony \
+  --assistant cursor \
   --yes
 
 # Preview without writes
@@ -136,11 +239,18 @@ ekp configure \
 ekp configure
 ```
 
-With `--yes` or `--dry-run`, supply at least one `--component` and one `--assistant`. Interactive mode may prompt for missing dimensions using **current** persisted selections as defaults (never tool detection; never Cursor injection).
+Noninteractive (`--yes` / `--dry-run`) requirements depend on the **desired** schema — not every configure always requires `--component`:
+
+- **Schema1:** ≥1 `--component` and ≥1 `--assistant`
+- **Schema2:** ≥1 `--workspace`, ≥1 `--assistant`, and explicit root (`--component` … **or** `--no-root-components`)
+- **Schema2→schema1:** `--no-workspaces` + ≥1 `--component` + ≥1 `--assistant`
+
+Interactive mode may prompt for missing dimensions using **current** persisted selections as defaults (never tool detection; never Cursor injection).
 
 **Not configure:** VERSION_MISMATCH → `ekp update` first; INCOMPLETE/MODIFIED → repair/resolve first; CONFIGURATION_DRIFT → restore installed config first; legacy-profile → configure unavailable.
 
 Package upgrade and project sync remain separate: install/upgrade the EKP package, run `ekp update` to synchronize, then `ekp configure` only from HEALTHY to change intent.
+
 ### Legacy profiles (still supported)
 
 Explicit packaging presets remain available:
@@ -180,6 +290,7 @@ ekp uninstall
 - Modified owned files block uninstall
 - Unmanaged assistant files survive
 - `project.yaml` is preserved when present
+- Uninstall is project-wide (including schema2 workspace installs — not per-workspace)
 - Conservative directory cleanup may leave empty assistant / `.ekp` directories when ownership was not proven
 
 ### Safety
@@ -190,7 +301,7 @@ ekp uninstall
 - `--yes` skips confirmation prompts, not safety checks
 - `--dry-run` shows the plan without writing files
 
-### Support matrix (v0.20)
+### Support matrix (v0.20 published)
 
 | Assistant | Generation | Deploy | Install | Status | Update | Configure | Repair | Uninstall |
 |-----------|------------|--------|---------|--------|--------|-----------|--------|-----------|
@@ -200,6 +311,8 @@ ekp uninstall
 | Google Antigravity | supported | supported | supported | supported | supported | supported | supported | supported |
 
 Configure applies to **composition** installs only (not legacy-profile). Manual assemble (Path B) remains available for contributor/profile workflows. See [`docs/deployment.md`](docs/deployment.md).
+
+**Upcoming (unreleased) v0.21:** workspace / monorepo support is implemented in-tree and locally validated, but **not** part of the published `@v0.20.0` Consumer package. Treat workspace CLI flags and schema2 as unavailable until a public v0.21 release.
 
 ---
 
@@ -292,6 +405,7 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 ## Release status
 
 - **Latest public release:** `v0.20.0`
+- **Upcoming (unreleased) v0.21:** Workspace / Monorepo Support — implementation complete, local validation complete; publication pending staging/CI/release (not installable via `@v0.20.0`)
 - **`v0.20.0`:** Safe Reconfiguration — published — public `ekp configure` desired-state workflow for HEALTHY composition installs
 - **v0.19.0:** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
 - **v0.18.0:** Project Composition Engine — component registry, `.ekp/project.yaml` intent, composition install/status/update/uninstall, Cursor-only Consumer lifecycle at publication time
@@ -336,7 +450,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.20` Safe Reconfiguration** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; Windows + Ubuntu CI; remote acquisition / PyPI deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.20`; v0.21 workspace impl complete / publication pending** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; workspace/monorepo (upcoming unreleased); Windows + Ubuntu CI; remote acquisition / PyPI deferred |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics

@@ -254,7 +254,15 @@ class TransactionApplier:
             registry = ComponentRegistry.load(get_ekp_root())
             store = ProjectConfigStore(plan.project_root, registry=registry)
 
-            file_snap = store.load_file_snapshot()
+            try:
+                file_snap = store.load_file_snapshot()
+            except ProjectConfigError as exc:
+                # Schema2 workspace path invalidation (missing/symlink/escape) between
+                # prepare and apply must refuse cleanly — never partial apply.
+                raise LifecycleConflictError(
+                    "Project configuration became invalid before configure; "
+                    "refusing transition: {}".format(exc)
+                ) from exc
             if file_snap is None:
                 raise LifecycleConflictError(
                     "Project configuration missing before configure transition."
@@ -278,7 +286,13 @@ class TransactionApplier:
                     "Configure plan new project config content fingerprint mismatch."
                 )
 
-            new_config = store._parse_config_bytes(plan.new_project_config_bytes)
+            try:
+                new_config = store._parse_config_bytes(plan.new_project_config_bytes)
+            except ProjectConfigError as exc:
+                raise LifecycleConflictError(
+                    "Desired project configuration became invalid before configure; "
+                    "refusing transition: {}".format(exc)
+                ) from exc
             from ekp.config.normalization import configuration_sha256 as semantic_hash
 
             if semantic_hash(new_config, registry) != plan.new_configuration_sha256:

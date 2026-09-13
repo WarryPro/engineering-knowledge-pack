@@ -48,6 +48,8 @@ def _file_kind(relpath):
         return "memory"
     if relpath.startswith(SKILLS_DIR + "/") and relpath.endswith("/SKILL.md"):
         return "skill"
+    if relpath.startswith(".claude/rules/") and relpath.endswith(".md"):
+        return "rule"
     return "other"
 
 

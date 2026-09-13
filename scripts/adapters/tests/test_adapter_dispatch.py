@@ -60,6 +60,12 @@ class AdapterRegistryTests(unittest.TestCase):
             self.assertTrue(registry.is_implemented(name), msg=name)
             self.assertEqual(registry.get(name)["name"], name)
 
+    def test_generate_scoped_registered_for_all_four(self):
+        registry = build_default_registry()
+        for name in ("cursor", "copilot", "claude", "antigravity"):
+            adapter = registry.get(name)
+            self.assertTrue(callable(adapter.get("generate_scoped")), msg=name)
+
     def test_unknown_adapter_rejected(self):
         registry = build_default_registry()
         with self.assertRaises(AdapterNotImplementedError):

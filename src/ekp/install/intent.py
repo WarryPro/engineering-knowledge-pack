@@ -17,8 +17,13 @@ from ekp.config.assistants import (
     canonicalize_assistants,
     default_project_assistants,
 )
-from ekp.config.models import ProjectConfig
+from ekp.config.models import (
+    PROJECT_SCHEMA_VERSION_1,
+    PROJECT_SCHEMA_VERSION_2,
+    ProjectConfig,
+)
 from ekp.config.normalization import configuration_sha256
+from ekp.config.project import validate_project_config_payload
 from ekp.detection.models import DetectionReport
 from ekp.install.deploy.registry import DeployRegistry, build_default_deploy_registry
 from ekp.install.errors import InstallSelectionError
@@ -40,6 +45,119 @@ class InstallIntent:
     composition: Optional[ResolvedComposition] = None
     additional_concerns: Tuple[str, ...] = ()
     configuration_sha256: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class ProjectLifecycleIntent:
+    """
+    Exact desired ProjectConfig for composition lifecycle (schema1 or schema2).
+
+    No ``None means preserve`` semantics — the config is complete.
+    """
+
+    config: ProjectConfig
+    configuration_sha256: str
+    additional_concerns: Tuple[str, ...] = ()
+    composition: Optional[ResolvedComposition] = None
+
+
+def build_project_lifecycle_intent(
+    config: ProjectConfig,
+    registry: ComponentRegistry,
+    *,
+    additional_concerns: Sequence[str] = (),
+    deploy_registry: Optional[DeployRegistry] = None,
+    project_root=None,
+) -> ProjectLifecycleIntent:
+    """
+    Validate a complete ProjectConfig and bind its semantic configuration hash.
+
+    For schema2, optional ``project_root`` triggers filesystem workspace checks.
+    """
+    if config.schema_version not in (
+        PROJECT_SCHEMA_VERSION_1,
+        PROJECT_SCHEMA_VERSION_2,
+    ):
+        raise InstallSelectionError(
+            "unsupported project config schema_version: {}".format(
+                config.schema_version
+            )
+        )
+    assistants = validate_composition_assistants(
+        list(config.assistants),
+        deploy_registry=deploy_registry,
+    )
+    if tuple(config.assistants) != assistants:
+        config = ProjectConfig(
+            schema_version=config.schema_version,
+            components=tuple(config.components),
+            assistants=assistants,
+            workspaces=tuple(config.workspaces),
+        )
+
+    # Re-validate through the same payload path used by ProjectConfigStore.
+    payload = {
+        "schema_version": config.schema_version,
+        "components": list(config.components),
+        "assistants": list(config.assistants),
+    }
+    if config.schema_version == PROJECT_SCHEMA_VERSION_2:
+        payload["workspaces"] = [
+            {"path": ws.path, "components": list(ws.components)}
+            for ws in config.workspaces
+        ]
+    try:
+        validated = validate_project_config_payload(
+            payload, registry, project_root=project_root
+        )
+    except Exception as exc:
+        # ProjectConfigError and workspace validation errors.
+        raise InstallSelectionError(str(exc)) from exc
+
+    if validated.schema_version == PROJECT_SCHEMA_VERSION_1 and not validated.components:
+        raise InstallSelectionError("composition intent has no requested components")
+    if validated.schema_version == PROJECT_SCHEMA_VERSION_2 and not validated.workspaces:
+        raise InstallSelectionError(
+            "schema_version 2 project config requires at least one workspace"
+        )
+
+    composition = None
+    if validated.schema_version == PROJECT_SCHEMA_VERSION_1:
+        try:
+            composition = resolve_composition(list(validated.components), registry)
+        except CompositionError as exc:
+            raise InstallSelectionError(str(exc)) from exc
+
+    digest = configuration_sha256(validated, registry)
+    return ProjectLifecycleIntent(
+        config=validated,
+        configuration_sha256=digest,
+        additional_concerns=tuple(additional_concerns),
+        composition=composition,
+    )
+
+
+def project_lifecycle_intent_from_install_intent(
+    intent: InstallIntent,
+    registry: ComponentRegistry,
+    *,
+    deploy_registry: Optional[DeployRegistry] = None,
+    project_root=None,
+) -> ProjectLifecycleIntent:
+    """Derive ProjectLifecycleIntent from a schema1 InstallIntent."""
+    config = intent_to_project_config(intent)
+    built = build_project_lifecycle_intent(
+        config,
+        registry,
+        additional_concerns=intent.additional_concerns,
+        deploy_registry=deploy_registry,
+        project_root=project_root,
+    )
+    if intent.configuration_sha256 and intent.configuration_sha256 != built.configuration_sha256:
+        raise InstallSelectionError(
+            "install intent configuration_sha256 does not match ProjectConfig hash"
+        )
+    return built
 
 
 def _deploy_registry_or_default(

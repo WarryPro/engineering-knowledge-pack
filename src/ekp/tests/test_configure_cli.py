@@ -144,7 +144,12 @@ class ConfigureCliNoninteractiveTests(ConfigureCliHelpers):
             ):
                 result = self._run(project, **kwargs)
                 self.assertEqual(result.exit_code, EXIT_SELECTION, kwargs)
-                self.assertIn("both component and assistant", result.message)
+                if kwargs.get("assistants") is None and kwargs.get("components") is None:
+                    self.assertIn("both component and assistant", result.message)
+                elif kwargs.get("assistants") is None:
+                    self.assertIn("assistant", result.message.lower())
+                else:
+                    self.assertIn("both component and assistant", result.message)
 
     def test_yes_and_dry_run_together_allowed(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -467,7 +472,7 @@ class ConfigureCliInteractiveTests(ConfigureCliHelpers):
             )
             self.assertEqual(result.exit_code, EXIT_SUCCESS, result.message)
             joined = "\n".join(outputs)
-            self.assertIn("Select exact desired project components", joined)
+            self.assertIn("Select exact desired root project components", joined)
             self.assertNotIn("Select exact desired AI assistants", joined)
             self.assertEqual(self._status(project).managed_total, 83)
 

@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Sequence
 
-from ekp.composition import ComponentRegistry, resolve_composition
+from ekp.composition import ComponentRegistry, resolve_composition, resolve_project_composition
 from ekp.config.assistants import assistant_display_label
-from ekp.config.models import ProjectConfig
+from ekp.config.models import PROJECT_SCHEMA_VERSION_2, ProjectConfig
 from ekp.lifecycle.configure import ConfigurePreparedOperation
 from ekp.lifecycle.plan import LifecyclePlan
 from ekp.paths import get_ekp_root
@@ -22,8 +22,25 @@ def _resolved_components(
     config: ProjectConfig, registry: Optional[ComponentRegistry] = None
 ) -> List[str]:
     loaded = registry or ComponentRegistry.load(get_ekp_root())
+    if config.schema_version == PROJECT_SCHEMA_VERSION_2:
+        resolution = resolve_project_composition(config, loaded)
+        if resolution.root is None:
+            return []
+        return list(resolution.root.resolved_components)
+    if not config.components:
+        return []
     composition = resolve_composition(list(config.components), loaded)
     return list(composition.resolved_components)
+
+
+def _fmt_workspaces(config: ProjectConfig) -> List[str]:
+    if config.schema_version != PROJECT_SCHEMA_VERSION_2 or not config.workspaces:
+        return ["  (none)"]
+    lines: List[str] = []
+    for ws in config.workspaces:
+        comps = ", ".join(ws.components) if ws.components else "(none)"
+        lines.append("  {} — {}".format(ws.path, comps))
+    return lines
 
 
 def _assistant_counts(plan: LifecyclePlan) -> Dict[str, int]:
@@ -50,15 +67,23 @@ def render_configure_plan(
     lines = [
         "EKP configure plan",
         "",
-        "Current requested components:",
+        "Schema: {} → {}".format(current.schema_version, desired.schema_version),
+        "",
+        "Current root components:",
     ]
-    lines.extend(_fmt_list(sorted(current.components)))
+    lines.extend(_fmt_list(list(current.components)))
     lines.append("")
-    lines.append("Desired requested components:")
-    lines.extend(_fmt_list(sorted(desired.components)))
+    lines.append("Desired root components:")
+    lines.extend(_fmt_list(list(desired.components)))
     lines.append("")
-    lines.append("Resolved desired components:")
+    lines.append("Resolved desired root components:")
     lines.extend(_fmt_list(_resolved_components(desired, loaded)))
+    lines.append("")
+    lines.append("Current workspaces:")
+    lines.extend(_fmt_workspaces(current))
+    lines.append("")
+    lines.append("Desired workspaces:")
+    lines.extend(_fmt_workspaces(desired))
     lines.append("")
     lines.append("Current assistants:")
     lines.extend(_fmt_list(sorted(current.assistants)))
@@ -125,15 +150,22 @@ def render_configure_plan(
 
 def render_configure_noop(prepared: ConfigurePreparedOperation) -> str:
     current = prepared.old_file_snapshot.config
+    root = ", ".join(current.components) if current.components else "(none)"
     lines = [
         "Configuration already matches the requested state.",
         "No changes are required.",
         "",
-        "Requested components: {}".format(", ".join(sorted(current.components))),
+        "Root components: {}".format(root),
         "Assistants: {}".format(
             ", ".join(assistant_display_label(a) for a in sorted(current.assistants))
         ),
     ]
+    if current.schema_version == PROJECT_SCHEMA_VERSION_2 and current.workspaces:
+        lines.append(
+            "Workspaces: {}".format(
+                ", ".join(ws.path for ws in current.workspaces)
+            )
+        )
     return "\n".join(lines)
 
 
@@ -145,19 +177,37 @@ def render_configure_success(
 ) -> str:
     desired = prepared.desired_config
     loaded = registry or ComponentRegistry.load(get_ekp_root())
+    root = ", ".join(desired.components) if desired.components else "(none)"
+    resolved = _resolved_components(desired, loaded)
     lines = [
         "EKP configuration updated.",
         "",
-        "Requested components: {}".format(", ".join(sorted(desired.components))),
-        "Resolved components: {}".format(
-            ", ".join(_resolved_components(desired, loaded))
+        "Schema: {}".format(desired.schema_version),
+        "Root components: {}".format(root),
+        "Resolved root components: {}".format(
+            ", ".join(resolved) if resolved else "(none)"
         ),
-        "Assistants: {}".format(
-            ", ".join(assistant_display_label(a) for a in sorted(desired.assistants))
-        ),
-        "Managed files: {}".format(managed_total),
-        "State: HEALTHY",
     ]
+    if desired.schema_version == PROJECT_SCHEMA_VERSION_2:
+        if desired.workspaces:
+            lines.append("Workspaces:")
+            for ws in desired.workspaces:
+                lines.append(
+                    "  {} — {}".format(ws.path, ", ".join(ws.components))
+                )
+        else:
+            lines.append("Workspaces: (none)")
+    lines.extend(
+        [
+            "Assistants: {}".format(
+                ", ".join(
+                    assistant_display_label(a) for a in sorted(desired.assistants)
+                )
+            ),
+            "Managed files: {}".format(managed_total),
+            "State: HEALTHY",
+        ]
+    )
     return "\n".join(lines)
 
 
