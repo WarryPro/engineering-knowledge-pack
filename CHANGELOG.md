@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.21.0]
+## [0.21.0] - 2026-09-14
 
 ### Added
 
@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Schema1 remains first-class; no mandatory conversion to schema2
 - v0.18 / v0.19 / v0.20 composition projects remain lifecycle-compatible; legacy-profile remains the historical Cursor path
 - InstallManifest `schema_version` remains **1**; `configuration_sha256` hashes requested intent; managed entries store path + adapter + sha256 (workspace scope is not a manifest field)
-- Published Consumer install URL remains `@v0.20.0` until v0.21.0 is published
+- Published Consumer install URL for this release is `@v0.21.0`
 
 ### Scope
 
