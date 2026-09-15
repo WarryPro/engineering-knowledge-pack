@@ -24,10 +24,10 @@ Related:
 ### Install the package (machine)
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.20.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.21.0
 ```
 
-Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Latest public release:** `v0.20.0`. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself. `ekp update` never downloads a release — it applies resources from the currently running package.
+Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Latest public release:** `v0.21.0`. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself. `ekp update` never downloads a release — it applies resources from the currently running package.
 
 ### Deploy into a project (composition default)
 
@@ -50,18 +50,18 @@ ekp status          # read-only installation health
 | `--path <dir>` | Target project directory (default: current directory) |
 | `--component <id>` | Explicit technology component (repeatable; composition mode) |
 | `--assistant <id>` | Explicit managed assistant (repeatable; composition mode; default Cursor when omitted) |
-| `--workspace <path> <component>` | Explicit workspace technology scope (repeatable; **v0.21.0 — release candidate validated on staging; not yet published**; forces schema2) |
-| `--no-root-components` | Explicit empty root components for schema2 (**v0.21.0 — release candidate validated on staging; not yet published**) |
-| `--no-workspaces` | Configure only: remove all workspaces → schema1 (**v0.21.0 — release candidate validated on staging; not yet published**) |
+| `--workspace <path> <component>` | Explicit workspace technology scope (repeatable; **v0.21.0**; forces schema2) |
+| `--no-root-components` | Explicit empty root components for schema2 (**v0.21.0**) |
+| `--no-workspaces` | Configure only: remove all workspaces → schema1 (**v0.21.0**) |
 | `--profile <name>` | Explicit Cursor profile preset (legacy compatibility; mutually exclusive with `--component` / `--assistant` / workspace flags) |
 | `--yes` | Skip confirmation prompts (does not bypass safety checks) |
 | `--dry-run` | Show plan without writing files |
 
 Legacy presets remain: `cursor-core`, `cursor-php`, `cursor-symfony`, `cursor-typescript`, `cursor-frontend`, `cursor-devops`, `cursor-nativescript`, `cursor-flutter`.
 
-### Workspace / monorepo (**v0.21.0 — release candidate validated on staging; not yet published**)
+### Workspace / monorepo (**v0.21.0**)
 
-Explicit workspace intent under one project lifecycle. Not available on published `@v0.20.0`.
+Explicit workspace intent under one project lifecycle. Available in published `@v0.21.0`.
 
 ```bash
 # schema2: workspaces present; omitted --component → empty root
@@ -117,7 +117,7 @@ Legacy `--profile` install writes Cursor rules + `install.json` only (no EKP-cre
 
 Manual copying into assistant paths (Path B) is **not** equivalent to a Consumer CLI managed install. Files copied manually are not automatically owned by `.ekp/install.json`. Do not mix manual and managed copies without understanding collision behavior.
 
-### Project lifecycle (`v0.19` + `v0.20` configure + `v0.21.0` release candidate workspaces)
+### Project lifecycle (`v0.19` + `v0.20` configure + `v0.21.0` workspaces)
 
 Typical flow:
 
@@ -175,7 +175,7 @@ User-facing contract:
 - new unmanaged collisions are conflicts
 - `--dry-run` previews without mutation; `--yes` skips confirmation only
 
-#### `ekp configure` (v0.20 Safe Reconfiguration + v0.21.0 release candidate workspaces)
+#### `ekp configure` (v0.20 Safe Reconfiguration + v0.21.0 workspaces)
 
 Changes the **exact** desired configuration of an existing **HEALTHY composition** installation (desired-state, not add/remove deltas).
 
@@ -203,7 +203,7 @@ Removes EKP-owned managed files using the ownership manifest:
 - project-wide (not per-workspace) for schema2 installs
 - conservative directory cleanup may leave empty assistant / `.ekp` directories when ownership was not proven
 
-#### v0.21.0 release candidate non-goals
+#### v0.21.0 non-goals
 
 - Workspace / monorepo autodetection (`pnpm-workspace`, `nx`, `turbo`, package.json workspaces, etc.)
 - Per-workspace assistant selection or per-workspace uninstall/update commands
