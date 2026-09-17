@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Packaging
+
+- Bump development version to `0.22.0.dev0` (not published)
+- Registry-facing `pyproject.toml` metadata: keywords, classifiers (Beta), project URLs
+- Consumer wheel excludes `ekp/tests/**`; sdist retains test sources
+- Packaging contract + same-tree reproducibility tests
+
 ## [0.21.0] - 2026-09-14
 
 ### Added

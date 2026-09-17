@@ -93,11 +93,13 @@ Invariants to preserve:
 ### 4c. Package build and packaging smoke
 
 ```bash
-py -3 -m pip install build hatchling
+py -3 -m pip install build hatchling twine
+py -3 -m unittest src.ekp.tests.test_packaging_contract -v
 py -3 scripts/packaging/smoke_install_wheel.py
+py -3 scripts/packaging/smoke_workspace_wheel.py
 ```
 
-Builds a wheel outside the repository checkout, installs it in a temporary venv, and exercises `ekp version`, `detect`, `install`, `status`, same-version `update` / repair, and `uninstall` (including dry-run and idempotency).
+Builds wheel + sdist, asserts the v0.22 packaging contract (wheel omits `ekp/tests/**`; sdist keeps test sources; same-tree byte-identical rebuilds), validates metadata (`twine check`), then installs the wheel outside the checkout and exercises Consumer CLI smokes.
 
 Cross-platform validation: [`.github/workflows/consumer-cli.yml`](.github/workflows/consumer-cli.yml) (Windows + Ubuntu).
 

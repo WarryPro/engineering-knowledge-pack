@@ -12,6 +12,8 @@ desktop.ini
 # Build and generated output
 dist/
 coverage/
+_ba_a_out/
+_ba_a_*.py
 
 # Python
 __pycache__/
