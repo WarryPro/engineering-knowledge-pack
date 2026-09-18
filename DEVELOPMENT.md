@@ -103,6 +103,36 @@ Builds wheel + sdist, asserts the v0.22 packaging contract (wheel omits `ekp/tes
 
 Cross-platform validation: [`.github/workflows/consumer-cli.yml`](.github/workflows/consumer-cli.yml) (Windows + Ubuntu).
 
+### 4d. Trusted Publishing pipeline (local contract — not yet configured remotely)
+
+Publication workflow (manual only): [`.github/workflows/publish-package.yml`](.github/workflows/publish-package.yml)
+
+Architecture:
+
+| Layer | Role |
+|-------|------|
+| `workflow_dispatch` inputs `target` + `ref` | Human authorization; no push/tag/release triggers |
+| `build` job | Unprivileged (`contents: read` only) — validate ref, clean checkout, Build A/B outside the tree, same-tree SHA256 gate, BA-A content + `twine check`, isolated wheel/sdist smokes, upload artifact |
+| `publish-testpypi` | OIDC only (`id-token: write`), Environment `testpypi`, TestPyPI URL — **no API token** |
+| `publish-pypi` | OIDC only (`id-token: write`), Environment `pypi` (future human approval) — **no API token** |
+
+Source contracts:
+
+- **TestPyPI:** full 40-character commit SHA; development/prerelease `pyproject` version; commit reachable from `master` / `staging` / `feature/*`
+- **PyPI:** annotated `vX.Y.Z` tag; final `X.Y.Z` version; tagged commit == `origin/master` == `origin/staging`
+
+Helpers:
+
+```bash
+py -3 scripts/packaging/validate_release_ref.py --target testpypi --ref <40-char-sha> --json
+py -3 scripts/packaging/prepare_publish_artifacts.py --repo-root . --build-a %TEMP%\a --build-b %TEMP%\b --release-dist %TEMP%\out
+py -3 -m unittest src.ekp.tests.test_publish_pipeline_contract -v
+```
+
+Attestations: Trusted Publishing + the official PyPA `gh-action-pypi-publish` action provides PyPI publish attestations by default. No separate Sigstore implementation in v0.22.
+
+**Registry status:** TestPyPI / PyPI projects, Trusted Publisher bindings, and GitHub Environments are **not yet configured**. Do not dispatch this workflow for real uploads until BA-B2+ remote setup.
+
 ### 5. Assemble and verify bundles
 
 Operational Cursor profiles:

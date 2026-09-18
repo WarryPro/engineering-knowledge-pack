@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Registry-facing `pyproject.toml` metadata: keywords, classifiers (Beta), project URLs
 - Consumer wheel excludes `ekp/tests/**`; sdist retains test sources
 - Packaging contract + same-tree reproducibility tests
+- Trusted Publishing pipeline contract: manual `publish-package.yml` with separated unprivileged build vs OIDC publish jobs (TestPyPI/PyPI environments not configured yet)
 
 ## [0.21.0] - 2026-09-14
 
