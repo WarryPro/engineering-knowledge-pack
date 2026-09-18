@@ -76,27 +76,43 @@ def expected_version_from_wheel(wheel):
     return name[len(prefix) : -len(suffix)]
 
 
-def main():
+def main(argv=None):
+    import argparse
+
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--wheel",
+        default=None,
+        help="Use an existing wheel instead of building into repository dist/",
+    )
+    args = parser.parse_args(argv)
+
     repo_root = Path(__file__).resolve().parents[2]
-    dist_dir = repo_root / "dist"
 
-    subprocess.run(
-        [sys.executable, "-m", "pip", "install", "build", "hatchling"],
-        check=True,
-        cwd=str(repo_root),
-    )
-    subprocess.run(
-        [sys.executable, "-m", "build", "--wheel", str(repo_root), "-o", str(dist_dir)],
-        check=True,
-        cwd=str(repo_root),
-    )
-
-    wheels = sorted(dist_dir.glob("engineering_knowledge_pack-*.whl"))
-    if not wheels:
-        print("No wheel produced", file=sys.stderr)
-        return 1
-    wheel = max(wheels, key=lambda path: path.stat().st_mtime)
-    print("Built wheel: {}".format(wheel.name))
+    if args.wheel:
+        wheel = Path(args.wheel).resolve()
+        if not wheel.is_file():
+            print("Wheel not found: {}".format(wheel), file=sys.stderr)
+            return 1
+        print("Using wheel: {}".format(wheel.name))
+    else:
+        dist_dir = repo_root / "dist"
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "build", "hatchling"],
+            check=True,
+            cwd=str(repo_root),
+        )
+        subprocess.run(
+            [sys.executable, "-m", "build", "--wheel", str(repo_root), "-o", str(dist_dir)],
+            check=True,
+            cwd=str(repo_root),
+        )
+        wheels = sorted(dist_dir.glob("engineering_knowledge_pack-*.whl"))
+        if not wheels:
+            print("No wheel produced", file=sys.stderr)
+            return 1
+        wheel = max(wheels, key=lambda path: path.stat().st_mtime)
+        print("Built wheel: {}".format(wheel.name))
     wheel_version = expected_version_from_wheel(wheel)
 
     with tempfile.TemporaryDirectory(prefix="ekp-smoke-") as tmp:
