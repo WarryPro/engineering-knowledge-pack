@@ -95,6 +95,17 @@ def _import_prepare_module():
     return mod
 
 
+def _import_upload_module():
+    import importlib.util
+
+    path = _repo_root() / "scripts" / "packaging" / "prepare_publish_upload.py"
+    spec = importlib.util.spec_from_file_location("prepare_publish_upload", path)
+    mod = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def _git(repo: Path, *args: str) -> str:
     proc = subprocess.run(
         ["git", *args],
@@ -215,10 +226,27 @@ class PublishWorkflowContractTests(unittest.TestCase):
             steps = self.data["jobs"][job_name]["steps"]
             uses = [s.get("uses", "") for s in steps]
             self.assertTrue(any("download-artifact" in u for u in uses))
-            self.assertFalse(any("checkout" in u for u in uses))
+            # Sparse checkout of the upload-prep helper only — never rebuild.
+            self.assertTrue(any("checkout" in u for u in uses))
             run_blocks = "\n".join(s.get("run", "") for s in steps)
             self.assertNotIn("python -m build", run_blocks)
             self.assertNotIn("prepare_publish_artifacts", run_blocks)
+            self.assertIn("prepare_publish_upload.py", run_blocks)
+
+    def test_publish_jobs_isolate_verified_upload_payload(self):
+        for job_name in ("publish-testpypi", "publish-pypi"):
+            steps = self.data["jobs"][job_name]["steps"]
+            publish = [s for s in steps if "gh-action-pypi-publish" in s.get("uses", "")][0]
+            packages_dir = publish["with"]["packages-dir"]
+            self.assertIn("upload-dist", packages_dir)
+            self.assertNotIn("publish-dist", packages_dir)
+            run_blocks = "\n".join(s.get("run", "") for s in steps)
+            self.assertIn("--artifact-dir", run_blocks)
+            self.assertIn("publish-dist", run_blocks)
+            self.assertIn("--upload-dir", run_blocks)
+            self.assertIn("upload-dist", run_blocks)
+            self.assertIn("SHA256SUMS", run_blocks)
+            self.assertIn('test ! -e "${RUNNER_TEMP}/upload-dist/SHA256SUMS"', run_blocks)
 
     def test_no_static_credential_references(self):
         for pattern in FORBIDDEN_SECRET_PATTERNS:
@@ -430,6 +458,136 @@ class PrepareArtifactsNegativeTests(unittest.TestCase):
             (repo / "dirt.txt").write_text("x", encoding="utf-8")
             with self.assertRaises(self.mod.PrepareError):
                 self.mod.assert_clean(repo)
+
+
+def _write_artifact_fixture(
+    root: Path,
+    *,
+    wheel_bytes: bytes = b"wheel-bytes",
+    sdist_bytes: bytes = b"sdist-bytes",
+    mutate_manifest: str | None = None,
+    extra_file: str | None = None,
+    omit: str | None = None,
+) -> Path:
+    """Create a release-dist shaped directory for upload-prep tests."""
+    artifact = root / "artifact"
+    artifact.mkdir()
+    wheel = artifact / "engineering_knowledge_pack-0.22.0.dev0-py3-none-any.whl"
+    sdist = artifact / "engineering_knowledge_pack-0.22.0.dev0.tar.gz"
+    if omit != "wheel":
+        wheel.write_bytes(wheel_bytes)
+    if omit != "sdist":
+        sdist.write_bytes(sdist_bytes)
+    if omit != "SHA256SUMS":
+        entries = []
+        if omit != "wheel":
+            entries.append(
+                "{}  {}".format(
+                    __import__("hashlib").sha256(wheel_bytes).hexdigest(),
+                    wheel.name,
+                )
+            )
+        if omit != "sdist":
+            entries.append(
+                "{}  {}".format(
+                    __import__("hashlib").sha256(sdist_bytes).hexdigest(),
+                    sdist.name,
+                )
+            )
+        text = "\n".join(entries) + ("\n" if entries else "")
+        if mutate_manifest is not None:
+            text = mutate_manifest
+        (artifact / "SHA256SUMS").write_text(text, encoding="utf-8")
+    if extra_file:
+        (artifact / extra_file).write_text("extra\n", encoding="utf-8")
+    return artifact
+
+
+class PreparePublishUploadTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.mod = _import_upload_module()
+
+    def test_successful_preparation_exact_upload_contents(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact = _write_artifact_fixture(root)
+            upload = root / "upload"
+            result = self.mod.prepare_upload(
+                artifact_dir=artifact, upload_dir=upload
+            )
+            names = sorted(p.name for p in upload.iterdir())
+            self.assertEqual(
+                names,
+                [
+                    "engineering_knowledge_pack-0.22.0.dev0-py3-none-any.whl",
+                    "engineering_knowledge_pack-0.22.0.dev0.tar.gz",
+                ],
+            )
+            self.assertNotIn("SHA256SUMS", names)
+            self.assertEqual(result["upload_files"], names)
+            self.assertTrue((artifact / "SHA256SUMS").is_file())
+            # Bytes must be unchanged copies
+            self.assertEqual(
+                (upload / names[0]).read_bytes(),
+                (artifact / names[0]).read_bytes(),
+            )
+            self.assertEqual(
+                (upload / names[1]).read_bytes(),
+                (artifact / names[1]).read_bytes(),
+            )
+
+    def test_checksum_mismatch_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact = _write_artifact_fixture(root, wheel_bytes=b"wheel-bytes")
+            wheel = next(artifact.glob("*.whl"))
+            wheel.write_bytes(b"tampered-wheel")
+            with self.assertRaises(self.mod.UploadPrepareError) as ctx:
+                self.mod.prepare_upload(
+                    artifact_dir=artifact, upload_dir=root / "upload"
+                )
+            self.assertIn("checksum mismatch", str(ctx.exception).lower())
+
+    def test_missing_wheel_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact = _write_artifact_fixture(root, omit="wheel")
+            with self.assertRaises(self.mod.UploadPrepareError):
+                self.mod.prepare_upload(
+                    artifact_dir=artifact, upload_dir=root / "upload"
+                )
+
+    def test_unexpected_file_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact = _write_artifact_fixture(root, extra_file="NOTES.txt")
+            with self.assertRaises(self.mod.UploadPrepareError) as ctx:
+                self.mod.prepare_upload(
+                    artifact_dir=artifact, upload_dir=root / "upload"
+                )
+            self.assertIn("unexpected", str(ctx.exception).lower())
+
+    def test_invalid_manifest_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact = _write_artifact_fixture(
+                root, mutate_manifest="not-a-valid-manifest-line\n"
+            )
+            with self.assertRaises(self.mod.UploadPrepareError) as ctx:
+                self.mod.prepare_upload(
+                    artifact_dir=artifact, upload_dir=root / "upload"
+                )
+            self.assertIn("malformed", str(ctx.exception).lower())
+
+    def test_missing_manifest_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            artifact = _write_artifact_fixture(root, omit="SHA256SUMS")
+            with self.assertRaises(self.mod.UploadPrepareError):
+                self.mod.prepare_upload(
+                    artifact_dir=artifact, upload_dir=root / "upload"
+                )
 
 
 class MutableActionRefNegativeTests(unittest.TestCase):
