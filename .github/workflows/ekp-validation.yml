@@ -29,7 +29,9 @@ jobs:
           python-version: "3.9"
 
       - name: Install dependencies
-        run: python -m pip install -r scripts/validate/requirements.txt
+        run: |
+          python -m pip install -r scripts/validate/requirements.txt
+          python -m pip install build hatchling twine
 
       - name: Install EKP package (editable)
         run: python -m pip install -e .
@@ -38,9 +40,7 @@ jobs:
         run: python -m unittest discover -s src/ekp/tests -v
 
       - name: Packaging smoke test
-        run: |
-          python -m pip install build hatchling
-          python scripts/packaging/smoke_install_wheel.py
+        run: python scripts/packaging/smoke_install_wheel.py
 
       - name: Workspace packaging smoke test
         run: python scripts/packaging/smoke_workspace_wheel.py

@@ -4,12 +4,36 @@ build-backend = "hatchling.build"
 
 [project]
 name = "engineering-knowledge-pack"
-version = "0.21.0"
+version = "0.22.0.dev0"
 description = "Engineering Knowledge Pack — tool-agnostic engineering knowledge with AI adapters"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.9"
 authors = [{ name = "EKP Contributors" }]
+keywords = [
+    "engineering",
+    "software-development",
+    "ai-assistant",
+    "cursor",
+    "copilot",
+    "claude",
+    "antigravity",
+    "developer-tools",
+    "knowledge-base",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Topic :: Software Development",
+    "Topic :: Software Development :: Libraries",
+]
 dependencies = [
     "PyYAML>=6.0",
     "jsonschema>=4.0",
@@ -19,10 +43,18 @@ dependencies = [
 ekp = "ekp.cli:main"
 
 [project.urls]
+Homepage = "https://github.com/WarryPro/engineering-knowledge-pack"
 Repository = "https://github.com/WarryPro/engineering-knowledge-pack"
+Issues = "https://github.com/WarryPro/engineering-knowledge-pack/issues"
+Changelog = "https://github.com/WarryPro/engineering-knowledge-pack/blob/master/CHANGELOG.md"
+Documentation = "https://github.com/WarryPro/engineering-knowledge-pack/blob/master/README.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ekp"]
+# Consumer wheel ships runtime only; repository tests stay in checkout/sdist.
+exclude = [
+    "src/ekp/tests",
+]
 
 [tool.hatch.build.targets.wheel.force-include]
 "knowledge" = "ekp/_resources/knowledge"
@@ -41,4 +73,11 @@ exclude = [
     "/dist",
     "/.venv",
     "/venv",
+    "/.pytest_cache",
+    "/coverage",
+    "/__pycache__",
+    "/_ba_a_out",
+    "**/__pycache__",
+    "**/*.py[cod]",
+    "/_ba_a_*.py",
 ]
