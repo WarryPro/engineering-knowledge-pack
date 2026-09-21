@@ -58,9 +58,10 @@ Detection proposes selectable components from stack markers. Install persists **
 
 ### Empty / new project
 
-Discover selectable components and supported assistants offline (no project required):
+Offline discovery (`ekp list components`, `ekp list assistants`, `ekp --version`) is part of **unreleased v0.22** and is not in the currently published `v0.21.0` package. Until `v0.22.0` is tagged, install remains pinned to `@v0.21.0` below; use a development checkout or a post-release build to try these commands.
 
 ```bash
+# Unreleased v0.22 (not in published v0.21.0):
 ekp list components
 ekp list assistants
 ekp --version
