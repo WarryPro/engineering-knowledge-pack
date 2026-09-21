@@ -24,15 +24,15 @@ Related:
 ### Install the package (machine)
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.21.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.22.0
 ```
 
-Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Latest public release:** `v0.21.0`. **v0.22.0** is a **release candidate validated on staging; not yet published** — do not pin consumers to `@v0.22.0` until the GitHub Release exists. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself. `ekp update` never downloads a release — it applies resources from the currently running package.
+Pin a published release tag for reproducible **package** installation. Do not use `@main`, `@master`, or `@staging` for production consumer installs. **Latest public release:** `v0.22.0`. **Package acquisition ≠ project update:** installing or upgrading the CLI does not rewrite project files by itself. `ekp update` never downloads a release — it applies resources from the currently running package.
 
 ### Deploy into a project (composition default)
 
 ```bash
-# Offline discovery (no project required; v0.22.0 release candidate — not in published @v0.21.0):
+# Offline discovery (no project required; available in published @v0.22.0):
 ekp list components
 ekp list assistants
 ekp --version
