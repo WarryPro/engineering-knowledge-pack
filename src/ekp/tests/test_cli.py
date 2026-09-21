@@ -18,11 +18,13 @@ class CliTests(unittest.TestCase):
                 self.assertEqual(exc.code, 0)
         self.assertIn("ekp", buffer.getvalue())
         self.assertIn("version", buffer.getvalue())
+        self.assertIn("list", buffer.getvalue())
         self.assertIn("detect", buffer.getvalue())
         self.assertIn("install", buffer.getvalue())
         self.assertIn("status", buffer.getvalue())
         self.assertIn("uninstall", buffer.getvalue())
         self.assertIn("update", buffer.getvalue())
+        self.assertIn("configure", buffer.getvalue())
 
     def test_version(self):
         buffer = io.StringIO()

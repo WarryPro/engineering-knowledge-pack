@@ -80,7 +80,10 @@ def prompt_configure_components(
                 continue
             lowered = part.lower()
             if lowered not in options:
-                output_fn("Unknown component: {!r}".format(part))
+                output_fn(
+                    "Unknown component: {!r}. "
+                    "Run `ekp list components` for selectable IDs.".format(part)
+                )
                 invalid = True
                 break
             chosen.append(lowered)
@@ -167,7 +170,9 @@ def prompt_configure_assistants(
             lowered = part.lower()
             if lowered not in options:
                 output_fn(
-                    "Unsupported assistant: {!r}. Supported: {}".format(
+                    "Unsupported assistant: {!r}. "
+                    "Run `ekp list assistants` for supported IDs. "
+                    "Supported: {}".format(
                         part, ", ".join(options)
                     )
                 )
