@@ -14,7 +14,7 @@ from pathlib import Path
 
 from ekp.paths import get_ekp_root
 
-EXPECTED_VERSION = "0.22.0.dev0"
+EXPECTED_VERSION = "0.22.0"
 DIST_NAME = "engineering-knowledge-pack"
 
 WHEEL_REQUIRED_PREFIXES = (

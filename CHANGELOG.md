@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.22.0]
+
 ### Added
 
 - CLI discoverability (BA-C): `ekp --version`, `ekp list components`, `ekp list assistants`
@@ -14,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Packaging
 
-- Bump development version to `0.22.0.dev0` (not published)
+- Package version `0.22.0` (release candidate; **not yet published**)
 - Registry-facing `pyproject.toml` metadata: keywords, classifiers (Beta), project URLs
 - Consumer wheel excludes `ekp/tests/**`; sdist retains test sources
 - Packaging contract + same-tree reproducibility tests
@@ -23,6 +25,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Distribution decision
 
 - BA-B3 registry publication remains **partial / deferred** (merge + `testpypi` GitHub Environment exist; registry upload and install were not validated and are not required for v0.22 / v1.0)
+- Published Consumer install URL remains `@v0.21.0` until `v0.22.0` is published
+
+### Publication sequence (pending approval)
+
+1. Merge this release-preparation PR into `staging` after green CI.
+2. Fast-forward or merge `staging` → `master` so both tips share the same tree as the approved release candidate (no divergent commits).
+3. Create annotated tag `v0.22.0` on that synchronized tip; create the GitHub Release from the tag.
+4. Cut over public docs (`README`, `docs/deployment.md`, changelog date, roadmap) to pin install URLs at `@v0.22.0` and mark the release published (follow-up `docs(release): sync v0.22 publication status`).
+5. Do **not** run `publish-package.yml` or interact with TestPyPI/PyPI for this release.
 
 ## [0.21.0] - 2026-09-14
 
