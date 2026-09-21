@@ -187,6 +187,7 @@ def validate_composition_assistants(
         if not registry.is_supported(assistant_id):
             raise InstallSelectionError(
                 "Unsupported Consumer assistant: {!r}.\n"
+                "Run `ekp list assistants` to see supported assistant IDs.\n"
                 "Supported assistants: {}".format(
                     assistant_id, ", ".join(supported)
                 )
@@ -231,12 +232,18 @@ def build_composition_intent(
         seen.add(component_id)
         if not registry.has(component_id):
             raise InstallSelectionError(
-                "Unknown component: {!r}".format(component_id)
+                "Unknown component: {!r}.\n"
+                "Run `ekp list components` to see selectable component IDs.".format(
+                    component_id
+                )
             )
         component = registry.get(component_id)
         if not component.selectable:
             raise InstallSelectionError(
-                "Component is not selectable: {!r}".format(component_id)
+                "Component is not selectable: {!r}.\n"
+                "Run `ekp list components` to see selectable component IDs.".format(
+                    component_id
+                )
             )
         unique.append(component_id)
 
@@ -372,11 +379,15 @@ def select_install_intent(
             raise InstallSelectionError(
                 "No supported technology composition detected.\n\n"
                 "Assistant selection does not replace technology selection.\n"
-                "Specify --component or --profile, or provide .ekp/project.yaml."
+                "Specify --component (see `ekp list components`) or --profile,\n"
+                "or provide .ekp/project.yaml."
             )
         raise InstallSelectionError(
             "No supported technology composition detected.\n\n"
-            "For non-interactive installation specify an explicit profile or components."
+            "For non-interactive installation specify --component "
+            "(see `ekp list components`) or --profile.\n"
+            "In an interactive terminal, run `ekp install` without --yes "
+            "to choose components."
         )
 
     return _prompt_empty_components(
@@ -483,9 +494,9 @@ def prompt_assistants(
             lowered = part.lower()
             if lowered not in options:
                 output_fn(
-                    "Unsupported assistant: {!r}. Supported: {}".format(
-                        part, ", ".join(options)
-                    )
+                    "Unsupported assistant: {!r}. "
+                    "Run `ekp list assistants` for supported IDs. "
+                    "Supported: {}".format(part, ", ".join(options))
                 )
                 invalid = True
                 break

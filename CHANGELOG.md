@@ -7,13 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- CLI discoverability (BA-C): `ekp --version`, `ekp list components`, `ekp list assistants`
+- Clearer top-level / install / configure help examples and actionable remediation messages
+
 ### Packaging
 
 - Bump development version to `0.22.0.dev0` (not published)
 - Registry-facing `pyproject.toml` metadata: keywords, classifiers (Beta), project URLs
 - Consumer wheel excludes `ekp/tests/**`; sdist retains test sources
 - Packaging contract + same-tree reproducibility tests
-- Trusted Publishing pipeline contract: manual `publish-package.yml` with separated unprivileged build vs OIDC publish jobs (TestPyPI/PyPI environments not configured yet)
+- Trusted Publishing pipeline contract retained for optional future use (`publish-package.yml`); GitHub tagged releases remain the distribution channel for v0.22 / v1.0 (TestPyPI/PyPI publication is not a release gate)
+
+### Distribution decision
+
+- BA-B3 registry publication remains **partial / deferred** (merge + `testpypi` GitHub Environment exist; registry upload and install were not validated and are not required for v0.22 / v1.0)
 
 ## [0.21.0] - 2026-09-14
 

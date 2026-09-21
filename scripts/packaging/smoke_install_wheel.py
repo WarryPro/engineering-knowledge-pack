@@ -17,6 +17,7 @@ from pathlib import Path
 REQUIRED_COMMANDS = (
     "detect",
     "version",
+    "list",
     "install",
     "status",
     "configure",

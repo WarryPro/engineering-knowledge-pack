@@ -58,6 +58,14 @@ Detection proposes selectable components from stack markers. Install persists **
 
 ### Empty / new project
 
+Discover selectable components and supported assistants offline (no project required):
+
+```bash
+ekp list components
+ekp list assistants
+ekp --version
+```
+
 Interactive (selector lists selectable components):
 
 ```bash
@@ -448,7 +456,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.21.0` (published)** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; workspace/monorepo; Windows + Ubuntu CI; remote acquisition / PyPI deferred |
+| Phase 6 — Consumer productization | **Operational through `v0.21.0` (published)** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; workspace/monorepo; Windows + Ubuntu CI; public install via GitHub tags; optional PyPI deferred (not a v0.22/v1.0 gate) |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics

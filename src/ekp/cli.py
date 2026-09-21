@@ -5,6 +5,11 @@ import sys
 
 from ekp.detection.render import render_human, render_json
 from ekp.detection.service import DetectionService
+from ekp.discovery import (
+    format_discovery_table,
+    list_selectable_components,
+    list_supported_assistants,
+)
 from ekp.install.deploy.registry import build_default_deploy_registry
 from ekp.install.service import InstallRequest, InstallService
 from ekp.lifecycle.configure_cli import run_configure_cli
@@ -16,17 +21,60 @@ from ekp.status.render import render_json as render_status_json
 from ekp.status.service import StatusRequest, StatusService
 from ekp.version import get_version
 
+_EPILOG = """\
+examples:
+  Existing project (detect -> install -> status):
+    ekp detect
+    ekp install
+    ekp status
+
+  Empty project (explicit components):
+    ekp list components
+    ekp install --component symfony --component frontend
+
+  Select assistants (default is Cursor when omitted):
+    ekp install --component typescript --assistant cursor --assistant copilot
+
+  Declare existing workspace directories (schema2):
+    ekp install --no-root-components \\
+      --workspace apps/api symfony --workspace apps/web frontend
+
+  After upgrading the EKP package, synchronize the project:
+    ekp update
+
+  Change composition intent on a HEALTHY install:
+    ekp configure --component typescript --assistant cursor
+
+  Discover package catalogs (offline; no project required):
+    ekp list components
+    ekp list assistants
+"""
+
+
+class _PrintPackageVersion(argparse.Action):
+    """Print the installed package version and exit successfully."""
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(get_version())
+        parser.exit(0)
+
 
 def _supported_assistants_help():
     return ", ".join(build_default_deploy_registry().supported_assistants())
 
 
-def main(argv=None):
-    # type: (list) -> int
-    """CLI entry point registered as the ``ekp`` console script."""
+def _build_parser():
     parser = argparse.ArgumentParser(
         prog="ekp",
         description="Engineering Knowledge Pack — consumer CLI",
+        epilog=_EPILOG,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        "--version",
+        action=_PrintPackageVersion,
+        nargs=0,
+        help="Show installed EKP package version and exit",
     )
     subparsers = parser.add_subparsers(dest="command")
 
@@ -45,12 +93,49 @@ def main(argv=None):
         help="Output machine-readable JSON",
     )
 
-    subparsers.add_parser("version", help="Show installed EKP version")
+    subparsers.add_parser(
+        "version",
+        help="Show installed EKP version and resource root",
+    )
+
+    list_parser = subparsers.add_parser(
+        "list",
+        help="List selectable components or supported assistants",
+        description=(
+            "List catalogs from the installed EKP package.\n\n"
+            "Works offline outside a project. Does not detect technologies, "
+            "prompt, or write managed project files."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "examples:\n"
+            "  ekp list components\n"
+            "  ekp list assistants\n"
+        ),
+    )
+    list_subparsers = list_parser.add_subparsers(dest="list_target")
+    list_subparsers.add_parser(
+        "components",
+        help="List selectable technology component IDs for --component",
+    )
+    list_subparsers.add_parser(
+        "assistants",
+        help="List supported Consumer assistant IDs for --assistant",
+    )
 
     install_parser = subparsers.add_parser(
         "install",
         help="Install EKP into a consumer project",
-        description="Install EKP into a consumer project",
+        description=(
+            "Install EKP into a consumer project.\n\n"
+            "examples:\n"
+            "  ekp install\n"
+            "  ekp install --component symfony --assistant cursor\n"
+            "  ekp install --no-root-components "
+            "--workspace apps/api symfony\n"
+            "  ekp list components   # choose IDs for --component\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     install_parser.add_argument(
         "--path",
@@ -71,7 +156,7 @@ def main(argv=None):
         metavar="ID",
         help=(
             "Repeatable project technology component "
-            "(mutually exclusive with --profile)"
+            "(mutually exclusive with --profile; see `ekp list components`)"
         ),
     )
     install_parser.add_argument(
@@ -81,9 +166,8 @@ def main(argv=None):
         metavar="ID",
         help=(
             "Repeatable managed AI assistant target "
-            "(supported: {}; mutually exclusive with --profile)".format(
-                _supported_assistants_help()
-            )
+            "(supported: {}; mutually exclusive with --profile; "
+            "see `ekp list assistants`)".format(_supported_assistants_help())
         ),
     )
     install_parser.add_argument(
@@ -95,7 +179,8 @@ def main(argv=None):
         help=(
             "Declare a workspace technology scope (PATH COMPONENT). "
             "Repeat to add workspaces or additional components for the same path. "
-            "Implies schema2. Mutually exclusive with --profile."
+            "Implies schema2. Mutually exclusive with --profile. "
+            "Workspace directories must already exist."
         ),
     )
     install_parser.add_argument(
@@ -155,6 +240,12 @@ def main(argv=None):
     update_parser = subparsers.add_parser(
         "update",
         help="Synchronize an installed project with the running EKP package",
+        description=(
+            "Synchronize an installed project with the running EKP package.\n\n"
+            "Package upgrade (pipx/pip) updates the tool; `ekp update` "
+            "synchronizes the project's managed files to the running package."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     update_parser.add_argument(
         "--path",
@@ -183,7 +274,11 @@ def main(argv=None):
             "With --yes or --dry-run, both component and assistant sets must "
             "be explicit for the desired schema (assistants always required; "
             "root/workspace dimensions via --component / --no-root-components "
-            "and --workspace / --no-workspaces as applicable)."
+            "and --workspace / --no-workspaces as applicable).\n\n"
+            "examples:\n"
+            "  ekp configure --component typescript --assistant cursor\n"
+            "  ekp list components\n"
+            "  ekp list assistants\n"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -199,7 +294,8 @@ def main(argv=None):
         metavar="ID",
         help=(
             "Repeatable exact desired root component ID "
-            "(with --yes/--dry-run, required unless --no-root-components)"
+            "(with --yes/--dry-run, required unless --no-root-components; "
+            "see `ekp list components`)"
         ),
     )
     configure_parser.add_argument(
@@ -209,9 +305,8 @@ def main(argv=None):
         metavar="ID",
         help=(
             "Repeatable exact desired assistant ID "
-            "(supported: {}; with --yes/--dry-run, at least one is required)".format(
-                _supported_assistants_help()
-            )
+            "(supported: {}; with --yes/--dry-run, at least one is required; "
+            "see `ekp list assistants`)".format(_supported_assistants_help())
         ),
     )
     configure_parser.add_argument(
@@ -224,7 +319,7 @@ def main(argv=None):
             "Declare a workspace technology scope (PATH COMPONENT). "
             "Repeat to add workspaces or components. "
             "For noninteractive configure, supplies the complete desired "
-            "workspace set."
+            "workspace set. Workspace directories must already exist."
         ),
     )
     configure_parser.add_argument(
@@ -253,12 +348,37 @@ def main(argv=None):
         help="Show configure plan without writing files (noninteractive)",
     )
 
+    return parser, list_parser
+
+
+def _run_list_command(args, list_parser):
+    # type: (argparse.Namespace, argparse.ArgumentParser) -> int
+    if args.list_target is None:
+        list_parser.print_help()
+        return 0
+    if args.list_target == "components":
+        sys.stdout.write(format_discovery_table(list_selectable_components()))
+        return 0
+    if args.list_target == "assistants":
+        sys.stdout.write(format_discovery_table(list_supported_assistants()))
+        return 0
+    list_parser.print_help()
+    return 0
+
+
+def main(argv=None):
+    # type: (list) -> int
+    """CLI entry point registered as the ``ekp`` console script."""
+    parser, list_parser = _build_parser()
     args = parser.parse_args(argv)
 
     if args.command == "version":
         print(get_version())
         print("resource_root: {}".format(get_ekp_root()))
         return 0
+
+    if args.command == "list":
+        return _run_list_command(args, list_parser)
 
     if args.command == "detect":
         try:

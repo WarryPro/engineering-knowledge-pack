@@ -717,7 +717,8 @@ class ConfigureService:
                 message=(
                     "Project configuration has changed outside EKP.\n"
                     "`ekp configure` will not adopt configuration drift.\n"
-                    "Restore the installed configuration first."
+                    "Restore the installed configuration first, then run "
+                    "`ekp status` to confirm HEALTHY before `ekp configure`."
                 ),
             )
         if status.state == StatusState.VERSION_MISMATCH:
@@ -741,13 +742,21 @@ class ConfigureService:
                 exit_code=InstallSelectionError.exit_code,
                 message=(
                     "One or more EKP-managed files were modified.\n"
-                    "Resolve or restore them before reconfiguring."
+                    "Resolve or restore them (or run `ekp update` when "
+                    "appropriate), then confirm HEALTHY with `ekp status` "
+                    "before `ekp configure`."
                 ),
             )
         if status.state != StatusState.HEALTHY:
             return ConfigureResult(
                 exit_code=InstallSelectionError.exit_code,
-                message="configure requires a HEALTHY composition installation.",
+                message=(
+                    "configure requires a HEALTHY composition installation.\n"
+                    "Run `ekp status` to inspect the current state, then use "
+                    "the recovery path for that state "
+                    "(`ekp install`, `ekp update`, or restore drift) "
+                    "before `ekp configure`."
+                ),
             )
         return None
 

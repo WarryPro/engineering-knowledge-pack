@@ -32,6 +32,11 @@ Pin a published release tag for reproducible **package** installation. Do not us
 ### Deploy into a project (composition default)
 
 ```bash
+# Offline discovery (no project required; unreleased BA-C until packaged in a tagged release):
+ekp list components
+ekp list assistants
+ekp --version
+
 cd <project>
 ekp detect          # optional — inspect technologies and proposed components
 ekp install         # composition from detection or interactive components; default assistant = Cursor
@@ -212,7 +217,7 @@ Removes EKP-owned managed files using the ownership manifest:
 - Mandatory schema1→schema2 migration; legacy-profile → composition migration
 - Force overwrite / drift adoption of hand-edited `project.yaml`
 - Remote knowledge or remote package/release acquisition from inside `ekp update`
-- PyPI publication as the distribution channel
+- PyPI / TestPyPI as a required distribution channel for v0.22 / v1.0 (GitHub tagged releases remain primary; Trusted Publishing tooling may exist for optional later use)
 - Combinatorial profiles such as `cursor-symfony-frontend`
 - Automatic assistant enablement from tool detection signals
 - Configure for legacy-profile installs (composition-only)
