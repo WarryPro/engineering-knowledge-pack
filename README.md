@@ -6,14 +6,14 @@ EKP is the **source of truth** for engineering practices. It is intentionally in
 
 ## Using EKP in a consumer project
 
-Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **Current v0.21 Consumer deployment supports Cursor, GitHub Copilot, Claude, and Google Antigravity** (same technology composition; assistant-specific outputs), including workspace / monorepo intent. You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
+Install the EKP Consumer CLI on your machine, then run it inside a consumer project to deploy and manage EKP engineering context. **Current v0.22 Consumer deployment supports Cursor, GitHub Copilot, Claude, and Google Antigravity** (same technology composition; assistant-specific outputs), including workspace / monorepo intent and offline CLI discovery. You do not need to clone this repository, run the validator, generate indexes, assemble bundles, or copy files manually.
 
-**Latest public release:** `v0.21.0`
+**Latest public release:** `v0.22.0`
 
 Published install (latest public release):
 
 ```bash
-pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.21.0
+pipx install git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.22.0
 ```
 
 ### Composition model (v0.19+)
@@ -58,10 +58,9 @@ Detection proposes selectable components from stack markers. Install persists **
 
 ### Empty / new project
 
-Offline discovery (`ekp list components`, `ekp list assistants`, `ekp --version`) is part of **v0.22.0 — release candidate validated on staging; not yet published** and is not in the currently published `v0.21.0` package. Until `v0.22.0` is tagged, install remains pinned to `@v0.21.0` below; use a development checkout or the release-candidate package to try these commands.
+Discover selectable components and supported assistants offline (no project required):
 
 ```bash
-# v0.22.0 release candidate (not in published v0.21.0):
 ekp list components
 ekp list assistants
 ekp --version
@@ -276,7 +275,7 @@ Other flags: `--path`, `--dry-run`, `--yes` (confirmation only — not a safety 
 
 ```bash
 # upgrade the package on your machine (acquisition)
-pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.21.0
+pipx install --force git+https://github.com/WarryPro/engineering-knowledge-pack.git@v0.22.0
 
 # then synchronize an existing managed project (project update)
 cd my-project
@@ -319,7 +318,7 @@ ekp uninstall
 | Claude | supported | supported | supported | supported | supported | supported | supported | supported |
 | Google Antigravity | supported | supported | supported | supported | supported | supported | supported | supported |
 
-Configure applies to **composition** installs only (not legacy-profile). Workspace / monorepo (`schema2`, `--workspace`, `--no-root-components`, `--no-workspaces`) is available in published `v0.21.0`. Manual assemble (Path B) remains available for contributor/profile workflows. See [`docs/deployment.md`](docs/deployment.md).
+Configure applies to **composition** installs only (not legacy-profile). Workspace / monorepo (`schema2`, `--workspace`, `--no-root-components`, `--no-workspaces`) and offline discovery (`ekp list`, `ekp --version`) are available in published `v0.22.0`. Manual assemble (Path B) remains available for contributor/profile workflows. See [`docs/deployment.md`](docs/deployment.md).
 
 ---
 
@@ -411,8 +410,8 @@ py -3 scripts/assemble/assemble.py --profile cursor-flutter --clean --verify
 
 ## Release status
 
-- **Latest public release:** `v0.21.0`
-- **v0.22.0 — release candidate validated on staging; not yet published:** Packaging hygiene + CLI discoverability (`ekp --version`, `ekp list …`); GitHub tagged releases remain the install channel (not installable via `@v0.21.0`)
+- **Latest public release:** `v0.22.0`
+- **v0.22.0:** Distribution & Product UX — published — packaging hygiene + CLI discoverability (`ekp --version`, `ekp list …`); GitHub tagged releases remain the install channel
 - **v0.21.0:** Workspace / Monorepo Support — published
 - **`v0.20.0`:** Safe Reconfiguration — published — public `ekp configure` desired-state workflow for HEALTHY composition installs
 - **v0.19.0:** Multi-Assistant Consumer Lifecycle — DeployRegistry + four deployers; repeatable `--assistant`; transactional multi-assistant install/status/update/repair/uninstall; Cursor remains default when `--assistant` is omitted
@@ -458,7 +457,7 @@ Copilot, Antigravity, and Claude are demonstrated through the `ekp-core` pilot p
 | Phase 3C — Governance foundation | **Complete** | ADRs, governance.md, lifecycle status |
 | Phase 4 — Technology knowledge | **Substantially complete** | Waves 1–3 published; `cursor-nativescript` (NativeScript L2); `cursor-flutter` (Flutter L2 published in `v0.14.0`); Flutter multi-adapter (`ekp-flutter`) deferred |
 | Phase 5 — Additional AI adapters | **Partial** | Stack multi-adapter profiles complete (`ekp-php` through `ekp-nativescript`, Cursor + Copilot); four-adapter `ekp-core` pilot; `ekp-flutter`, Antigravity/Claude on stack profiles, and `ekp-core` promotion deferred |
-| Phase 6 — Consumer productization | **Operational through `v0.21.0` (published); v0.22.0 — release candidate validated on staging; not yet published** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; workspace/monorepo; Windows + Ubuntu CI; public install via GitHub tags; CLI discoverability (staging RC); optional PyPI deferred (not a v0.22/v1.0 gate) |
+| Phase 6 — Consumer productization | **Operational through `v0.22.0` (published)** | Package; composition + legacy lifecycle; four-assistant Consumer deploy; public `ekp configure`; workspace/monorepo; Windows + Ubuntu CI; public install via GitHub tags; CLI discoverability; optional PyPI deferred (not a v0.22/v1.0 gate) |
 | Evaluation MVP | **Complete in `v0.17.0` (offline L0)** | Repository-only evaluation infrastructure; L1 real-model public evidence optional/deferred; not a Consumer CLI dependency |
 
 ### Repository metrics
